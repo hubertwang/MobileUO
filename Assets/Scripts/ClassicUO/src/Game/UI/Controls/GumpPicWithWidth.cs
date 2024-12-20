@@ -38,7 +38,7 @@ namespace ClassicUO.Game.UI.Controls
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
             ResetHueVector();
-            ShaderHueTranslator.GetHueVector(ref _hueVector, Hue);
+            ShaderHuesTraslator.GetHueVector(ref _hueVector, Hue);
 
             var texture = GumpsLoader.Instance.GetTexture(Graphic);
             if (texture != null)

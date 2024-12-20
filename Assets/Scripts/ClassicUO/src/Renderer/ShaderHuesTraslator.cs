@@ -28,7 +28,7 @@ using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Renderer
 {
-    internal static class ShaderHueTranslator
+    internal static class ShaderHuesTraslator
     {
         public const byte SHADER_NONE = 0;
         public const byte SHADER_HUED = 1;

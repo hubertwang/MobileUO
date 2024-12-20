@@ -108,7 +108,7 @@ namespace ClassicUO.Game.GameObjects
                 hue = Constants.DEAD_RANGE_COLOR;
             }
 
-            ShaderHueTranslator.GetHueVector(ref HueVector, hue, data.IsPartialHue, data.IsTranslucent ? .5f : 0);
+            ShaderHuesTraslator.GetHueVector(ref HueVector, hue, data.IsPartialHue, data.IsTranslucent ? .5f : 0);
 
             switch (Blend)
             {

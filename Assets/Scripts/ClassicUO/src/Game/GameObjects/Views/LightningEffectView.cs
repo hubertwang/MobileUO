@@ -51,8 +51,8 @@ namespace ClassicUO.Game.GameObjects
                 hue = 1150;
             }
 
-            ShaderHueTranslator.GetHueVector(ref HueVector, hue, false, 0);
-            HueVector.Y = ShaderHueTranslator.SHADER_LIGHTS;
+            ShaderHuesTraslator.GetHueVector(ref HueVector, hue, false, 0);
+            HueVector.Y = ShaderHuesTraslator.SHADER_LIGHTS;
 
             //Engine.DebugInfo.EffectsRendered++;
 

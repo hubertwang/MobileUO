@@ -889,7 +889,7 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 ResetHueVector();
 
-                ShaderHueTranslator.GetHueVector(ref _hueVector, 0, false, Alpha, true);
+                ShaderHuesTraslator.GetHueVector(ref _hueVector, 0, false, Alpha, true);
 
                 int middleWidth = Width - _gumpTexture[0].Width - _gumpTexture[2].Width;
                 batcher.Draw2D(_gumpTexture[0], x, y, ref _hueVector);

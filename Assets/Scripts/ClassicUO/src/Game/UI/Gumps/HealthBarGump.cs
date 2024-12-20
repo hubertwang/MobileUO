@@ -837,7 +837,7 @@ namespace ClassicUO.Game.UI.Gumps
             public override bool Draw(UltimaBatcher2D batcher, int x, int y)
             {
                 ResetHueVector();
-                ShaderHueTranslator.GetHueVector(ref _hueVector, 0, false, Alpha);
+                ShaderHuesTraslator.GetHueVector(ref _hueVector, 0, false, Alpha);
 
                 return batcher.Draw2D(LineColor, x, y, LineWidth, Height, ref _hueVector);
             }
