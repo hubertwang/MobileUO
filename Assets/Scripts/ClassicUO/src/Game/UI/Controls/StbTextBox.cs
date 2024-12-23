@@ -382,7 +382,7 @@ namespace ClassicUO.Game.UI.Controls
                     int selectStart = Math.Min(_stb.SelectStart, _stb.SelectEnd);
                     int selectEnd = Math.Max(_stb.SelectStart, _stb.SelectEnd);
 
-                    if (selectStart < selectEnd && selectStart >= 0 && selectEnd - selectStart < Text.Length)
+                    if (selectStart < selectEnd && selectStart >= 0 && selectEnd - selectStart <= Text.Length)
                     {
                         SDL.SDL_SetClipboardText(Text.Substring(selectStart, selectEnd - selectStart));
                     }
@@ -392,7 +392,7 @@ namespace ClassicUO.Game.UI.Controls
                     selectStart = Math.Min(_stb.SelectStart, _stb.SelectEnd);
                     selectEnd = Math.Max(_stb.SelectStart, _stb.SelectEnd);
 
-                    if (selectStart < selectEnd && selectStart >= 0 && selectEnd - selectStart < Text.Length)
+                    if (selectStart < selectEnd && selectStart >= 0 && selectEnd - selectStart <= Text.Length)
                     {
                         SDL.SDL_SetClipboardText(Text.Substring(selectStart, selectEnd - selectStart));
                         if (IsEditable)
@@ -828,6 +828,22 @@ namespace ClassicUO.Game.UI.Controls
                 }
                 return h;
             }
+        }
+
+        protected override bool OnMouseDoubleClick(int x, int y, MouseButtonType button)
+        {
+            if (!NoSelection && CaretIndex < Text.Length && CaretIndex >= 0 && !char.IsWhiteSpace(Text[CaretIndex]))
+            {
+                int idx = CaretIndex;
+                if (idx - 1 >= 0 && char.IsWhiteSpace(Text[idx - 1]))
+                    idx = CaretIndex + 1;
+                SelectionStart = _stb.MoveToPreviousWord(idx);
+                SelectionEnd = _stb.MoveToNextWord(idx);
+                if (SelectionEnd < Text.Length)
+                    --SelectionEnd;
+                return true;
+            }
+            return base.OnMouseDoubleClick(x, y, button);
         }
     }
 }
