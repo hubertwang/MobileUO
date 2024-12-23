@@ -305,7 +305,7 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 foreach (WMapMarkerFile markerFile in _markerFiles)
                 {
-                    var entry = new ContextMenuItemEntry($"Show/Hide '{markerFile.Name}'", () =>
+                    ContextMenuItemEntry entry = new ContextMenuItemEntry($"Show/Hide '{markerFile.Name}'", () =>
                     {
                         markerFile.Hidden = !markerFile.Hidden;
                         
@@ -373,16 +373,16 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (World.InGame)
                 {
-                    var start = DateTime.UtcNow;
+                    DateTime start = DateTime.UtcNow;
 
                     uint[] cachedColorsForTileId = new uint[ushort.MaxValue];
 
-                    var huesLoaderInstance = HuesLoader.Instance;
-                    var huesCount = huesLoaderInstance.HuesCount;
-                    var huesRange = huesLoaderInstance.HuesRange;
-                    var tileDataLoaderStaticData = TileDataLoader.Instance.StaticData;
-                    var playerNotNullAndIsGargoyle = World.Player != null && World.Player.Race == RaceType.GARGOYLE;
-                    var A = (byte) 255;
+                    HuesLoader huesLoaderInstance = HuesLoader.Instance;
+                    int huesCount = huesLoaderInstance.HuesCount;
+                    HuesGroup[] huesRange = huesLoaderInstance.HuesRange;
+                    StaticTiles[] tileDataLoaderStaticData = TileDataLoader.Instance.StaticData;
+                    bool playerNotNullAndIsGargoyle = World.Player != null && World.Player.Race == RaceType.GARGOYLE;
+                    byte A = (byte) 255;
                     
                     const float MAG_0 = 80f / 100f;
                     const float MAG_1 = 100f / 80f;
@@ -480,8 +480,8 @@ namespace ClassicUO.Game.UI.Gumps
                                     {
                                         ref MapCells cell = ref cells[pos];
                                         
-                                        var cachedColor = cachedColorsForTileId[cell.TileID];
-                                        ref var cc = ref buffer[block];
+                                        uint cachedColor = cachedColorsForTileId[cell.TileID];
+                                        ref Color cc = ref buffer[block];
                                         if (cachedColor != 0)
                                         {
                                             cc.PackedValue = cachedColor;
@@ -489,7 +489,7 @@ namespace ClassicUO.Game.UI.Gumps
                                         else
                                         {
                                             ushort color = (ushort) (0x8000 | huesLoaderInstance.GetRadarColorData(cell.TileID));
-                                            var packedColor = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
+                                            uint packedColor = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
                                             cc.PackedValue = packedColor;
                                             cachedColorsForTileId[cell.TileID] = packedColor;
                                         }
@@ -524,7 +524,7 @@ namespace ClassicUO.Game.UI.Gumps
                                                             (realWidth + OFFSET_PIX) + (mapX + staticBlock.X) +
                                                             OFFSET_PIX_HALF;
 
-                                                ref var cc = ref buffer[block];
+                                                ref Color cc = ref buffer[block];
                                                 cc.PackedValue = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
 
                                                 allZ[block] = staticBlock.Z;
@@ -557,9 +557,9 @@ namespace ClassicUO.Game.UI.Gumps
                                     continue;
 
                                 ref Color cc = ref buffer[blockCurrent];
-                                var R = cc.R;
-                                var G = cc.G;
-                                var B = cc.B;
+                                byte R = cc.R;
+                                byte G = cc.G;
+                                byte B = cc.B;
 
                                 if (R != 0 || G != 0 || B != 0)
                                 {
@@ -625,7 +625,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     GameActions.Print("Loading WorldMap markers..", 0x2A);
 
-                    foreach (var t in _markerIcons.Values)
+                    foreach (Texture2D t in _markerIcons.Values)
                     {
                         if (t != null && !t.IsDisposed)
                             t.Dispose();
@@ -647,7 +647,7 @@ namespace ClassicUO.Game.UI.Gumps
                         try
                         {
 
-                            var texture = CurLoader.CreateTextureFromICO_Cur(ms);
+                            Texture2D texture = CurLoader.CreateTextureFromICO_Cur(ms);
                             _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
 
                         }
@@ -674,7 +674,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                         try
                         {                           
-                            var texture = Texture2D.FromStream(Client.Game.GraphicsDevice, ms);
+                            Texture2D texture = Texture2D.FromStream(Client.Game.GraphicsDevice, ms);
                             _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
 
                         }
@@ -910,7 +910,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_mapTexture != null)
             {
-                var rect = ScissorStack.CalculateScissors(Matrix.Identity, gX, gY, gWidth, gHeight);
+                Rectangle rect = ScissorStack.CalculateScissors(Matrix.Identity, gX, gY, gWidth, gHeight);
 
                 if (ScissorStack.PushScissors(batcher.GraphicsDevice, rect))
                 {
@@ -1001,7 +1001,7 @@ namespace ClassicUO.Game.UI.Gumps
                     {
                         if (mob != null && mob.Distance <= World.ClientViewRange)
                         {
-                            var wme = World.WMapManager.GetEntity(mob);
+                            WMapEntity wme = World.WMapManager.GetEntity(mob);
                             if (wme != null)
                                 wme.Name = mob.Name;
                             else
@@ -1010,7 +1010,7 @@ namespace ClassicUO.Game.UI.Gumps
                         }
                         else
                         {
-                            var wme = World.WMapManager.GetEntity(mob.Serial);
+                            WMapEntity wme = World.WMapManager.GetEntity(mob.Serial);
                             if (wme != null && wme.IsGuild)
                             {
                                 DrawWMEntity(batcher, wme, gX, gY, halfWidth, halfHeight, Zoom);
@@ -1020,7 +1020,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
 
-            foreach (var wme in World.WMapManager.Entities.Values)
+            foreach (WMapEntity wme in World.WMapManager.Entities.Values)
             {
                 if (wme.IsGuild && !World.Party.Contains(wme.Serial))
                 {
@@ -1032,15 +1032,15 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    var partyMember = World.Party.Members[i];
+                    PartyMember partyMember = World.Party.Members[i];
 
                     if (partyMember != null && SerialHelper.IsValid(partyMember.Serial))
                     {
-                        var mob = World.Mobiles.Get(partyMember.Serial);
+                        Mobile mob = World.Mobiles.Get(partyMember.Serial);
 
                         if (mob != null && mob.Distance <= World.ClientViewRange)
                         {
-                            var wme = World.WMapManager.GetEntity(mob);
+                            WMapEntity wme = World.WMapManager.GetEntity(mob);
                             if (wme != null)
                                 wme.Name = partyMember.Name;
 
@@ -1049,7 +1049,7 @@ namespace ClassicUO.Game.UI.Gumps
                         }
                         else
                         {
-                            var wme = World.WMapManager.GetEntity(partyMember.Serial);
+                            WMapEntity wme = World.WMapManager.GetEntity(partyMember.Serial);
                             if (wme != null && !wme.IsGuild)
                             {
                                 DrawWMEntity(batcher, wme, gX, gY, halfWidth, halfHeight, Zoom);
@@ -1528,9 +1528,9 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void AdjustPosition(int x, int y, int centerX, int centerY, out int newX, out int newY)
         {
-            var offset = GetOffset(x, y, centerX, centerY);
-            var currX = x;
-            var currY = y;
+            int offset = GetOffset(x, y, centerX, centerY);
+            int currX = x;
+            int currY = y;
 
             while (offset != 0)
             {
@@ -1651,14 +1651,14 @@ namespace ClassicUO.Game.UI.Gumps
 
         private bool GetOptionValue(string key)
         {
-            _options.TryGetValue(key, out var v);
+            _options.TryGetValue(key, out ContextMenuItemEntry v);
 
             return v != null && v.IsSelected;
         }
 
         public void SetOptionValue(string key, bool v)
         {
-            if (_options.TryGetValue(key, out var entry) && entry != null)
+            if (_options.TryGetValue(key, out ContextMenuItemEntry entry) && entry != null)
             {
                 entry.IsSelected = v;
             }

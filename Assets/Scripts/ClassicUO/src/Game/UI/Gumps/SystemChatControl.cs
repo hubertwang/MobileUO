@@ -267,7 +267,7 @@ namespace ClassicUO.Game.UI.Gumps
         public override void Dispose()
         {
             MessageManager.MessageReceived -= ChatOnMessageReceived;
-            foreach (var chatLineTime in _textEntries)
+            foreach (ChatLineTime chatLineTime in _textEntries)
             {
                 chatLineTime?.Destroy();
             }
@@ -433,7 +433,7 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 case SDL.SDL_Keycode.SDLK_q when Keyboard.Ctrl && _messageHistoryIndex > -1 && !ProfileManager.Current.DisableCtrlQWBtn:
 
-                    var scene = Client.Game.GetScene<GameScene>();
+                    GameScene scene = Client.Game.GetScene<GameScene>();
                     if (scene == null)
                         return;
 
