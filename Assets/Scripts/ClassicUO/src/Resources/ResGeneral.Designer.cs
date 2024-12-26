@@ -1,1 +1,0 @@
-../../../../../external/ClassicUO/src/Resources/ResGeneral.Designer.cs
