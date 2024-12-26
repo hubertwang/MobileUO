@@ -63,7 +63,10 @@ namespace ClassicUO
         public GameController()
         {
             _graphicDeviceManager = new GraphicsDeviceManager(this);
-            // _graphicDeviceManager.PreparingDeviceSettings += (sender, e) => e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.DiscardContents;
+            // _graphicDeviceManager.PreparingDeviceSettings += (sender, e) =>
+            //{
+            //    e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.DiscardContents;
+            //};
            
             _graphicDeviceManager.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
             _graphicDeviceManager.SynchronizeWithVerticalRetrace = false; // TODO: V-Sync option
@@ -404,6 +407,8 @@ namespace ClassicUO
 
             _totalFrames++;
 
+            GraphicsDevice.Clear(Color.Black);
+
             if (_scene != null && _scene.IsLoaded && !_scene.IsDestroyed)
             {
                 _scene.Draw(_uoSpriteBatch);
@@ -459,12 +464,6 @@ namespace ClassicUO
                 _statisticsTimer = totalMilliseconds + 500;
             }
         }
-
-        //public override void OnSDLEvent(ref SDL_Event ev)
-        //{
-        //    HandleSdlEvent(ref ev);
-        //    base.OnSDLEvent(ref ev);
-        //}
 
         private void WindowOnClientSizeChanged(object sender, EventArgs e)
         {

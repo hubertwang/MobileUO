@@ -28,6 +28,7 @@ namespace ClassicUO.Renderer
         private DepthStencilState _stencil;
         private bool _useScissor;
         private int _numSprites;
+        private Matrix _transformMatrix;
 
         private Material hueMaterial;
         private Material xbrMaterial;
@@ -903,15 +904,15 @@ namespace ClassicUO.Renderer
         }
 
         [MethodImpl(256)]
-        public bool Draw2D(Texture2D texture, float dx, float dy, float dwidth, float dheight, int sx, int sy, float swidth, float sheight, ref XnaVector3 hue, float angle = 0.0f)
+        public bool Draw2D(Texture2D texture, float dx, float dy, float dwidth, float dheight, float sx, float sy, float swidth, float sheight, ref XnaVector3 hue, float angle = 0.0f)
         {
             if (texture.UnityTexture == null)
             {
                 return false;
             }
             
-            float minX = sx / (float) texture.Width, maxX = (sx + swidth) / texture.Width;
-            float minY = sy / (float) texture.Height, maxY = (sy + sheight) / texture.Height;
+            float minX = sx / texture.Width, maxX = (sx + swidth) / texture.Width;
+            float minY = sy / texture.Height, maxY = (sy + sheight) / texture.Height;
 
             var vertex = new PositionTextureColor4();
 
@@ -1235,17 +1236,48 @@ namespace ClassicUO.Renderer
         {
             hueMaterial.SetTexture(HueTex1, GraphicsDevice.Textures[1].UnityTexture);
             hueMaterial.SetTexture(HueTex2, GraphicsDevice.Textures[2].UnityTexture);
+            //SetMatrixToDefault();
+            //Begin(null, _transformMatrix);
         }
 
         public void Begin(Effect effect)
         {
             CustomEffect = effect;
+            Begin(effect, Matrix.Identity);
+            //SetMatrixToDefault();
+            //Begin(effect, _transformMatrix);
         }
 
         [MethodImpl(256)]
         public void End()
         {
             CustomEffect = null;
+        }
+
+        public void Begin(Effect customEffect, Matrix transform_matrix)
+        {
+            //EnsureNotStarted();
+            //_started = true;
+            //_drawingArea.Min.X = 0;
+            //_drawingArea.Min.Y = 0;
+            //_drawingArea.Min.Z = -150;
+            //_drawingArea.Max.X = GraphicsDevice.Viewport.Width;
+            //_drawingArea.Max.Y = GraphicsDevice.Viewport.Height;
+            //_drawingArea.Max.Z = 150;
+
+            CustomEffect = customEffect;
+            _transformMatrix = transform_matrix;
+        }
+
+        private void SetMatrixToDefault()
+        {
+            var viewport = GraphicsDevice.Viewport;
+            Matrix.CreateOrthographicOffCenter(
+                viewport.X,
+                viewport.X + viewport.Width,
+                viewport.Y + viewport.Height, 
+                viewport.Y, 
+                0, 1, out _transformMatrix);
         }
 
         //Because XNA's Blend enum starts with 1, we duplicate BlendMode.Zero for 0th index
@@ -1303,7 +1335,7 @@ namespace ClassicUO.Renderer
                 hueMaterial.SetVector(ScissorRect, scissorVector4);
             }
 
-            DefaultEffect.ApplyStates();
+            DefaultEffect.ApplyStates(ref _transformMatrix);
         }
 
         [MethodImpl(256)]
@@ -1341,7 +1373,6 @@ namespace ClassicUO.Renderer
         private class IsometricEffect : MatrixEffect
         {
             private Vector2 _viewPort;
-            private Matrix _matrix = Matrix.Identity;
 
             public IsometricEffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.IsometricEffect)
             {
@@ -1364,15 +1395,15 @@ namespace ClassicUO.Renderer
             public EffectParameter Brighlight { get; }
 
 
-            public override void ApplyStates()
+            public override void ApplyStates(ref Matrix matrix)
             {
-                WorldMatrix.SetValue(_matrix);
+                WorldMatrix.SetValue(Matrix.Identity);
 
                 _viewPort.x = GraphicsDevice.Viewport.Width;
                 _viewPort.y = GraphicsDevice.Viewport.Height;
                 Viewport.SetValue(_viewPort);
 
-                base.ApplyStates();
+                base.ApplyStates(ref matrix);
             }
         }
 
