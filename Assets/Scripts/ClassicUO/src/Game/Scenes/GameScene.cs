@@ -46,12 +46,11 @@ namespace ClassicUO.Game.Scenes
 {
     internal partial class GameScene : Scene
     {
-        //NOTE: Added these to allow the game viewport to be smaller than what CUO was allowing
+        // MobileUO: NOTE: Added these to allow the game viewport to be smaller than what CUO was allowing
         public static int MinimumViewportWidth = 200;
         public static int MinimumViewportHeight = 300;
 
         private readonly LightData[] _lights = new LightData[Constants.MAX_LIGHTS_DATA_INDEX_COUNT];
-        private readonly float[] _scaleArray = Enumerable.Range(5, 21).Select(i => i / 10.0f).ToArray(); // 0.5 => 2.5
         private bool _alphaChanged;
         private long _alphaTimer;
         private bool _deathScreenActive;
@@ -73,6 +72,7 @@ namespace ClassicUO.Game.Scenes
         private Item _multi;
         private Vector3 _selectionLines = Vector3.Zero;
 
+        // MobileUO: joystick variables
         public Vector2 JoystickInput;
         public float JoystickRunThreshold;
         
@@ -109,28 +109,6 @@ namespace ClassicUO.Game.Scenes
         }
 
         public bool UpdateDrawPosition { get; set; }
-
-        public int ScalePos
-        {
-            get => _scale;
-            set
-            {
-                if (value < 0)
-                    value = 0;
-                else if (value >= _scaleArray.Length - 1)
-                    value = _scaleArray.Length - 1;
-
-                _scale = value;
-
-                Camera.Zoom = _scaleArray[_scale];
-            }
-        }
-
-        public float Scale
-        {
-            get => _scaleArray[_scale];
-            set => ScalePos = (int) (value * 10) - 5;
-        }
 
         public HotkeysManager Hotkeys { get; private set; }
 
@@ -190,10 +168,9 @@ namespace ClassicUO.Game.Scenes
 
             MessageManager.MessageReceived += ChatOnMessageReceived;
 
-            Scale = ProfileManager.Current.DefaultScale;
-
             UIManager.ContainerScale = ProfileManager.Current.ContainersScale / 100f;
 
+            // MobileUO: MinimumViewportWidth and MinimumViewportHeight
             SDL.SDL_SetWindowMinimumSize(Client.Game.Window.Handle, MinimumViewportWidth, MinimumViewportHeight);
 
             if (ProfileManager.Current.WindowBorderless)
@@ -209,6 +186,7 @@ namespace ClassicUO.Game.Scenes
                 int w = Settings.GlobalSettings.WindowSize.Value.X;
                 int h = Settings.GlobalSettings.WindowSize.Value.Y;
 
+                // MobileUO: MinimumViewportWidth and MinimumViewportHeight
                 w = Math.Max(MinimumViewportWidth, w);
                 h = Math.Max(MinimumViewportHeight, h);
 
@@ -220,8 +198,9 @@ namespace ClassicUO.Game.Scenes
             CircleOfTransparency.Create(ProfileManager.Current.CircleOfTransparencyRadius);
             Plugin.OnConnected();
 
-           // UIManager.Add(new Hues_gump());
 
+            Camera.SetZoomValues(new [] { .6f, .7f, .8f, 0.9f, 1f, 1.1f, 1.2f, 1.3f, 1.5f });
+            Camera.Zoom = ProfileManager.Current.DefaultScale;
         }
 
         private void ChatOnMessageReceived(object sender, UOMessageEventArgs e)
@@ -357,6 +336,7 @@ namespace ClassicUO.Game.Scenes
             Settings.GlobalSettings.IsWindowMaximized = Client.Game.IsWindowMaximized();
             Client.Game.SetWindowBorderless(false);
             
+            // MobileUO: dispose
             CircleOfTransparency.Dispose();
 
             base.Unload();
@@ -463,6 +443,14 @@ namespace ClassicUO.Game.Scenes
 
         private void FillGameObjectList()
         {
+            _renderListCount = 0;
+            _foliageCount = 0;
+
+            if (!World.InGame)
+            {
+                return;
+            }
+
             _isListReady = false;
             _alphaChanged = _alphaTimer < Time.Ticks;
 
@@ -474,13 +462,10 @@ namespace ClassicUO.Game.Scenes
             {
                 _foliageIndex = 1;
             }
-            _foliageCount = 0;
 
             GetViewPort();
 
-            _renderListCount = 0;
             _objectHandlesCount = 0;
-
             _useObjectHandles = NameOverHeadManager.IsToggled || (Keyboard.Ctrl && Keyboard.Shift);
 
             if (_useObjectHandles)
@@ -581,23 +566,15 @@ namespace ClassicUO.Game.Scenes
             int width = ProfileManager.Current.GameWindowSize.X;
             int height = ProfileManager.Current.GameWindowSize.Y;
 
-            Camera.SetPosition
-            (
-                World.Player.RealScreenPosition.X + 22,
-                World.Player.RealScreenPosition.Y + 22
-            );
-
             Camera.SetGameWindowBounds
             (
-                posX, 
-                posY, 
+                posX,
+                posY,
                 width,
                 height
             );
 
-
             SelectedObject.TranslatedMousePositionByViewport = Camera.MouseToWorldPosition();
-
 
             base.Update(totalMS, frameMS);
 
@@ -622,23 +599,22 @@ namespace ClassicUO.Game.Scenes
             Pathfinder.ProcessAutoWalk();
             DelayedObjectClickManager.Update();
 
-            //Don't allow MoveCharacterByMouseInput on mobile platforms unless UseMouseOnMobile is enabled
+            // MobileUO: Don't allow MoveCharacterByMouseInput on mobile platforms unless UseMouseOnMobile is enabled
             // if (UnityEngine.Application.isMobilePlatform == false || UserPreferences.UseMouseOnMobile.CurrentValue == 1)
+            if (!MoveCharacterByMouseInput() && !ProfileManager.Current.DisableArrowBtn)
             {
-                if (!MoveCharacterByMouseInput() && !ProfileManager.Current.DisableArrowBtn)
-                {
-                    Direction dir = DirectionHelper.DirectionFromKeyboardArrows(_flags[0],
-                        _flags[2],
-                        _flags[1],
-                        _flags[3]);
+                Direction dir = DirectionHelper.DirectionFromKeyboardArrows(_flags[0],
+                                                                            _flags[2],
+                                                                            _flags[1],
+                                                                            _flags[3]);
 
-                    if (World.InGame && !Pathfinder.AutoWalking && dir != Direction.NONE)
-                    {
-                        World.Player.Walk(dir, ProfileManager.Current.AlwaysRun);
-                    }
+                if (World.InGame && !Pathfinder.AutoWalking && dir != Direction.NONE)
+                {
+                    World.Player.Walk(dir, ProfileManager.Current.AlwaysRun);
                 }
             }
 
+            // MobileUO: Joystick input
             if (JoystickInput != Vector2.Zero && UserPreferences.JoystickCancelsFollow.CurrentValue == (int) PreferenceEnums.JoystickCancelsFollow.On)
             {
                 _continueRunning = false;
@@ -786,11 +762,11 @@ namespace ClassicUO.Game.Scenes
 
 
         private static XBREffect _xbr_effect;
-        private bool _use_render_target = true; // mandlar: rendering looks completely wrong if this is set to false. need to re-visit later
+        private bool _use_render_target = true; // MobileUO: rendering looks completely wrong if this is set to false. need to re-visit later ~mandlar
 
         public override bool Draw(UltimaBatcher2D batcher)
         {
-            //Revert scaling during game scene drawing
+            // MobileUO: Revert scaling during game scene drawing
             var originalBatcherScale = batcher.scale;
             batcher.scale = 1f;
             
@@ -805,7 +781,7 @@ namespace ClassicUO.Game.Scenes
 
             Viewport r_viewport = batcher.GraphicsDevice.Viewport;
 
-            Matrix matrix = Camera.ViewProjectionMatrix;
+            Matrix matrix = Camera.TransformMatrix;
 
             if (ProfileManager.Current.EnableDeathScreen)
             {
@@ -837,11 +813,12 @@ namespace ClassicUO.Game.Scenes
                 batcher.GraphicsDevice.Viewport = Camera.GetViewport();
             }
 
-            DrawWorld(batcher, posX, posY, ref matrix, _use_render_target);
+            DrawWorld(batcher, ref matrix, _use_render_target);
 
             if (_use_render_target)
             {
-                can_draw_lights = PrepareLightsRendering(batcher, ref matrix);
+                // MobileUO: commented out
+                //can_draw_lights = PrepareLightsRendering(batcher, ref matrix);
             }
             
             // draw world rt
@@ -930,7 +907,7 @@ namespace ClassicUO.Game.Scenes
 
             batcher.Begin();
             DrawOverheads(batcher, posX, posY);
-            DrawSelection(batcher, posX, posY);
+            DrawSelection(batcher);
             batcher.End();
 
 
@@ -947,18 +924,20 @@ namespace ClassicUO.Game.Scenes
             return base.Draw(batcher);
         }
 
-        private void DrawWorld(UltimaBatcher2D batcher, int masterX, int masterY, ref Matrix matrix, bool use_render_target)
+        private void DrawWorld(UltimaBatcher2D batcher, ref Matrix matrix, bool use_render_target)
         {
             SelectedObject.Object = null;
 
             if (use_render_target)
             {
                 batcher.GraphicsDevice.SetRenderTarget(_world_render_target);
+                // MobileUO: clear
                 batcher.GraphicsDevice.Clear(Color.Black);
 
-                //NOTE: This extra Clear is important, otherwise hall-of-mirrors effects can happen in areas which are not drawn, such as black tiles surrounding caves
+                // MobileUO: NOTE: This extra Clear is important, otherwise hall-of-mirrors effects can happen in areas which are not drawn, such as black tiles surrounding caves
                 batcher.GraphicsDevice.Clear(ClearOptions.Stencil | ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 0, 0);
             }
+            
 
             batcher.SetBrightlight(ProfileManager.Current.Brighlight);
             batcher.Begin(null, matrix);
@@ -975,7 +954,7 @@ namespace ClassicUO.Game.Scenes
                 fx += 22;
                 //fy -= 22;
 
-                CircleOfTransparency.Draw(batcher, fx + masterX, fy + masterY);
+                CircleOfTransparency.Draw(batcher, fx, fy);
             }
 
             if (!_deathScreenActive)
@@ -998,12 +977,12 @@ namespace ClassicUO.Game.Scenes
                 }
 
                 if (_multi != null && TargetManager.IsTargeting && TargetManager.TargetingState == CursorTarget.MultiPlacement)
-                    _multi.Draw(batcher, _multi.RealScreenPosition.X,  _multi.RealScreenPosition.Y);
+                    _multi.Draw(batcher, _multi.RealScreenPosition.X, _multi.RealScreenPosition.Y);
             }
 
 
             // draw weather
-            _weather.Draw(batcher, masterX, masterY);
+            _weather.Draw(batcher, 0, 0);
             batcher.End();
 
             if (use_render_target)
@@ -1018,6 +997,7 @@ namespace ClassicUO.Game.Scenes
                 return false;
 
             batcher.GraphicsDevice.SetRenderTarget(_lightRenderTarget);
+            // MobileUO: clear
             batcher.GraphicsDevice.Clear(ClearOptions.Target, Color.Black, 0, 0);
 
             if (!UseAltLights)
@@ -1029,7 +1009,8 @@ namespace ClassicUO.Game.Scenes
 
                 _vectorClear.X = _vectorClear.Y = _vectorClear.Z = lightColor;
 
-                batcher.GraphicsDevice.Clear(ClearOptions.Target, _vectorClear, 0, 0);
+                // MobileUO: clear
+                batcher.GraphicsDevice.Clear(ClearOptions.Target, Color.Black, 0, 0);
             }
 
             batcher.Begin(null, matrix);
@@ -1080,7 +1061,7 @@ namespace ClassicUO.Game.Scenes
             SelectedObject.LastObject = SelectedObject.Object;
         }
 
-        public void DrawSelection(UltimaBatcher2D batcher, int x, int y)
+        public void DrawSelection(UltimaBatcher2D batcher)
         {
             if (_isSelectionActive)
             {
@@ -1102,17 +1083,7 @@ namespace ClassicUO.Game.Scenes
                 MessageManager.HandleMessage(World.Player, "Stopped following.", String.Empty, 0, MessageType.Regular, 3, TEXT_TYPE.CLIENT, false);
             }
         }
-
-        public void ZoomIn()
-        {
-            ScalePos--;
-        }
-
-        public void ZoomOut()
-        {
-            ScalePos++;
-        }
-
+        
         private struct LightData
         {
             public byte ID;

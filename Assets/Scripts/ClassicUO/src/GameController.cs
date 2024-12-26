@@ -31,6 +31,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
+// MobileUO: import
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
@@ -57,12 +58,14 @@ namespace ClassicUO
         private double _totalElapsed, _currentFpsTime;
         private uint _totalFrames;
 
+        // MobileUO: Batcher and TouchScreenKeyboard
         public UltimaBatcher2D Batcher => _uoSpriteBatch;
         public static UnityEngine.TouchScreenKeyboard TouchScreenKeyboard;
 
         public GameController()
         {
             _graphicDeviceManager = new GraphicsDeviceManager(this);
+            // MobileUO: commented out
             // _graphicDeviceManager.PreparingDeviceSettings += (sender, e) =>
             //{
             //    e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.DiscardContents;
@@ -89,8 +92,11 @@ namespace ClassicUO
 
         protected override void Initialize()
         {
+            // MobileUO: commented out
             // if (_graphicDeviceManager.GraphicsDevice.Adapter.IsProfileSupported(GraphicsProfile.HiDef))
-            //     _graphicDeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
+            //{
+            //    _graphicDeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
+            //}
             _graphicDeviceManager.ApplyChanges();
 
             SetRefreshRate(Settings.GlobalSettings.FPS);
@@ -116,6 +122,7 @@ namespace ClassicUO
             uint[] buffer = new uint[TEXTURE_WIDTH * TEXTURE_HEIGHT * 2];
             HuesLoader.Instance.CreateShaderColors(buffer);
 
+            // MobileUO: true parameters for invertY
             _hueSamplers[0] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
             _hueSamplers[0].SetData(buffer, 0, TEXTURE_WIDTH * TEXTURE_HEIGHT, true);
             _hueSamplers[1] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
@@ -124,6 +131,7 @@ namespace ClassicUO
             GraphicsDevice.Textures[1] = _hueSamplers[0];
             GraphicsDevice.Textures[2] = _hueSamplers[1];
 
+            // MobileUO: filter mode
             GraphicsDevice.Textures[1].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
             GraphicsDevice.Textures[2].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
             
@@ -138,6 +146,7 @@ namespace ClassicUO
             SetWindowPositionBySettings();
         }
 
+        // MobileUO: makes public
         public override void UnloadContent()
         {
             SDL_GetWindowBordersSize(Window.Handle, out int top, out int left, out _, out _);
@@ -167,7 +176,7 @@ namespace ClassicUO
             Verdata.File?.Dispose();
             World.Map?.Destroy();
 
-            //NOTE: My dispose related changes, see if they're still necessary
+            // MobileUO: NOTE: My dispose related changes, see if they're still necessary
             _hueSamplers[0]?.Dispose();
             _hueSamplers[0] = null;
             _hueSamplers[1]?.Dispose();
@@ -178,7 +187,7 @@ namespace ClassicUO
             Texture2DCache.Dispose();
             RenderedText.Dispose();
             
-            //NOTE: We force the sockets to disconnect in case they haven't already been disposed
+            // MobileUO: NOTE: We force the sockets to disconnect in case they haven't already been disposed
             //This is good practice since the Client can be quit while the socket is still active
             if (NetClient.LoginSocket.IsDisposed == false)
             {
@@ -203,7 +212,7 @@ namespace ClassicUO
             _scene?.Dispose();
             _scene = scene;
 
-            //NOTE: Added this to be able to react to scene changes, mainly for calculating render scale factor
+            // MobileUO: NOTE: Added this to be able to react to scene changes, mainly for calculating render scale factor
             Client.InvokeSceneChanged();
 
             if (scene != null)
@@ -341,6 +350,7 @@ namespace ClassicUO
 
             Time.Ticks = (uint) gameTime.TotalGameTime.TotalMilliseconds;
 
+            // MobileUO: new MouseUpdate function
             // Mouse.Update();
             MouseUpdate();
             OnNetworkUpdate(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
@@ -353,6 +363,7 @@ namespace ClassicUO
                 Profiler.ExitContext("Update");
             }
 
+            // MobileUO: Unity input
             UnityInputUpdate();
             
             UIManager.Update(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
@@ -568,6 +579,7 @@ namespace ClassicUO
 
                     if (sdlEvent->key.keysym.sym == SDL_Keycode.SDLK_PRINTSCREEN)
                     {
+                        // MobileUO: commented out
                         //string path = Path.Combine(FileSystemHelper.CreateFolderIfNotExists(CUOEnviroment.ExecutablePath, "Data", "Client", "Screenshots"), $"screenshot_{DateTime.Now:yyyy-MM-dd_hh-mm-ss}.png");
 
                         //Color[] colors = new Color[_graphicDeviceManager.PreferredBackBufferWidth * _graphicDeviceManager.PreferredBackBufferHeight];
@@ -846,6 +858,7 @@ namespace ClassicUO
             return 0;
         }
 
+        // MobileUO: here to end of file for Unity functions to help support inputs
         private readonly UnityEngine.KeyCode[] _keyCodeEnumValues = (UnityEngine.KeyCode[]) Enum.GetValues(typeof(UnityEngine.KeyCode));
         private UnityEngine.Vector3 lastMousePosition;
         public SDL_Keymod KeymodOverride;
@@ -957,12 +970,12 @@ namespace ClassicUO
                     if(zoomCounter > 3)
                     {
                         zoomCounter = 0;
-                        Client.Game.GetScene<GameScene>().ZoomIn();
+                        --Client.Game.Scene.Camera.ZoomIndex;
                     }
                     else if(zoomCounter < -3)
                     {
                         zoomCounter = 0;
-                        Client.Game.GetScene<GameScene>().ZoomOut();
+                        ++Client.Game.Scene.Camera.ZoomIndex;
                     }
                 }
 
