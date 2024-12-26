@@ -165,6 +165,8 @@ namespace ClassicUO.Configuration
         public bool CloseAllAnchoredGumpsInGroupWithRightClick { get; set; } = false;
         public bool HoldAltToMoveGumps { get; set; }
 
+        public bool HideScreenshotStoredInMessage { get; set; }
+
         // Experimental
          public bool CastSpellsByOneClick { get; set; }
          public bool BuffBarTime { get; set; }
@@ -212,12 +214,14 @@ namespace ClassicUO.Configuration
         public int CounterBarColumns { get; set; } = 1;
 
 
+        public int FilterType { get; set; } = 0;
         public bool ShadowsEnabled { get; set; } = true;
         public int AuraUnderFeetType { get; set; } // 0 = NO, 1 = in warmode, 2 = ctrl+shift, 3 = always
         public bool AuraOnMouse { get; set; } = true;
 
         public bool PartyAura { get; set; }
 
+        // MobileUO: set to false
         public bool UseXBR { get; set; } = false;
 
         public bool HideChatGradient { get; set; } = false;
@@ -251,6 +255,8 @@ namespace ClassicUO.Configuration
         public bool UseLargeContainerGumps { get; set; } = false;
 
         public bool RelativeDragAndDropItems { get; set; }
+
+        public bool HighlightContainerWhenSelected { get; set; }
 
         public bool ShowHouseContent { get; set; }
         public bool SaveHealthbars { get; set; }
@@ -541,6 +547,7 @@ namespace ClassicUO.Configuration
                                 case GUMP_TYPE.GT_MACROBUTTON:
                                     gump = new MacroButtonGump();
                                     break;
+                                // MobileUO: added assistant gumps
                                 case GUMP_TYPE.GT_ASSISTANTMACROBUTTON:
                                     gump = new AssistantMacroButtonGump();
                                     break;
@@ -658,6 +665,7 @@ namespace ClassicUO.Configuration
                                     case GUMP_TYPE.GT_MACROBUTTON:
                                         gump = new MacroButtonGump();
                                         break;
+                                    // MobileUO: added assistant gumps
                                     case GUMP_TYPE.GT_ASSISTANTMACROBUTTON:
                                         gump = new AssistantMacroButtonGump();
                                         break;

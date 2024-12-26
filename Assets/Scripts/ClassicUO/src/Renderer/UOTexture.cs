@@ -40,6 +40,7 @@ namespace ClassicUO.Renderer
         public long Ticks { get; set; }
         public uint[] Data => _data;
 
+        // MobileUO: added keepData optional parameter
         public void PushData(uint[] data, bool keepData = false)
         {
             if (keepData)
@@ -50,6 +51,7 @@ namespace ClassicUO.Renderer
             SetData(data);
         }
 
+        // MobileUO: logic changes for Unity
         public bool Contains(int x, int y, bool pixelCheck = true)
         {
             if (x >= 0 && y >= 0 && x < Width && y < Height)
@@ -67,7 +69,7 @@ namespace ClassicUO.Renderer
             return false;
         }
         
-        //Used for Contains checks in texture using Unity's own texture data, instead of keeping a copy of the data in _data field
+        // MobileUO: Used for Contains checks in texture using Unity's own texture data, instead of keeping a copy of the data in _data field
         private uint GetDataAtPos(int pos)
         {
             //The index calculation here is the same as in Texture2D.SetData
@@ -115,14 +117,8 @@ namespace ClassicUO.Renderer
 
     internal class ArtTexture : UOTexture32
     {
-        public ArtTexture(int offsetX, int offsetY, int offsetW, int offsetH, int width, int height) : base(width, height)
+        public ArtTexture(int width, int height) : base(width, height)
         {
-            ImageRectangle = new Rectangle(offsetX, offsetY, offsetW, offsetH);
-        }
-
-        public ArtTexture(Rectangle rect, int width, int height) : base(width, height)
-        {
-            ImageRectangle = rect;
         }
 
         public Rectangle ImageRectangle;

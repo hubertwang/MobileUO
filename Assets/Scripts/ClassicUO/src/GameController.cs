@@ -38,7 +38,9 @@ using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Network;
 using ClassicUO.Renderer;
+using ClassicUO.Resources;
 using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -117,7 +119,7 @@ namespace ClassicUO
             Client.Load();
 
             const int TEXTURE_WIDTH = 32;
-            const int TEXTURE_HEIGHT = 2048 * 1;
+            const int TEXTURE_HEIGHT = 2048;
 
             uint[] buffer = new uint[TEXTURE_WIDTH * TEXTURE_HEIGHT * 2];
             HuesLoader.Instance.CreateShaderColors(buffer);
@@ -355,7 +357,7 @@ namespace ClassicUO
             MouseUpdate();
             OnNetworkUpdate(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
             Plugin.Tick();
-
+            
             if (_scene != null && _scene.IsLoaded && !_scene.IsDestroyed)
             {
                 Profiler.EnterContext("Update");
@@ -440,6 +442,7 @@ namespace ClassicUO
             }
 
             SelectedObject.HealthbarObject = null;
+            SelectedObject.SelectedContainer = null;
 
             base.Draw(gameTime);
 
@@ -580,18 +583,7 @@ namespace ClassicUO
                     if (sdlEvent->key.keysym.sym == SDL_Keycode.SDLK_PRINTSCREEN)
                     {
                         // MobileUO: commented out
-                        //string path = Path.Combine(FileSystemHelper.CreateFolderIfNotExists(CUOEnviroment.ExecutablePath, "Data", "Client", "Screenshots"), $"screenshot_{DateTime.Now:yyyy-MM-dd_hh-mm-ss}.png");
-
-                        //Color[] colors = new Color[_graphicDeviceManager.PreferredBackBufferWidth * _graphicDeviceManager.PreferredBackBufferHeight];
-                        //GraphicsDevice.GetBackBufferData(colors);
-
-                        //using (Texture2D texture = new Texture2D(GraphicsDevice, _graphicDeviceManager.PreferredBackBufferWidth, _graphicDeviceManager.PreferredBackBufferHeight, false, SurfaceFormat.Color))
-                        //using (FileStream fileStream = File.Create(path))
-                        //{
-                        //    texture.SetData(colors);
-                        //    texture.SaveAsPng(fileStream, texture.Width, texture.Height);
-                        //    GameActions.Print($"Screenshot stored in: {path}", 0x44, MessageType.System);
-                        //}
+                        // TakeScreenshot();
                     }
 
                     break;
@@ -858,6 +850,32 @@ namespace ClassicUO
             return 0;
         }
 
+        // MobileUO: commented out
+        //private void TakeScreenshot()
+        //{
+        //    string screenshotsFolder = FileSystemHelper.CreateFolderIfNotExists(CUOEnviroment.ExecutablePath, "Data", "Client", "Screenshots");
+        //    string path = Path.Combine(screenshotsFolder, $"screenshot_{DateTime.Now:yyyy-MM-dd_hh-mm-ss}.png");
+
+        //    Color[] colors = new Color[_graphicDeviceManager.PreferredBackBufferWidth * _graphicDeviceManager.PreferredBackBufferHeight];
+        //    GraphicsDevice.GetBackBufferData(colors);
+
+        //    using (Texture2D texture = new Texture2D(GraphicsDevice, _graphicDeviceManager.PreferredBackBufferWidth, _graphicDeviceManager.PreferredBackBufferHeight, false, SurfaceFormat.Color))
+        //    using (FileStream fileStream = File.Create(path))
+        //    {
+        //        texture.SetData(colors);
+        //        texture.SaveAsPng(fileStream, texture.Width, texture.Height);
+        //        var message = string.Format(ResGeneral.ScreenshotStoredIn0, path);
+        //        if (ProfileManager.Current.HideScreenshotStoredInMessage)
+        //        {
+        //            Log.Info(message);
+        //        }
+        //        else
+        //        {
+        //            GameActions.Print(message, 0x44, MessageType.System);
+        //        }
+        //    }
+        //}
+
         // MobileUO: here to end of file for Unity functions to help support inputs
         private readonly UnityEngine.KeyCode[] _keyCodeEnumValues = (UnityEngine.KeyCode[]) Enum.GetValues(typeof(UnityEngine.KeyCode));
         private UnityEngine.Vector3 lastMousePosition;
@@ -955,7 +973,7 @@ namespace ClassicUO
                     SimulateMouse(finger.Down, finger.Up, false, false, mouseMotion, false);
                 }
                 
-                if (fingers.Count == 2 && ProfileManager.Current.EnableMousewheelScaleZoom && UIManager.MouseOverControl is WorldViewport)
+                if (fingers.Count == 2 && ProfileManager.Current.EnableMousewheelScaleZoom && UIManager.IsMouseOverWorld)
                 {                    
                     var scale = Lean.Touch.LeanGesture.GetPinchScale(fingers);                  
                     if(scale < 1)

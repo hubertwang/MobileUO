@@ -61,7 +61,7 @@ namespace ClassicUO.Game
         private readonly Tooltip _tooltip;
         private Vector3 _auraVector = new Vector3(0, 13, 0);
         private readonly RenderedText _targetDistanceText = RenderedText.Create(String.Empty, 0x0481, style: FontStyle.BlackBorder);
-        private ArtTexture _draggedItemTexture;
+        private UOTexture32 _draggedItemTexture;
         private ushort _graphic = 0x2073;
         private bool _needGraphicUpdate = true;
         private Point _offset;
@@ -224,6 +224,7 @@ namespace ClassicUO.Game
                             _cursorOffset[1, j] = 0;
                         }
                     }
+                    // MobileUO: commented out
                     // if (pixels != null && pixels.Length != 0)
                     // {
                     //     unsafe
@@ -290,7 +291,10 @@ namespace ClassicUO.Game
 
         public void SetDraggedItem(Point? offset)
         {
-            _draggedItemTexture = ArtLoader.Instance.GetTexture(ItemHold.DisplayedGraphic);
+            _draggedItemTexture = ItemHold.IsGumpTexture ?
+                GumpsLoader.Instance.GetTexture((ushort) (ItemHold.DisplayedGraphic - Constants.ITEM_GUMP_TEXTURE_OFFSET)) 
+                :
+                ArtLoader.Instance.GetTexture(ItemHold.DisplayedGraphic);
             if (_draggedItemTexture == null)
                 return;
 
@@ -480,9 +484,7 @@ namespace ClassicUO.Game
 
                 if (ProfileManager.Current.ShowTargetRangeIndicator)
                 {
-                    GameScene gs = Client.Game.GetScene<GameScene>();
-
-                    if (gs != null && gs.IsMouseOverViewport)
+                    if (UIManager.IsMouseOverWorld)
                     {
                         if (SelectedObject.Object is GameObject obj)
                         {
@@ -568,7 +570,7 @@ namespace ClassicUO.Game
                 }
                 else
                 {
-                    if (gs.IsMouseOverViewport && SelectedObject.Object is Entity item && World.OPL.Contains(item))
+                    if (UIManager.IsMouseOverWorld && SelectedObject.Object is Entity item && World.OPL.Contains(item))
                     {
                         if (_tooltip.IsEmpty || item != _tooltip.Serial)
                             _tooltip.SetGameObject(item);
@@ -752,6 +754,7 @@ namespace ClassicUO.Game
             public readonly IntPtr CursorPtr;
         }
 
+        // MobileUO: dispose
         public void Dispose()
         {
             _aura?.Dispose();

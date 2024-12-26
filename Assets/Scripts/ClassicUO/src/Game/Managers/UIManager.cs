@@ -65,7 +65,26 @@ namespace ClassicUO.Game.Managers
 
         public static bool IsMouseOverAControl => MouseOverControl != null;
 
-        public static bool IsMouseOverWorld => MouseOverControl is WorldViewport;
+        public static bool IsModalOpen { get; private set; }
+
+        public static bool IsMouseOverWorld
+        {
+            get
+            {
+                Point mouse = Mouse.Position;
+                Profile profile = ProfileManager.Current;
+
+                return profile != null &&
+                       GameCursor.AllowDrawSDLCursor &&
+                       DraggingControl == null &&
+                       MouseOverControl == null &&
+                       !IsModalOpen &&
+                       mouse.X >= profile.GameWindowPosition.X + 5 &&
+                       mouse.X < profile.GameWindowPosition.X + 5 + profile.GameWindowSize.X &&
+                       mouse.Y >= profile.GameWindowPosition.Y + 5 &&
+                       mouse.Y < profile.GameWindowPosition.Y + 5 + profile.GameWindowSize.Y;
+            }
+        }
 
         public static Control DraggingControl { get; private set; }
 
@@ -121,9 +140,6 @@ namespace ClassicUO.Game.Managers
         }
 
         public static bool IsDragging => _isDraggingControl && DraggingControl != null;
-
-        public static bool ValidForDClick() => !(_validForDClick is WorldViewport);
-
 
 
         public static void OnMouseDragging()
@@ -422,7 +438,7 @@ namespace ClassicUO.Game.Managers
         public static bool HadMouseDownOnGump(MouseButtonType button)
         {
             Control c = LastControlMouseDown(button);
-            return c != null && !c.IsDisposed && !(c is WorldViewport) && !ItemHold.Enabled;
+            return c != null && !c.IsDisposed && !IsMouseOverWorld && !ItemHold.Enabled;
         }
 
         public static Control LastControlMouseDown(MouseButtonType button)
@@ -574,6 +590,7 @@ namespace ClassicUO.Game.Managers
                 s.Dispose();
             }
             
+            // MobileUO: clear logic
             Gumps.Clear();
             
             for (int i = 0; i < _mouseDownControls.Length; i++)
@@ -582,6 +599,7 @@ namespace ClassicUO.Game.Managers
             }
         }
 
+        // MobileUO: added Dispose method
         public static void Dispose()
         {
             GameCursor?.Dispose();
@@ -672,6 +690,7 @@ namespace ClassicUO.Game.Managers
             }
         }
 
+        // MobileUO: made method public
         public static Control GetMouseOverControl(Point position)
         {
             if (_isDraggingControl)
@@ -679,13 +698,13 @@ namespace ClassicUO.Game.Managers
 
             Control control = null;
 
-            bool ismodal = IsModalControlOpen();
+            IsModalOpen = IsModalControlOpen();
 
             for (LinkedListNode<Control> first = Gumps.First; first != null; first = first.Next)
             {
                 Control c = first.Value;
 
-                if ((ismodal && !c.ControlInfo.IsModal) || !c.IsVisible || !c.IsEnabled)
+                if ((IsModalOpen && !c.ControlInfo.IsModal) || !c.IsVisible || !c.IsEnabled)
                 {
                     continue;
                 }

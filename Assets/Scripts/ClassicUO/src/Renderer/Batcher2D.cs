@@ -31,6 +31,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
+    // MobileUO: unused (replaced by UnityBatcher.cs)
     internal sealed unsafe class UltimaBatcher2D_Unused : IDisposable
     {
         private const int MAX_SPRITES = 0x800;
@@ -39,19 +40,26 @@ namespace ClassicUO.Renderer
 
 
         private readonly IndexBuffer _indexBuffer;
-        private readonly RasterizerState _rasterizerState;
         private readonly DynamicVertexBuffer _vertexBuffer;
         private readonly Texture2D[] _textureInfo;
         private PositionNormalTextureColor4* _vertexInfo;
         private BlendState _blendState;
+        private DepthStencilState _stencil;
+        private SamplerState _sampler;
+        private RasterizerState _rasterizerState;
+
         private Effect _customEffect;
         private bool _started;
-        private DepthStencilState _stencil;
         private bool _useScissor;
         private BoundingBox _drawingArea;
         private int _numSprites;
         private Matrix _transformMatrix;
+        private Matrix _projectionMatrix = new Matrix(0f,                         //(float)( 2.0 / (double)viewport.Width ) is the actual value we will use
+                                                      0.0f, 0.0f, 0.0f, 0.0f, 0f, //(float)( -2.0 / (double)viewport.Height ) is the actual value we will use
+                                                      0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+        private int _currentBufferPosition;
 
+        // MobileUO: unused (replaced by UnityBatcher.cs)
         public UltimaBatcher2D_Unused(GraphicsDevice device)
         {
             GraphicsDevice = device;
@@ -62,6 +70,7 @@ namespace ClassicUO.Renderer
             _indexBuffer.SetData(GenerateIndexArray());
             _blendState = BlendState.AlphaBlend;
             _rasterizerState = RasterizerState.CullNone;
+            _sampler = SamplerState.PointClamp;
 
             _rasterizerState = new RasterizerState
             {
@@ -1162,7 +1171,7 @@ namespace ClassicUO.Renderer
 
                 float sin = (float)Math.Sin(angle);
                 float cos = (float)Math.Cos(angle);
-
+                
                 float tempX = -ww;
                 float tempY = -hh;
                 float rotX = tempX * cos - tempY * sin;
@@ -1269,7 +1278,7 @@ namespace ClassicUO.Renderer
         }
 
         [MethodImpl(256)]
-        public bool Draw2D(Texture2D texture, int x, int y, float width, float height, ref Vector3 hue)
+        public bool Draw2D(Texture2D texture, float x, float y, float width, float height, ref Vector3 hue)
         {
             EnsureSize();
 
@@ -1447,19 +1456,17 @@ namespace ClassicUO.Renderer
             PushSprite(texture);
             return true;
         }
-
+        
         [MethodImpl(256)]
         public void Begin()
         {
-            SetMatrixToDefault();
-            Begin(null, _transformMatrix);
+            Begin(null, Matrix.Identity);
         }
 
         [MethodImpl(256)]
         public void Begin(Effect effect)
         {
-            SetMatrixToDefault();
-            Begin(effect, _transformMatrix);
+            Begin(effect, Matrix.Identity);
         }
 
         [MethodImpl(256)]
@@ -1498,17 +1505,6 @@ namespace ClassicUO.Renderer
                 Flush();
         }
 
-         private void SetMatrixToDefault()
-        {
-            var viewport = GraphicsDevice.Viewport;
-            Matrix.CreateOrthographicOffCenter(
-                viewport.X,
-                viewport.X + viewport.Width,
-                viewport.Y + viewport.Height, 
-                viewport.Y, 
-                0, 1, out _transformMatrix);
-        }
-
         [MethodImpl(256)]
         private bool PushSprite(Texture2D texture)
         {
@@ -1542,14 +1538,14 @@ namespace ClassicUO.Renderer
             GraphicsDevice.BlendState = _blendState;
             GraphicsDevice.DepthStencilState = _stencil;
             GraphicsDevice.RasterizerState = _useScissor ? _rasterizerState : RasterizerState.CullNone;
-            GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
+            GraphicsDevice.SamplerStates[0] = _sampler;
             GraphicsDevice.SamplerStates[1] = SamplerState.PointClamp;
             GraphicsDevice.SamplerStates[2] = SamplerState.PointClamp;
 
             GraphicsDevice.Indices = _indexBuffer;
             GraphicsDevice.SetVertexBuffer(_vertexBuffer);
 
-            DefaultEffect.ApplyStates(ref _transformMatrix);
+            SetMatrixForEffect(DefaultEffect);
         }
 
         private unsafe void Flush()
@@ -1578,9 +1574,13 @@ namespace ClassicUO.Renderer
             if (_customEffect != null)
             {
                 if (_customEffect is MatrixEffect eff)
-                    eff.ApplyStates(ref _transformMatrix);
+                {
+                    SetMatrixForEffect(eff);
+                }
                 else
+                {
                     _customEffect.CurrentTechnique.Passes[0].Apply();
+                }
             }
 
             for (int i = 1; i < _numSprites; i++)
@@ -1598,6 +1598,18 @@ namespace ClassicUO.Renderer
             _numSprites = 0;
         }
 
+        private void SetMatrixForEffect(MatrixEffect effect)
+        {
+            _projectionMatrix.M11 = (float) (2.0 / GraphicsDevice.Viewport.Width);
+            _projectionMatrix.M22 = (float) (-2.0 / GraphicsDevice.Viewport.Height);
+
+            Matrix.Multiply(ref _transformMatrix,
+                            ref _projectionMatrix,
+                            out Matrix matrix);
+
+            effect.ApplyStates(matrix);
+        }
+
         [MethodImpl(256)]
         private void InternalDraw(Texture2D texture, int baseSprite, int batchSize)
         {
@@ -1610,7 +1622,6 @@ namespace ClassicUO.Renderer
                                                  batchSize << 1);
         }
 
-        [MethodImpl(256)]
         public void EnableScissorTest(bool enable)
         {
             if (enable == _useScissor)
@@ -1624,7 +1635,6 @@ namespace ClassicUO.Renderer
             _useScissor = enable;
         }
 
-        [MethodImpl(256)]
         public void SetBlendState(BlendState blend)
         {
             Flush();
@@ -1632,7 +1642,6 @@ namespace ClassicUO.Renderer
             _blendState = blend ?? BlendState.AlphaBlend;
         }
 
-        [MethodImpl(256)]
         public void SetStencil(DepthStencilState stencil)
         {
             Flush();
@@ -1640,7 +1649,12 @@ namespace ClassicUO.Renderer
             _stencil = stencil ?? Stencil;
         }
 
-        private int _currentBufferPosition;
+        public void SetSampler(SamplerState sampler)
+        {
+            Flush();
+
+            _sampler = sampler ?? SamplerState.PointClamp;
+        }
 
         private unsafe int UpdateVertexBuffer(int len)
         {
@@ -1702,6 +1716,7 @@ namespace ClassicUO.Renderer
         private class IsometricEffect : MatrixEffect
         {
             private Vector2 _viewPort;
+            private Matrix _matrix = Matrix.Identity;
 
             public IsometricEffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.IsometricEffect)
             {
@@ -1718,15 +1733,15 @@ namespace ClassicUO.Renderer
             public EffectParameter Brighlight { get; }
 
 
-            public override void ApplyStates(ref Matrix matrix)
+            public override void ApplyStates(Matrix matrix)
             {
-                WorldMatrix.SetValue(Matrix.Identity);
+                WorldMatrix.SetValue(_matrix);
 
                 _viewPort.X = GraphicsDevice.Viewport.Width;
                 _viewPort.Y = GraphicsDevice.Viewport.Height;
                 Viewport.SetValue(_viewPort);
 
-                base.ApplyStates(ref matrix);
+                base.ApplyStates(matrix);
             }
         }
 
@@ -1781,6 +1796,7 @@ namespace ClassicUO.Renderer
 
         public static byte[] xBREffect => _xBREffect ?? (_xBREffect = GetResource("ClassicUO.shaders.xBR.fxc"));
 
+        // MobileUO: commented out
         // public static byte[] StandardEffect
         // {
         //     get
@@ -1800,6 +1816,7 @@ namespace ClassicUO.Renderer
 
         private static byte[] GetResource(string name)
         {
+            // MobileUO: early return
             return new byte[1];
             
             Stream stream = typeof(UltimaBatcher2D).Assembly.GetManifestResourceStream(

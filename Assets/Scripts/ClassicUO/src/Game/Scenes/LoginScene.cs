@@ -40,6 +40,7 @@ using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using ClassicUO.IO.Resources;
+using ClassicUO.Resources;
 
 namespace ClassicUO.Game.Scenes
 {
@@ -66,7 +67,7 @@ namespace ClassicUO.Game.Scenes
         private uint _pingTime;
 
 
-         public LoginScene() 
+        public LoginScene() 
             : base
             (
                 (int) SceneType.Login,
@@ -146,7 +147,7 @@ namespace ClassicUO.Game.Scenes
             NetClient.LoginSocket.Disconnected -= Login_NetClient_Disconnected;
             NetClient.PacketReceived -= NetClient_PacketReceived;
 
-            //NOTE: We force the login socket to disconnect in case it hasn't already been disposed
+            // MobileUO: NOTE: We force the login socket to disconnect in case it hasn't already been disposed
             //This is good practice since the Client can be quit while the socket is still active
             if (NetClient.LoginSocket.IsDisposed == false)
             {
@@ -154,6 +155,7 @@ namespace ClassicUO.Game.Scenes
             }
 
             UIManager.GameCursor.IsLoading = false;
+            // MobileUO: added Clear
             UIManager.Clear();
             base.Unload();
         }
@@ -268,26 +270,26 @@ namespace ClassicUO.Game.Scenes
                 switch (CurrentLoginStep)
                 {
                     case LoginSteps.Connecting:
-                        labelText = ClilocLoader.Instance.GetString(3000002, "Connecting..."); // "Connecting..."
+                        labelText = ClilocLoader.Instance.GetString(3000002, ResGeneral.Connecting); // "Connecting..."
 
                         break;
 
                     case LoginSteps.VerifyingAccount:
-                        labelText = ClilocLoader.Instance.GetString(3000003, "Verifying Account..."); // "Verifying Account..."
+                        labelText = ClilocLoader.Instance.GetString(3000003, ResGeneral.VerifyingAccount); // "Verifying Account..."
                         showButtons = LoginButtons.Cancel;
                         break;
 
                     case LoginSteps.LoginInToServer:
-                        labelText = ClilocLoader.Instance.GetString(3000053, "Logging into Shard"); // logging into shard
+                        labelText = ClilocLoader.Instance.GetString(3000053, ResGeneral.LoggingIntoShard); // logging into shard
 
                         break;
 
                     case LoginSteps.EnteringBritania:
-                        labelText = ClilocLoader.Instance.GetString(3000001, "Entering Britannia..."); // Entering Britania...
+                        labelText = ClilocLoader.Instance.GetString(3000001, ResGeneral.EnteringBritannia); // Entering Britania...
 
                         break;
                     case LoginSteps.CharacterCreationDone:
-                        labelText = "Creating character...";
+                        labelText = ResGeneral.CreatingCharacter;
                         break;
                 }
             }
@@ -326,7 +328,7 @@ namespace ClassicUO.Game.Scenes
 
             if (!NetClient.LoginSocket.Connect(Settings.GlobalSettings.IP, Settings.GlobalSettings.Port))
             {
-                PopupMessage = "Check your internet connection and try again";
+                PopupMessage = ResGeneral.CheckYourConnectionAndTryAgain;
                 Log.Error( "No Internet Access");
             }
             if(!Reconnect)
@@ -489,7 +491,7 @@ namespace ClassicUO.Game.Scenes
 
             Characters = null;
             Servers = null;
-            PopupMessage = $"Connection lost:\n{StringHelper.AddSpaceBeforeCapital(e.ToString())}";
+            PopupMessage = string.Format(ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
             CurrentLoginStep = LoginSteps.PopUpMessage;
         }
 
@@ -505,11 +507,11 @@ namespace ClassicUO.Game.Scenes
                 if (Settings.GlobalSettings.Reconnect)
                 {
                     Reconnect = true;
-                    PopupMessage = $"Reconnect, please wait...`{_reconnectTryCounter}`\n`{StringHelper.AddSpaceBeforeCapital(e.ToString())}`";
+                    PopupMessage = string.Format(ResGeneral.ReconnectPleaseWait01, _reconnectTryCounter, StringHelper.AddSpaceBeforeCapital(e.ToString()));
                     UIManager.GetGump<LoadingGump>()?.SetText(PopupMessage);
                 }
                 else
-                    PopupMessage = $"Connection lost:\n`{StringHelper.AddSpaceBeforeCapital(e.ToString())}`";
+                    PopupMessage = string.Format(ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
 
                 CurrentLoginStep = LoginSteps.PopUpMessage;
             }

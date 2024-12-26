@@ -30,6 +30,7 @@ using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Network;
 using ClassicUO.Renderer;
+using ClassicUO.Resources;
 using ClassicUO.Utility;
 
 using Microsoft.Xna.Framework.Graphics;
@@ -255,6 +256,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void GenerateVirtualTextures()
         {
             _shopGumpParts = new UOTexture32[12];
+            // MobileUO: added keepData = true parameter
             UOTexture32 t = GumpsLoader.Instance.GetTexture(0x0870, true);
             UOTexture32[][] splits = new UOTexture32[4][];
 
@@ -265,6 +267,7 @@ namespace ClassicUO.Game.UI.Gumps
                                                                  {0, 64, t.Width, 124},
                                                                  {0, 124, t.Width, t.Height - 124}
                                                              });
+            // MobileUO: added keepData = true parameter
             t = GumpsLoader.Instance.GetTexture(0x0871, true);
 
             splits[1] = Utility.GraphicHelper.SplitTexture16(t,
@@ -274,6 +277,7 @@ namespace ClassicUO.Game.UI.Gumps
                                                                  {0, 64, t.Width, 94},
                                                                  {0, 94, t.Width, t.Height - 94}
                                                              });
+            // MobileUO: added keepData = true parameter
             t = GumpsLoader.Instance.GetTexture(0x0872, true);
 
             splits[2] = Utility.GraphicHelper.SplitTexture16(t,
@@ -283,6 +287,7 @@ namespace ClassicUO.Game.UI.Gumps
                                                                  {0, 64, t.Width, 124},
                                                                  {0, 124, t.Width, t.Height - 124}
                                                              });
+            // MobileUO: added keepData = true parameter
             t = GumpsLoader.Instance.GetTexture(0x0873, true);
 
             splits[3] = Utility.GraphicHelper.SplitTexture16(t,
@@ -613,7 +618,7 @@ namespace ClassicUO.Game.UI.Gumps
                 else
                     return;
 
-                string subname = $"{itemName} at {Price}gp";
+                string subname = string.Format(ResGumps.Item0Price1, itemName, Price);
 
                 Add(_name = new Label(subname, true, 0x219, 110, 1, FontStyle.None, TEXT_ALIGN_TYPE.TS_LEFT, true)
                 {
@@ -668,7 +673,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             public void SetName(string s, bool new_name)
             {
-                _name.Text = new_name ? $"{s}: {Price}" : $"{s} at {Price}gp";
+                _name.Text = new_name ? $"{s}: {Price}" : string.Format(ResGumps.Item0Price1, s, Price);
                 WantUpdateSize = true;
             }
 

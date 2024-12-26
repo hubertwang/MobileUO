@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+// MobileUO: added import
 using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.Utility.Logging;
 
@@ -107,6 +108,22 @@ namespace ClassicUO.Game.UI.Controls
 
         public int Length => Text?.Length ?? 0;
 
+        public byte Font
+        {
+            get => _rendererText.Font;
+            set
+            {
+                if (_rendererText.Font != value)
+                {
+                    _rendererText.Font = value;
+                    _rendererText.CreateTexture();
+                    _rendererCaret.Font = value;
+                    _rendererCaret.CreateTexture();
+
+                    UpdateCaretScreenPosition();
+                }
+            } 
+        }
         public bool AllowTAB { get; set; }
         public bool NoSelection { get; set; }
 
@@ -789,7 +806,7 @@ namespace ClassicUO.Game.UI.Controls
             if (UnityEngine.Application.isMobilePlatform && IsEditable &&
                 UserPreferences.DisableTouchscreenKeyboardOnMobile.CurrentValue == (int) PreferenceEnums.DisableTouchscreenKeyboardOnMobile.Off)
             {
-                //NOTE: Show touchscreen keyboard when abstract text box is selected
+                // MobileUO: NOTE: Show touchscreen keyboard when abstract text box is selected
                 GameController.TouchScreenKeyboard = UnityEngine.TouchScreenKeyboard.Open(_stb.text,
                     UnityEngine.TouchScreenKeyboardType.Default, false, Multiline, this is LoginGump.PasswordStbTextBox);
             }

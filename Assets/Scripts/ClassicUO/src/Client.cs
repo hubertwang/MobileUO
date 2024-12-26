@@ -36,6 +36,7 @@ using ClassicUO.IO.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ClassicUO.Game;
+using ClassicUO.Resources;
 
 namespace ClassicUO
 {
@@ -46,10 +47,13 @@ namespace ClassicUO
         public static string ClientPath { get; private set; }
         public static bool IsUOPInstallation { get; private set; }
         public static bool UseUOPGumps { get; set; }
+        // MobileUO: removed private setter
         public static GameController Game { get; set; }
         
+        // MobileUO: added variable
         public static event Action SceneChanged;
 
+        // MobileUO: added method
         public static void InvokeSceneChanged()
         {
             SceneChanged?.Invoke();
@@ -97,7 +101,7 @@ namespace ClassicUO
             if (!Directory.Exists(clientPath))
             {
                 Log.Error("Invalid client directory: " + clientPath);
-                ShowErrorMessage($"'{clientPath}' is not a valid UO directory");
+                ShowErrorMessage(string.Format(ResErrorMessages.ClientPathIsNotAValidUODirectory, clientPath));
                 throw new InvalidClientDirectory($"'{clientPath}' is not a valid directory");
             }
 
@@ -111,7 +115,7 @@ namespace ClassicUO
                     !ClientVersionHelper.IsClientVersionValid(clientVersionText, out clientVersion))
                 {
                     Log.Error("Invalid client version: " + clientVersionText);
-                    ShowErrorMessage($"Impossible to define the client version.\nClient version: '{clientVersionText}'");
+                    ShowErrorMessage(string.Format(ResGumps.ImpossibleToDefineTheClientVersion0, clientVersionText));
                     throw new InvalidClientVersion($"Invalid client version: '{clientVersionText}'");
                 }
 
@@ -151,6 +155,7 @@ namespace ClassicUO
             Log.Trace("Network calibration...");
             PacketHandlers.Load();
             //ATTENTION: you will need to enable ALSO ultimalive server-side, or this code will have absolutely no effect!
+            // MobileUO: commented out
             //UltimaLive.Enable();
             PacketsTable.AdjustPacketSizeByVersion(Version);
 
@@ -175,6 +180,7 @@ namespace ClassicUO
                 Plugin.Create(p);
             Log.Trace("Done!");
 
+            // MobileUO: commented out
             //UoAssist.Start();
 
             Log.Trace(">>>>>>>>>>>>> DONE >>>>>>>>>>>>>");

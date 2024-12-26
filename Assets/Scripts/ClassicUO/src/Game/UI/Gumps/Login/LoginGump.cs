@@ -28,6 +28,7 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
+using ClassicUO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Input;
 using Microsoft.Xna.Framework;
@@ -88,19 +89,19 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 if (Client.Version < ClientVersion.CV_500A)
                     Add(new GumpPic(286, 45, 0x058A, 0));
 
-                Add(new Label("Log in to Ultima Online", false, HUE, font: 2)
+                Add(new Label(ResGumps.LoginToUO, false, HUE, font: 2)
                 {
                     X = 253,
                     Y = 305
                 });
 
-                Add(new Label("Account Name", false, HUE, font: 2)
+                Add(new Label(ResGumps.Account, false, HUE, font: 2)
                 {
                     X = 183,
                     Y = 345
                 });
 
-                Add(new Label("Password", false, HUE, font: 2)
+                Add(new Label(ResGumps.Password, false, HUE, font: 2)
                 {
                     X = 183,
                     Y = 385
@@ -125,20 +126,20 @@ namespace ClassicUO.Game.UI.Gumps.Login
                     Y = 453
                 });
 
-                Add(new Label($"ClassicUO Version {CUOEnviroment.Version}", false, 0x034E, font: 9)
+                Add(new Label(string.Format(ResGumps.CUOVersion0, CUOEnviroment.Version), false, 0x034E, font: 9)
                 {
                     X = 286,
                     Y = 465
                 });
 
 
-                Add(_checkboxAutologin = new Checkbox(0x00D2, 0x00D3, "Autologin", 1, 0x0386, false)
+                Add(_checkboxAutologin = new Checkbox(0x00D2, 0x00D3, ResGumps.Autologin, 1, 0x0386, false)
                 {
                     X = 150,
                     Y = 417
                 });
 
-                Add(_checkboxSaveAccount = new Checkbox(0x00D2, 0x00D3, "Save Account", 1, 0x0386, false)
+                Add(_checkboxSaveAccount = new Checkbox(0x00D2, 0x00D3, ResGumps.SaveAccount, 1, 0x0386, false)
                 {
                     X = _checkboxAutologin.X + _checkboxAutologin.Width + 10,
                     Y = 417
@@ -181,20 +182,20 @@ namespace ClassicUO.Game.UI.Gumps.Login
                     Y = 453
                 });
 
-                Add(new Label($"ClassicUO Version {CUOEnviroment.Version}", false, 0x0481, font: 9)
+                Add(new Label(string.Format(ResGumps.CUOVersion0, CUOEnviroment.Version), false, 0x0481, font: 9)
                 {
                     X = 286,
                     Y = 465
                 });
 
 
-                Add(_checkboxAutologin = new Checkbox(0x00D2, 0x00D3, "Autologin", 9, 0x0481, false)
+                Add(_checkboxAutologin = new Checkbox(0x00D2, 0x00D3, ResGumps.Autologin, 9, 0x0481, false)
                 {
                     X = 150,
                     Y = 417
                 });
 
-                Add(_checkboxSaveAccount = new Checkbox(0x00D2, 0x00D3, "Save Account", 9, 0x0481, false)
+                Add(_checkboxSaveAccount = new Checkbox(0x00D2, 0x00D3, ResGumps.SaveAccount, 9, 0x0481, false)
                 {
                     X = _checkboxAutologin.X + _checkboxAutologin.Width + 10,
                     Y = 417
@@ -204,7 +205,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 hue = 0x0481;
             }
 
-            //Upscale arrow button on mobile
+            // MobileUO: Upscale arrow button on mobile
             UpscaleNextArrow();
 
             // Account Text Input Background
@@ -257,6 +258,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
 
             //Add(new NiceButton(){ });
 
+            // MobileUO: commented out
             // Add(new HtmlControl(htmlX, htmlY, 150, 15,
             //                     false, false,
             //                     false,
@@ -315,6 +317,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 _textboxAccount.SetKeyboardFocus();
         }
 
+        // MobileUO: added method
         private void UpscaleNextArrow()
         {
             //We use a size threshold because for some servers or client versions, the next arrow is actually a Login
@@ -357,7 +360,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 _time = (float) totalMS + 1000;
                 _nextArrow0.ButtonGraphicNormal = _nextArrow0.ButtonGraphicNormal == _buttonNormal ? _buttonOver : _buttonNormal;
                 
-                //Setting ButtonGraphicNormal resets the button's Width and Height so we need to apply the upscaling again
+                // MobileUO: Setting ButtonGraphicNormal resets the button's Width and Height so we need to apply the upscaling again
                 UpscaleNextArrow();
             }
 
@@ -396,6 +399,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
         }
 
+        // MobileUO: made public
         public class PasswordStbTextBox : StbTextBox
         {
             public PasswordStbTextBox(byte font, int max_char_count = -1, int maxWidth = 0, bool isunicode = true, FontStyle style = FontStyle.None, ushort hue = 0, TEXT_ALIGN_TYPE align = TEXT_ALIGN_TYPE.TS_LEFT) : base(font, max_char_count, maxWidth, isunicode, style, hue, align)
@@ -514,7 +518,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
             }
         }
 
-
+        // MobileUO: made public
         public enum Buttons
         {
             NextArrow,

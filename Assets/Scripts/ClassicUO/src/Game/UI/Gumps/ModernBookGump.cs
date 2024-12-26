@@ -134,7 +134,7 @@ namespace ClassicUO.Game.UI.Gumps
             }, 1);
             _titleTextBox.SetText(title);
             _titleTextBox.TextChanged += PageZero_TextChanged;
-            Add(new Label("by", true, 1) { X = 40, Y = 130 }, 1);
+            Add(new Label(Resources.ResGumps.By, true, 1) { X = 40, Y = 130 }, 1);
             Add(_authorTextBox = new StbTextBox(DefaultFont, 29, 150, IsNewBook, FontStyle.None, 0)
             {
                 X = 40,
@@ -409,7 +409,7 @@ namespace ClassicUO.Game.UI.Gumps
                     if (UnityEngine.Application.isMobilePlatform && IsEditable &&
                         UserPreferences.DisableTouchscreenKeyboardOnMobile.CurrentValue == (int) PreferenceEnums.DisableTouchscreenKeyboardOnMobile.Off)
                     {
-                        //NOTE: Show touchscreen keyboard when abstract text box is selected
+                        // MobileUO: NOTE: Show touchscreen keyboard when abstract text box is selected
                         GameController.TouchScreenKeyboard = UnityEngine.TouchScreenKeyboard.Open(Stb.text,
                             UnityEngine.TouchScreenKeyboardType.Default, false, Multiline, false);
                     }

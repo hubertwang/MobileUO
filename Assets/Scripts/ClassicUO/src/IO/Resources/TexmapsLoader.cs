@@ -20,6 +20,7 @@
 #endregion
 
 using System;
+using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -31,6 +32,7 @@ namespace ClassicUO.IO.Resources
 {
     internal class TexmapsLoader : UOFileLoader<UOTexture32>
     {
+        // MobileUO: keep these variables for getting map texture
         private readonly uint[] _textmapPixels128 = new uint[128 * 128];
         private readonly uint[] _textmapPixels64 = new uint[64 * 64];
         private UOFile _file;
@@ -138,6 +140,7 @@ namespace ClassicUO.IO.Resources
 
         }
 
+        // MobileUO: added keepData parameter
         public override UOTexture32 GetTexture(uint g, bool keepData = false)
         {
             if (g >= Resources.Length)
@@ -149,6 +152,7 @@ namespace ClassicUO.IO.Resources
 
             if (texture == null || texture.IsDisposed)
             {
+                // MobileUO: SetDataPointerEXT is not implemented, continue to use SetData implementation
                 uint[] pixels = GetTexMapTexture((ushort) g, out int size);
 
                 if (pixels == null || pixels.Length == 0)
@@ -169,6 +173,7 @@ namespace ClassicUO.IO.Resources
             return texture;
         }
 
+        // MobileUO: added override method
         public override void ClearResources()
         {
             base.ClearResources();
@@ -178,6 +183,7 @@ namespace ClassicUO.IO.Resources
             _instance = null;
         }
 
+        // MobileUO: SetDataPointerEXT is not implemented, continue to use SetData implementation
         private uint[] GetTexMapTexture(ushort index, out int size)
         {
             ref UOFileIndex entry = ref GetValidRefEntry(index);
