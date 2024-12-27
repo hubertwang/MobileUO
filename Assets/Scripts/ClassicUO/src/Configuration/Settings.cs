@@ -87,6 +87,7 @@ namespace ClassicUO.Configuration
 
         [JsonProperty("plugins")] public string[] Plugins { get; set; } = {@"./Assistant/Razor.dll"};
 
+        // MobileUO: added variable
         [JsonProperty("internal_assistant")]
         public bool EnableInternalAssistant { get; set; } = true;
 
