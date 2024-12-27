@@ -1,4 +1,5 @@
 ﻿#region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,18 +18,16 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
-
-using ClassicUO.Configuration;
-using ClassicUO.Game;
-using Microsoft.Xna.Framework.Audio;
 
 namespace ClassicUO.IO.Audio
 {
     internal class UOSound : Sound
     {
+        // MobileUO: added variable
         protected override uint DistortionFix => 500;
         private readonly byte[] _waveBuffer;
 
@@ -39,8 +38,8 @@ namespace ClassicUO.IO.Audio
             Delay = (uint) ((buffer.Length - 32) / 88.2f);
         }
 
-        public int X, Y;
         public bool CalculateByDistance { get; set; }
+        public int X, Y;
 
         protected override void OnBufferNeeded(object sender, EventArgs e)
         {

@@ -1,4 +1,5 @@
 #region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,10 +18,12 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
 using System.Runtime.InteropServices;
+using SDL2;
 
 namespace ClassicUO.Utility
 {
@@ -32,8 +35,10 @@ namespace ClassicUO.Utility
 
         static ZLib()
         {
+            // MobileUO: removed switch (SDL2.SDL.SDL_GetPlatform())
             _compressor = new ManagedUniversal();
         }
+
 
         public static void Decompress(byte[] source, int offset, byte[] dest, int length)
         {
@@ -80,9 +85,10 @@ namespace ClassicUO.Utility
 
             ZLibError Decompress(byte[] dest, ref int destLength, byte[] source, int sourceLength);
             ZLibError Decompress(IntPtr dest, ref int destLength, IntPtr source, int sourceLength);
-
         }
-        
+
+        // MobileUO: removed Compressor64 and CompressorUnix64 classes
+
         private sealed class ManagedUniversal : ICompressor
         {
             public string Version => "1.2.11";

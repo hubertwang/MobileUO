@@ -1,4 +1,5 @@
 #region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,24 +18,23 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
-
 using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.UI.Gumps
 {
-    enum GUMP_TYPE
+    internal enum GUMP_TYPE
     {
         NONE,
 
@@ -59,12 +59,14 @@ namespace ClassicUO.Game.UI.Gumps
 
         GT_DEBUG,
         GT_NETSTATS,
+        // MobileUO: Assisstant buttons
         GT_ASSISTANTMACROBUTTON,
         GT_ASSISTANTHOTKEYBUTTON
     }
 
     internal class Gump : Control
     {
+        // MobileUO: added variables
         private Button closeButton;
         public static bool CloseButtonsEnabled;
         
@@ -76,12 +78,14 @@ namespace ClassicUO.Game.UI.Gumps
             AcceptKeyboardInput = false;
         }
 
-        //NOTE: Make sure close button is always on top
+        // MobileUO: NOTE: Make sure close button is always on top
+        // MobileUO: added function
         protected override void OnChildAdded()
         {
             UpdateCloseButton();
         }
 
+        // MobileUO: added function
         private void InitCloseButton()
         {
             if ((closeButton == null || closeButton.IsDisposed) && CloseButtonsEnabled && (CanCloseWithRightClick || CanCloseWithEsc))
@@ -94,6 +98,7 @@ namespace ClassicUO.Game.UI.Gumps
             }
         }
 
+        // MobileUO: added function
         public void UpdateCloseButton()
         {
             InitCloseButton();
@@ -133,7 +138,9 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             if (ActivePage == 0)
+            {
                 ActivePage = 1;
+            }
 
             base.Update(totalMS, frameMS);
         }
@@ -143,10 +150,13 @@ namespace ClassicUO.Game.UI.Gumps
             Item it = World.Items.Get(LocalSerial);
 
             if (it != null && it.Opened)
+            {
                 it.Opened = false;
+            }
 
             base.Dispose();
 
+            // MobileUO: added dispose
             if (closeButton != null && closeButton.IsDisposed == false)
             {
                 closeButton.Dispose();
@@ -167,7 +177,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         public virtual void Save(XmlTextWriter writer)
         {
-            writer.WriteAttributeString("type", ((int)GumpType).ToString());
+            writer.WriteAttributeString("type", ((int) GumpType).ToString());
             writer.WriteAttributeString("x", X.ToString());
             writer.WriteAttributeString("y", Y.ToString());
             writer.WriteAttributeString("serial", LocalSerial.ToString());
@@ -191,15 +201,15 @@ namespace ClassicUO.Game.UI.Gumps
 
         public virtual void Restore(XmlElement xml)
         {
-
         }
 
         public void RequestUpdateContents()
-            => InvalidateContents = true;
+        {
+            InvalidateContents = true;
+        }
 
         protected virtual void UpdateContents()
         {
-
         }
 
         protected override void OnDragEnd(int x, int y)
@@ -209,16 +219,25 @@ namespace ClassicUO.Game.UI.Gumps
             int halfHeight = Height - (Height >> 2);
 
             if (X < -halfWidth)
+            {
                 position.X = -halfWidth;
+            }
 
             if (Y < -halfHeight)
+            {
                 position.Y = -halfHeight;
+            }
 
             if (X > Client.Game.Window.ClientBounds.Width - (Width - halfWidth))
+            {
                 position.X = Client.Game.Window.ClientBounds.Width - (Width - halfWidth);
+            }
 
             if (Y > Client.Game.Window.ClientBounds.Height - (Height - halfHeight))
+            {
                 position.Y = Client.Game.Window.ClientBounds.Height - (Height - halfHeight);
+            }
+
             Location = position;
         }
 
@@ -253,9 +272,13 @@ namespace ClassicUO.Game.UI.Gumps
                 GameActions.ReplyGump(LocalSerial, ServerSerial, buttonID, switches.ToArray(), entries.ToArray());
 
                 if (CanMove)
+                {
                     UIManager.SavePosition(ServerSerial, Location);
+                }
                 else
+                {
                     UIManager.RemovePosition(ServerSerial);
+                }
 
                 Dispose();
             }
@@ -264,10 +287,14 @@ namespace ClassicUO.Game.UI.Gumps
         protected override void CloseWithRightClick()
         {
             if (!CanCloseWithRightClick)
+            {
                 return;
+            }
 
             if (ServerSerial != 0)
+            {
                 OnButtonClick(0);
+            }
 
             base.CloseWithRightClick();
         }

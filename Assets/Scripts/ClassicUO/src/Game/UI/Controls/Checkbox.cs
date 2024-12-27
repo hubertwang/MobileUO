@@ -1,4 +1,5 @@
 ﻿#region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,11 +18,11 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
 using System.Collections.Generic;
-
 using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
@@ -33,11 +34,11 @@ namespace ClassicUO.Game.UI.Controls
     {
         private const int INACTIVE = 0;
         private const int ACTIVE = 1;
+        private bool _isChecked;
         private readonly RenderedText _text;
         private readonly UOTexture32[] _textures = new UOTexture32[2];
-        private bool _isChecked;
         
-        //NOTE: Added for Assistant
+        // MobileUO: NOTE: Added for Assistant
         public ushort Hue
         {
             get => _text.Hue;
@@ -107,7 +108,9 @@ namespace ClassicUO.Game.UI.Controls
                 UOTexture32 t = _textures[i];
 
                 if (t != null)
+                {
                     t.Ticks = (long) totalMS;
+                }
             }
 
             base.Update(totalMS, frameMS);
@@ -116,13 +119,20 @@ namespace ClassicUO.Game.UI.Controls
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
             if (IsDisposed)
+            {
                 return false;
+            }
 
             ResetHueVector();
 
             bool ok = base.Draw(batcher, x, y);
             batcher.Draw2D(IsChecked ? _textures[ACTIVE] : _textures[INACTIVE], x, y, ref _hueVector);
-            _text.Draw(batcher, x + _textures[ACTIVE].Width + 2, y);
+
+            _text.Draw
+            (
+                batcher, x + _textures[ACTIVE]
+                    .Width + 2, y
+            );
 
             return ok;
         }
@@ -135,7 +145,9 @@ namespace ClassicUO.Game.UI.Controls
         protected override void OnMouseUp(int x, int y, MouseButtonType button)
         {
             if (button == MouseButtonType.Left && MouseIsOver)
+            {
                 IsChecked = !IsChecked;
+            }
         }
 
         public override void Dispose()

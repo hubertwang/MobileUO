@@ -1,4 +1,5 @@
 ﻿#region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,52 +18,53 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-
 using ClassicUO.Utility;
 
 namespace ClassicUO.IO.Resources
 {
     internal class AnimDataLoader : UOFileLoader
     {
+        private static AnimDataLoader _instance;
         private UOFileMul _file;
 
         private AnimDataLoader()
         {
         }
 
-        private static AnimDataLoader _instance;
         public static AnimDataLoader Instance => _instance ?? (_instance = new AnimDataLoader());
-
-        public override Task Load()
-        {
-            return Task.Run(() => 
-            {
-                string path = UOFileManager.GetUOFilePath("animdata.mul");
-
-                if (File.Exists(path))
-                {
-                    _file = new UOFileMul(path);
-                }
-            });
-        }
 
         public UOFile AnimDataFile => _file;
 
+        public override Task Load()
+        {
+            return Task.Run
+            (
+                () =>
+                {
+                    string path = UOFileManager.GetUOFilePath("animdata.mul");
+
+                    if (File.Exists(path))
+                    {
+                        _file = new UOFileMul(path);
+                    }
+                }
+            );
+        }
+
+        // MobileUO: added ClearResources method
         public override void ClearResources()
         {
             _file?.Dispose();
             _file = null;
             _instance = null;
         }
-
-
-      
 
         public AnimDataFrame2 CalculateCurrentGraphic(ushort graphic)
         {

@@ -1,4 +1,5 @@
 ﻿#region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,23 +18,25 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
 using ClassicUO.Utility.Platforms;
 
 namespace ClassicUO.Utility
 {
     public static unsafe class UnsafeMemoryManager
     {
+        // MobileUO: commented out
         // static UnsafeMemoryManager()
         // {
         //     Console.WriteLine("Platform: {0}", PlatformHelper.IsMonoRuntime ? "Mono" : ".NET");
         // }
 
+        // MobileUO: commented out
         // [MethodImpl(256)]
         // public static void* AsPointer<T>(ref T v)
         // {
@@ -44,35 +47,37 @@ namespace ClassicUO.Utility
 
         public static T ToStruct<T>(IntPtr ptr)
         {
-            //NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
+            // MobileUO: NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
             return Marshal.PtrToStructure<T>(ptr);
             // return ToStruct<T>(ptr, SizeOf<T>());
         }
 
-        // [MethodImpl(256)]
-        // public static T ToStruct<T>(IntPtr ptr, int size)
-        // {
-        //     byte* str = (byte*) ptr;
-        //
-        //     T result = default;
-        //     byte* resultPtr = (byte*) AsPointer(ref result);
-        //     Buffer.MemoryCopy(str, resultPtr, size, size);
-        //
-        //     return result;
-        // }
+        // MobileUO: commented out
+        //[MethodImpl(256)]
+        //public static T ToStruct<T>(IntPtr ptr, int size)
+        //{
+        //    byte* str = (byte*) ptr;
 
-        // [MethodImpl(256)]
-        // public static T As<T>(object v)
-        // {
-        //     int size = SizeOf<T>();
-        //
-        //     return Reinterpret<object, T>(v, size);
-        // }
+        //    T result = default;
+        //    byte* resultPtr = (byte*) AsPointer(ref result);
+        //    Buffer.MemoryCopy(str, resultPtr, size, size);
+
+        //    return result;
+        //}
+
+        // MobileUO: commented out
+        //[MethodImpl(256)]
+        //public static T As<T>(object v)
+        //{
+        //    int size = SizeOf<T>();
+
+        //    return Reinterpret<object, T>(v, size);
+        //}
 
         [MethodImpl(256)]
         public static int SizeOf<T>()
         {
-            //NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
+            // MobileUO: NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
             return Marshal.SizeOf<T>();
             // DoubleStruct<T> doubleStruct = DoubleStruct<T>.Value;
             // TypedReference tRef0 = __makeref(doubleStruct.First);
@@ -93,39 +98,40 @@ namespace ClassicUO.Utility
             // return (int) ((byte*) ptrToT1 - (byte*) ptrToT0);
         }
 
+        // MobileUO: commented out
+        //[MethodImpl(256)]
+        //public static TOut Reinterpret<TIn, TOut>(TIn curValue, int sizeBytes) //where TIn : struct where TOut : struct
+        //{
+        //    TOut result = default;
 
-        // [MethodImpl(256)]
-        // public static TOut Reinterpret<TIn, TOut>(TIn curValue, int sizeBytes) //where TIn : struct where TOut : struct
-        // {
-        //     TOut result = default;
-        //
-        //     //SingleStruct<TIn> inS = SingleStruct<TIn>.Value;
-        //     //SingleStruct<TOut> outS = SingleStruct<TOut>.Value;
-        //
-        //     TypedReference resultRef = __makeref(result);
-        //     TypedReference curValueRef = __makeref(curValue);
-        //
-        //
-        //     int offset = PlatformHelper.IsMonoRuntime ? 1 : 0;
-        //
-        //     byte* resultPtr = (byte*) *((IntPtr*) &resultRef + offset);
-        //     byte* curValuePtr = (byte*) *((IntPtr*) &curValueRef + offset);
-        //
-        //     //for (int i = 0; i < sizeBytes; ++i)
-        //     //    resultPtr[i] = curValuePtr[i];
-        //
-        //     Buffer.MemoryCopy(curValuePtr, resultPtr, sizeBytes, sizeBytes);
-        //
-        //     return result;
-        // }
+        //    //SingleStruct<TIn> inS = SingleStruct<TIn>.Value;
+        //    //SingleStruct<TOut> outS = SingleStruct<TOut>.Value;
 
-        // [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        // private struct DoubleStruct<T>
-        // {
-        //     public T First;
-        //     public T Second;
-        //     public static readonly DoubleStruct<T> Value;
-        // }
+        //    TypedReference resultRef = __makeref(result);
+        //    TypedReference curValueRef = __makeref(curValue);
+
+
+        //    int offset = PlatformHelper.IsMonoRuntime ? 1 : 0;
+
+        //    byte* resultPtr = (byte*) *((IntPtr*) &resultRef + offset);
+        //    byte* curValuePtr = (byte*) *((IntPtr*) &curValueRef + offset);
+
+        //    //for (int i = 0; i < sizeBytes; ++i)
+        //    //    resultPtr[i] = curValuePtr[i];
+
+        //    Buffer.MemoryCopy(curValuePtr, resultPtr, sizeBytes, sizeBytes);
+
+        //    return result;
+        //}
+
+        // MobileUO: commented out
+        //[StructLayout(LayoutKind.Sequential, Pack = 1)]
+        //private struct DoubleStruct<T>
+        //{
+        //    public T First;
+        //    public T Second;
+        //    public static readonly DoubleStruct<T> Value;
+        //}
 
         //[StructLayout(LayoutKind.Sequential, Pack = 1)]
         //private struct DoubleStruct<T> //where T : struct

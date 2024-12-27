@@ -1,4 +1,5 @@
 ﻿#region license
+
 // Copyright (C) 2020 ClassicUO Development Community on Github
 // 
 // This project is an alternative client for the game Ultima Online.
@@ -17,6 +18,7 @@
 // 
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #endregion
 
 using SDL2;
@@ -28,8 +30,8 @@ namespace ClassicUO.Input
         private static SDL.SDL_Keycode _code;
 
 
-
         public static SDL.SDL_Keymod IgnoreKeyMod { get; } = SDL.SDL_Keymod.KMOD_CAPS | SDL.SDL_Keymod.KMOD_NUM | SDL.SDL_Keymod.KMOD_MODE | SDL.SDL_Keymod.KMOD_RESERVED;
+        // MobileUO: removed priate setters
         public static bool Alt { get; set; }
         public static bool Shift { get; set; }
         public static bool Ctrl { get; set; }
@@ -40,7 +42,7 @@ namespace ClassicUO.Input
         //{
         //    return code != SDL.SDL_Keycode.SDLK_UNKNOWN && _code == code;
         //}
-     
+
         //public static bool IsModPressed(SDL.SDL_Keymod mod, SDL.SDL_Keymod tocheck)
         //{
         //    mod ^= mod & IgnoreKeyMod;
@@ -80,7 +82,9 @@ namespace ClassicUO.Input
             Ctrl = (e.keysym.mod & SDL.SDL_Keymod.KMOD_CTRL) != SDL.SDL_Keymod.KMOD_NONE;
 
             if (e.keysym.sym != SDL.SDL_Keycode.SDLK_UNKNOWN)
+            {
                 _code = e.keysym.sym;
+            }
         }
     }
 }

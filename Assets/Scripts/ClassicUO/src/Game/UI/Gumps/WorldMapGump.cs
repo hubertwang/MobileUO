@@ -25,9 +25,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using ClassicUO.Configuration;
@@ -38,69 +35,61 @@ using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.IO;
 using ClassicUO.IO.Resources;
-using ClassicUO.Network;
 using ClassicUO.Renderer;
 using ClassicUO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
 using SDL2;
-
 using SpriteFont = ClassicUO.Renderer.SpriteFont;
-
 
 namespace ClassicUO.Game.UI.Gumps
 {
     internal class WorldMapGump : ResizableGump
     {
-        private UOTexture32 _mapTexture;
-
-        private readonly float[] _zooms = new float[10] { 0.125f, 0.25f, 0.5f, 0.75f, 1f, 1.5f, 2f, 4f, 6f, 8f };
-        private int _zoomIndex = 4;
-        private Point _center, _lastScroll;
-        private bool _isScrolling;
-        private int _mapIndex;
-        private int _lastX;
-        private int _lastY;
-        private int _lastZ;
-        private int _lastZoom;
-        private bool _mapMarkersLoaded = false;
-        private Label _coords;
-        private readonly string _mapFilesPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client");
-        private readonly string _mapIconsPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "MapIcons");
-
         private static Point _last_position = new Point(100, 100);
-
+        private Point _center, _lastScroll;
+        private Label _coords;
 
 
         private bool _flipMap = true;
         private bool _freeView;
-        private bool _showPartyMembers = true;
-        private bool _isTopMost;
-        private bool _showCoordinates;
-        private bool _showMobiles = true;
-        private bool _showPlayerName = true;
-        private bool _showPlayerBar = true;
-        private bool _showGroupName = true;
-        private bool _showGroupBar = true;
-        private bool _showMultis = true;
-        private bool _showMarkers = true;
-        private bool _showMarkerNames = true;
-        private bool _showMarkerIcons = true;
         private List<string> _hiddenMarkerFiles;
+        private bool _isScrolling;
+        private bool _isTopMost;
+        private int _lastX;
+        private int _lastY;
+        private int _lastZ;
+        private int _lastZoom;
+        private readonly string _mapFilesPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client");
+        private readonly string _mapIconsPath = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Client", "MapIcons");
+        private int _mapIndex;
+        private bool _mapMarkersLoaded;
+        private UOTexture32 _mapTexture;
+
+
+        private readonly List<WMapMarkerFile> _markerFiles = new List<WMapMarkerFile>();
 
         private SpriteFont _markerFont = Fonts.Map1;
         private int _markerFontIndex = 1;
+        private readonly Dictionary<string, Texture2D> _markerIcons = new Dictionary<string, Texture2D>();
 
         private readonly Dictionary<string, ContextMenuItemEntry> _options = new Dictionary<string, ContextMenuItemEntry>();
+        private bool _showCoordinates;
+        private bool _showGroupBar = true;
+        private bool _showGroupName = true;
+        private bool _showMarkerIcons = true;
+        private bool _showMarkerNames = true;
+        private bool _showMarkers = true;
+        private bool _showMobiles = true;
+        private bool _showMultis = true;
+        private bool _showPartyMembers = true;
+        private bool _showPlayerBar = true;
+        private bool _showPlayerName = true;
+        private int _zoomIndex = 4;
 
-
-
-        private List<WMapMarkerFile> _markerFiles = new List<WMapMarkerFile>();
-        private Dictionary<string, Texture2D> _markerIcons = new Dictionary<string, Texture2D>();
+        private readonly float[] _zooms = new float[10] {0.125f, 0.25f, 0.5f, 0.75f, 1f, 1.5f, 2f, 4f, 6f, 8f};
 
         // MobileUO: added variables
         private bool readyToCreateTexture;
@@ -125,12 +114,13 @@ namespace ClassicUO.Game.UI.Gumps
             LoadMarkers();
 
             World.WMapManager.SetEnable(true);
-            
+
             BuildGump();
         }
 
         public override GUMP_TYPE GumpType => GUMP_TYPE.GT_WORLDMAP;
         public float Zoom => _zooms[_zoomIndex];
+
         public bool TopMost
         {
             get => _isTopMost;
@@ -158,7 +148,6 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
         }
-
 
 
         public override void Restore(XmlElement xml)
@@ -200,13 +189,16 @@ namespace ClassicUO.Game.UI.Gumps
 
             _hiddenMarkerFiles = string.IsNullOrEmpty(ProfileManager.Current.WorldMapHiddenMarkerFiles)
                 ? new List<string>()
-                : ProfileManager.Current.WorldMapHiddenMarkerFiles.Split(',').ToList();
+                : ProfileManager.Current.WorldMapHiddenMarkerFiles.Split(',')
+                                .ToList();
         }
 
         public void SaveSettings()
         {
             if (ProfileManager.Current == null)
+            {
                 return;
+            }
 
 
             ProfileManager.Current.WorldMapWidth = Width;
@@ -242,11 +234,15 @@ namespace ClassicUO.Game.UI.Gumps
         {
             BuildContextMenu();
             _coords?.Dispose();
-            Add(_coords = new Label("", true, 0x03b2, font: 1, style: FontStyle.BlackBorder)
-            {
-                X = 10,
-                Y = 5
-            });
+
+            Add
+            (
+                _coords = new Label("", true, 0x03b2, font: 1, style: FontStyle.BlackBorder)
+                {
+                    X = 10,
+                    Y = 5
+                }
+            );
         }
 
         private void BuildOptionDictionary()
@@ -259,13 +255,17 @@ namespace ClassicUO.Game.UI.Gumps
             _options["flip_map"] = new ContextMenuItemEntry(ResGumps.FlipMap, () => { _flipMap = !_flipMap; }, true, _flipMap);
             _options["top_most"] = new ContextMenuItemEntry(ResGumps.TopMost, () => { TopMost = !TopMost; }, true, _isTopMost);
             _options["free_view"] = new ContextMenuItemEntry(ResGumps.FreeView, () => { FreeView = !FreeView; }, true, FreeView);
-            _options["show_party_members"] = new ContextMenuItemEntry(ResGumps.ShowPartyMembers, () =>
-            {
-                _showPartyMembers = !_showPartyMembers;
 
-                World.WMapManager.SetEnable(_showPartyMembers);
+            _options["show_party_members"] = new ContextMenuItemEntry
+            (
+                ResGumps.ShowPartyMembers, () =>
+                {
+                    _showPartyMembers = !_showPartyMembers;
 
-            }, true, _showPartyMembers);
+                    World.WMapManager.SetEnable(_showPartyMembers);
+                }, true, _showPartyMembers
+            );
+
             _options["show_mobiles"] = new ContextMenuItemEntry(ResGumps.ShowMobiles, () => { _showMobiles = !_showMobiles; }, true, _showMobiles);
             _options["show_multis"] = new ContextMenuItemEntry(ResGumps.ShowHousesBoats, () => { _showMultis = !_showMultis; }, true, _showMultis);
             _options["show_your_name"] = new ContextMenuItemEntry(ResGumps.ShowYourName, () => { _showPlayerName = !_showPlayerName; }, true, _showPlayerName);
@@ -280,7 +280,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void BuildContextMenu()
         {
             BuildOptionDictionary();
-            
+
             ContextMenu?.Dispose();
             ContextMenu = new ContextMenuControl();
 
@@ -307,25 +307,27 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 foreach (WMapMarkerFile markerFile in _markerFiles)
                 {
-                    ContextMenuItemEntry entry = new ContextMenuItemEntry(string.Format(ResGumps.ShowHide0, markerFile.Name), () =>
-                    {
-                        markerFile.Hidden = !markerFile.Hidden;
-                        
-                        if (!markerFile.Hidden)
+                    ContextMenuItemEntry entry = new ContextMenuItemEntry
+                    (
+                        string.Format(ResGumps.ShowHide0, markerFile.Name), () =>
                         {
-                            string hiddenFile = _hiddenMarkerFiles.SingleOrDefault(x => x.Equals(markerFile.Name));
+                            markerFile.Hidden = !markerFile.Hidden;
 
-                            if (!string.IsNullOrEmpty(hiddenFile))
+                            if (!markerFile.Hidden)
                             {
-                                _hiddenMarkerFiles.Remove(hiddenFile);
-                            }
-                        }
-                        else
-                        {
-                            _hiddenMarkerFiles.Add(markerFile.Name);
-                        }
+                                string hiddenFile = _hiddenMarkerFiles.SingleOrDefault(x => x.Equals(markerFile.Name));
 
-                    }, true, !markerFile.Hidden);
+                                if (!string.IsNullOrEmpty(hiddenFile))
+                                {
+                                    _hiddenMarkerFiles.Remove(hiddenFile);
+                                }
+                            }
+                            else
+                            {
+                                _hiddenMarkerFiles.Add(markerFile.Name);
+                            }
+                        }, true, !markerFile.Hidden
+                    );
 
                     _options[$"show_marker_{markerFile.Name}"] = entry;
                     markersEntry.Add(entry);
@@ -361,6 +363,549 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
 
+        #region Update
+
+        public override void Update(double totalMS, double frameMS)
+        {
+            base.Update(totalMS, frameMS);
+
+            // MobileUO: added logic
+            if (readyToCreateTexture)
+            {
+                GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
+                readyToCreateTexture = false;
+                _mapTexture = new UOTexture32(realWidth, realHeight);
+                _mapTexture.SetData(buffer);
+                buffer = null;
+            }
+
+            if (_mapIndex != World.MapIndex)
+            {
+                Load();
+            }
+
+            World.WMapManager.RequestServerPartyGuildInfo();
+        }
+
+        #endregion
+
+
+        private (int, int) RotatePoint(int x, int y, float zoom, int dist, float angle = 45f)
+        {
+            x = (int) (x * zoom);
+            y = (int) (y * zoom);
+
+            if (angle == 0.0f)
+            {
+                return (x, y);
+            }
+
+            return ((int) Math.Round(Math.Cos(dist * Math.PI / 4.0) * x - Math.Sin(dist * Math.PI / 4.0) * y),
+                    (int) Math.Round(Math.Sin(dist * Math.PI / 4.0) * x + Math.Cos(dist * Math.PI / 4.0) * y));
+        }
+
+        private void AdjustPosition(int x, int y, int centerX, int centerY, out int newX, out int newY)
+        {
+            int offset = GetOffset(x, y, centerX, centerY);
+            int currX = x;
+            int currY = y;
+
+            while (offset != 0)
+            {
+                if ((offset & 1) != 0)
+                {
+                    currY = centerY;
+                    currX = x * currY / y;
+                }
+                else if ((offset & 2) != 0)
+                {
+                    currY = -centerY;
+                    currX = x * currY / y;
+                }
+                else if ((offset & 4) != 0)
+                {
+                    currX = centerX;
+                    currY = y * currX / x;
+                }
+                else if ((offset & 8) != 0)
+                {
+                    currX = -centerX;
+                    currY = y * currX / x;
+                }
+
+                x = currX;
+                y = currY;
+                offset = GetOffset(x, y, centerX, centerY);
+            }
+
+            newX = x;
+            newY = y;
+        }
+
+        private int GetOffset(int x, int y, int centerX, int centerY)
+        {
+            const int offset = 0;
+
+            if (y > centerY)
+            {
+                return 1;
+            }
+
+            if (y < -centerY)
+            {
+                return 2;
+            }
+
+            if (x > centerX)
+            {
+                return offset + 4;
+            }
+
+            if (x >= -centerX)
+            {
+                return offset;
+            }
+
+            return offset + 8;
+        }
+
+        public override void Dispose()
+        {
+            SaveSettings();
+            World.WMapManager.SetEnable(false);
+
+            UIManager.GameCursor.IsDraggingCursorForced = false;
+
+            _mapTexture?.Dispose();
+            base.Dispose();
+        }
+
+        private Color GetColor(string name)
+        {
+            if (name.Equals("red", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Red;
+            }
+
+            if (name.Equals("green", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Green;
+            }
+
+            if (name.Equals("blue", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Blue;
+            }
+
+            if (name.Equals("purple", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Purple;
+            }
+
+            if (name.Equals("black", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Black;
+            }
+
+            if (name.Equals("yellow", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Yellow;
+            }
+
+            if (name.Equals("white", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.White;
+            }
+
+            if (name.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                return Color.Transparent;
+            }
+
+            return Color.White;
+        }
+
+        private void SetFont(int fontIndex)
+        {
+            _markerFontIndex = fontIndex;
+
+            switch (fontIndex)
+            {
+                case 1:
+                    _markerFont = Fonts.Map1;
+
+                    break;
+
+                case 2:
+                    _markerFont = Fonts.Map2;
+
+                    break;
+
+                case 3:
+                    _markerFont = Fonts.Map3;
+
+                    break;
+
+                case 4:
+                    _markerFont = Fonts.Map4;
+
+                    break;
+
+                case 5:
+                    _markerFont = Fonts.Map5;
+
+                    break;
+
+                case 6:
+                    _markerFont = Fonts.Map6;
+
+                    break;
+
+                default:
+                    _markerFontIndex = 1;
+                    _markerFont = Fonts.Map1;
+
+                    break;
+            }
+        }
+
+        private bool GetOptionValue(string key)
+        {
+            _options.TryGetValue(key, out ContextMenuItemEntry v);
+
+            return v != null && v.IsSelected;
+        }
+
+        public void SetOptionValue(string key, bool v)
+        {
+            if (_options.TryGetValue(key, out ContextMenuItemEntry entry) && entry != null)
+            {
+                entry.IsSelected = v;
+            }
+        }
+
+
+        private class WMapMarker
+        {
+            public string Name { get; set; }
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int MapId { get; set; }
+            public Color Color { get; set; }
+            public Texture2D MarkerIcon { get; set; }
+            public string MarkerIconName { get; set; }
+            public int ZoomIndex { get; set; }
+        }
+
+        private class WMapMarkerFile
+        {
+            public string Name { get; set; }
+            public string FullPath { get; set; }
+            public List<WMapMarker> Markers { get; set; }
+            public bool Hidden { get; set; }
+        }
+
+        private class CurLoader
+        {
+            public static unsafe Texture2D CreateTextureFromICO_Cur(Stream stream)
+            {
+                byte[] buffer = new byte[stream.Length];
+                stream.Read(buffer, 0, buffer.Length);
+
+                DataReader reader = new DataReader();
+                reader.SetData(buffer, stream.Length);
+
+                bool was_error;
+                long fp_offset;
+                int bmp_pitch;
+                int i, pad;
+                SDL.SDL_Surface* surface;
+                uint r_mask, g_mask, b_mask;
+                byte* bits;
+                int expand_bmp;
+                int max_col = 0;
+                uint ico_of_s = 0;
+                uint* palette = stackalloc uint[256];
+
+                ushort bf_reserved, bf_type, bf_count;
+                uint bi_size, bi_width, bi_height;
+                ushort bi_planes, bi_bit_count;
+                uint bi_compression, bi_size_image, bi_x_perls_per_meter, bi_y_perls_per_meter, bi_clr_used, bi_clr_important;
+
+                bf_reserved = reader.ReadUShort();
+                bf_type = reader.ReadUShort();
+                bf_count = reader.ReadUShort();
+
+                for (i = 0; i < bf_count; i++)
+                {
+                    int b_width = reader.ReadByte();
+                    int b_height = reader.ReadByte();
+                    int b_color_count = reader.ReadByte();
+                    byte b_reserver = reader.ReadByte();
+                    ushort w_planes = reader.ReadUShort();
+                    ushort w_bit_count = reader.ReadUShort();
+                    uint dw_bytes_in_res = reader.ReadUInt();
+                    uint dw_image_offse = reader.ReadUInt();
+
+                    if (b_width == 0)
+                    {
+                        b_width = 256;
+                    }
+
+                    if (b_height == 0)
+                    {
+                        b_height = 256;
+                    }
+
+                    if (b_color_count == 0)
+                    {
+                        b_color_count = 256;
+                    }
+
+                    if (b_color_count > max_col)
+                    {
+                        max_col = b_color_count;
+                        ico_of_s = dw_image_offse;
+                    }
+                }
+
+                reader.Seek(ico_of_s);
+
+                bi_size = reader.ReadUInt();
+
+                if (bi_size == 40)
+                {
+                    bi_width = reader.ReadUInt();
+                    bi_height = reader.ReadUInt();
+                    bi_planes = reader.ReadUShort();
+                    bi_bit_count = reader.ReadUShort();
+                    bi_compression = reader.ReadUInt();
+                    bi_size_image = reader.ReadUInt();
+                    bi_x_perls_per_meter = reader.ReadUInt();
+                    bi_y_perls_per_meter = reader.ReadUInt();
+                    bi_clr_used = reader.ReadUInt();
+                    bi_clr_important = reader.ReadUInt();
+                }
+                else
+                {
+                    return null;
+                }
+
+                const int BI_RGB = 0;
+                const int BI_RLE = 1;
+                const int BI_RLE4 = 2;
+                const int BI_BITFIELDS = 3;
+
+                switch (bi_compression)
+                {
+                    case BI_RGB:
+
+                        switch (bi_bit_count)
+                        {
+                            case 1:
+                            case 4:
+                                expand_bmp = bi_bit_count;
+                                bi_bit_count = 8;
+
+                                break;
+
+                            case 8:
+                                expand_bmp = 8;
+
+                                break;
+
+                            case 32:
+                                r_mask = 0x00FF0000;
+                                g_mask = 0x0000FF00;
+                                b_mask = 0x000000FF;
+                                expand_bmp = 0;
+
+                                break;
+
+                            default:
+                                return null;
+                        }
+
+                        break;
+
+                    default:
+                        return null;
+                }
+
+
+                bi_height >>= 1;
+
+                surface = (SDL.SDL_Surface*) SDL.SDL_CreateRGBSurface
+                (
+                    0, (int) bi_width, (int) bi_height, 32, 0x00FF0000,
+                    0x0000FF00, 0x000000FF, 0xFF000000
+                );
+
+                if (bi_bit_count <= 8)
+                {
+                    if (bi_clr_used == 0)
+                    {
+                        bi_clr_used = (uint) (1 << bi_bit_count);
+                    }
+
+                    for (i = 0; i < bi_clr_used; i++)
+                    {
+                        palette[i] = reader.ReadUInt();
+                    }
+                }
+
+                bits = (byte*) (surface->pixels + surface->h * surface->pitch);
+
+                switch (expand_bmp)
+                {
+                    case 1:
+                        bmp_pitch = (int) (bi_width + 7) >> 3;
+                        pad = bmp_pitch % 4 != 0 ? 4 - bmp_pitch % 4 : 0;
+
+                        break;
+
+                    case 4:
+                        bmp_pitch = (int) (bi_width + 1) >> 1;
+                        pad = bmp_pitch % 4 != 0 ? 4 - bmp_pitch % 4 : 0;
+
+                        break;
+
+                    case 8:
+                        bmp_pitch = (int) bi_width;
+                        pad = bmp_pitch % 4 != 0 ? 4 - bmp_pitch % 4 : 0;
+
+                        break;
+
+                    default:
+                        bmp_pitch = (int) bi_width * 4;
+                        pad = 0;
+
+                        break;
+                }
+
+
+                while (bits > (byte*) surface->pixels)
+                {
+                    bits -= surface->pitch;
+
+                    switch (expand_bmp)
+                    {
+                        case 1:
+                        case 4:
+                        case 8:
+                        {
+                            byte pixel = 0;
+                            int shift = 8 - expand_bmp;
+
+                            for (i = 0; i < surface->w; i++)
+                            {
+                                if (i % (8 / expand_bmp) == 0)
+                                {
+                                    pixel = reader.ReadByte();
+                                }
+
+                                *((uint*) bits + i) = palette[pixel >> shift];
+                                pixel <<= expand_bmp;
+                            }
+                        }
+
+                            break;
+
+                        default:
+
+                            for (int k = 0; k < surface->pitch; k++)
+                            {
+                                bits[k] = reader.ReadByte();
+                            }
+
+                            break;
+                    }
+
+                    if (pad != 0)
+                    {
+                        for (i = 0; i < pad; i++)
+                        {
+                            reader.ReadByte();
+                        }
+                    }
+                }
+
+
+                bits = (byte*) (surface->pixels + surface->h * surface->pitch);
+                expand_bmp = 1;
+                bmp_pitch = (int) (bi_width + 7) >> 3;
+                pad = bmp_pitch % 4 != 0 ? 4 - bmp_pitch % 4 : 0;
+
+                while (bits > (byte*) surface->pixels)
+                {
+                    byte pixel = 0;
+                    int shift = 8 - expand_bmp;
+
+                    bits -= surface->pitch;
+
+                    for (i = 0; i < surface->w; i++)
+                    {
+                        if (i % (8 / expand_bmp) == 0)
+                        {
+                            pixel = reader.ReadByte();
+                        }
+
+                        *((uint*) bits + i) |= pixel >> shift != 0 ? 0 : 0xFF000000;
+
+                        pixel <<= expand_bmp;
+                    }
+
+                    if (pad != 0)
+                    {
+                        for (i = 0; i < pad; i++)
+                        {
+                            reader.ReadByte();
+                        }
+                    }
+                }
+
+                surface = (SDL.SDL_Surface*) INTERNAL_convertSurfaceFormat((IntPtr) surface);
+
+                int len = surface->w * surface->h * 4;
+                byte* pixels = (byte*) surface->pixels;
+
+                for (i = 0; i < len; i += 4, pixels += 4)
+                {
+                    if (pixels[3] == 0)
+                    {
+                        pixels[0] = 0;
+                        pixels[1] = 0;
+                        pixels[2] = 0;
+                    }
+                }
+
+                Texture2D texture = new Texture2D(Client.Game.GraphicsDevice, surface->w, surface->h);
+                texture.SetDataPointerEXT(0, new Rectangle(0, 0, surface->w, surface->h), surface->pixels, len);
+
+                SDL.SDL_FreeSurface((IntPtr) surface);
+
+                reader.ReleaseData();
+
+                return texture;
+            }
+
+            private static unsafe IntPtr INTERNAL_convertSurfaceFormat(IntPtr surface)
+            {
+                IntPtr result = surface;
+                SDL.SDL_Surface* surPtr = (SDL.SDL_Surface*) surface;
+                SDL.SDL_PixelFormat* pixelFormatPtr = (SDL.SDL_PixelFormat*) surPtr->format;
+
+                // SurfaceFormat.Color is SDL_PIXELFORMAT_ABGR8888
+                if (pixelFormatPtr->format != SDL.SDL_PIXELFORMAT_ABGR8888)
+                {
+                    // Create a properly formatted copy, free the old surface
+                    result = SDL.SDL_ConvertSurfaceFormat(surface, SDL.SDL_PIXELFORMAT_ABGR8888, 0);
+                    SDL.SDL_FreeSurface(surface);
+                }
+
+                return result;
+            }
+        }
 
 
         #region Loading
@@ -619,9 +1164,7 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
 
-
-
-        private unsafe void LoadMarkers()
+        private void LoadMarkers()
         {
             //return Task.Run(() =>
             {
@@ -634,16 +1177,20 @@ namespace ClassicUO.Game.UI.Gumps
                     foreach (Texture2D t in _markerIcons.Values)
                     {
                         if (t != null && !t.IsDisposed)
+                        {
                             t.Dispose();
+                        }
                     }
 
                     _markerIcons.Clear();
 
                     if (!Directory.Exists(_mapIconsPath))
+                    {
                         Directory.CreateDirectory(_mapIconsPath);
+                    }
 
                     foreach (string icon in Directory.GetFiles(_mapIconsPath, "*.cur")
-                                            .Union(Directory.GetFiles(_mapIconsPath, "*.ico")))
+                                                     .Union(Directory.GetFiles(_mapIconsPath, "*.ico")))
                     {
                         FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read);
                         MemoryStream ms = new MemoryStream();
@@ -652,10 +1199,13 @@ namespace ClassicUO.Game.UI.Gumps
 
                         try
                         {
-
                             Texture2D texture = CurLoader.CreateTextureFromICO_Cur(ms);
-                            _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
 
+                            _markerIcons.Add
+                            (
+                                Path.GetFileNameWithoutExtension(icon)
+                                    .ToLower(), texture
+                            );
                         }
                         catch (Exception ee)
                         {
@@ -666,12 +1216,11 @@ namespace ClassicUO.Game.UI.Gumps
                             ms.Dispose();
                             fs.Dispose();
                         }
-
                     }
 
                     foreach (string icon in Directory.GetFiles(_mapIconsPath, "*.png")
-                        .Union(Directory.GetFiles(_mapIconsPath, "*.jpg"))
-                        )
+                                                     .Union(Directory.GetFiles(_mapIconsPath, "*.jpg"))
+                    )
                     {
                         FileStream fs = new FileStream(icon, FileMode.Open, FileAccess.Read);
                         MemoryStream ms = new MemoryStream();
@@ -679,10 +1228,14 @@ namespace ClassicUO.Game.UI.Gumps
                         ms.Seek(0, SeekOrigin.Begin);
 
                         try
-                        {                           
+                        {
                             Texture2D texture = Texture2D.FromStream(Client.Game.GraphicsDevice, ms);
-                            _markerIcons.Add(Path.GetFileNameWithoutExtension(icon).ToLower(), texture);
 
+                            _markerIcons.Add
+                            (
+                                Path.GetFileNameWithoutExtension(icon)
+                                    .ToLower(), texture
+                            );
                         }
                         catch (Exception ee)
                         {
@@ -695,8 +1248,10 @@ namespace ClassicUO.Game.UI.Gumps
                         }
                     }
 
-                    string[] mapFiles = Directory.GetFiles(_mapFilesPath, "*.map").Union(Directory.GetFiles(_mapFilesPath, "*.csv"))
-                        .Union(Directory.GetFiles(_mapFilesPath, "*.xml")).ToArray();
+                    string[] mapFiles = Directory.GetFiles(_mapFilesPath, "*.map")
+                                                 .Union(Directory.GetFiles(_mapFilesPath, "*.csv"))
+                                                 .Union(Directory.GetFiles(_mapFilesPath, "*.xml"))
+                                                 .ToArray();
 
                     _markerFiles.Clear();
 
@@ -715,9 +1270,13 @@ namespace ClassicUO.Game.UI.Gumps
                             string hiddenFile = _hiddenMarkerFiles.FirstOrDefault(x => x.Contains(markerFile.Name));
 
                             if (!string.IsNullOrEmpty(hiddenFile))
+                            {
                                 markerFile.Hidden = true;
+                            }
 
-                            if (mapFile != null && Path.GetExtension(mapFile).ToLower().Equals(".xml")) // Ultima Mapper
+                            if (mapFile != null && Path.GetExtension(mapFile)
+                                                       .ToLower()
+                                                       .Equals(".xml")) // Ultima Mapper
                             {
                                 XmlTextReader reader = new XmlTextReader(mapFile);
 
@@ -735,17 +1294,25 @@ namespace ClassicUO.Game.UI.Gumps
                                             ZoomIndex = 3
                                         };
 
-                                        if (_markerIcons.TryGetValue(reader.GetAttribute("Icon").ToLower(), out Texture2D value))
+                                        if (_markerIcons.TryGetValue
+                                        (
+                                            reader.GetAttribute("Icon")
+                                                  .ToLower(), out Texture2D value
+                                        ))
                                         {
                                             marker.MarkerIcon = value;
-                                            marker.MarkerIconName = reader.GetAttribute("Icon").ToLower();
+
+                                            marker.MarkerIconName = reader.GetAttribute("Icon")
+                                                                          .ToLower();
                                         }
 
                                         markerFile.Markers.Add(marker);
                                     }
                                 }
                             }
-                            else if (mapFile != null && Path.GetExtension(mapFile).ToLower().Equals(".map")) //UOAM
+                            else if (mapFile != null && Path.GetExtension(mapFile)
+                                                            .ToLower()
+                                                            .Equals(".map")) //UOAM
                             {
                                 using (StreamReader reader = new StreamReader(mapFile))
                                 {
@@ -755,10 +1322,14 @@ namespace ClassicUO.Game.UI.Gumps
 
                                         // ignore empty lines, and if UOAM, ignore the first line that always has a 3
                                         if (string.IsNullOrEmpty(line) || line.Equals("3"))
+                                        {
                                             continue;
+                                        }
 
                                         // Check for UOAM file
-                                        if (line.Substring(0, 1).Equals("+") || line.Substring(0, 1).Equals("-"))
+                                        if (line.Substring(0, 1)
+                                                .Equals("+") || line.Substring(0, 1)
+                                                                    .Equals("-"))
                                         {
                                             string icon = line.Substring(1, line.IndexOf(':') - 1);
 
@@ -767,7 +1338,9 @@ namespace ClassicUO.Game.UI.Gumps
                                             string[] splits = line.Split(' ');
 
                                             if (splits.Length <= 1)
+                                            {
                                                 continue;
+                                            }
 
                                             WMapMarker marker = new WMapMarker
                                             {
@@ -780,10 +1353,18 @@ namespace ClassicUO.Game.UI.Gumps
                                             };
 
                                             string[] iconSplits = icon.Split(' ');
-                                            marker.MarkerIconName = iconSplits[0].ToLower();
 
-                                            if (_markerIcons.TryGetValue(iconSplits[0].ToLower(), out Texture2D value))
+                                            marker.MarkerIconName = iconSplits[0]
+                                                .ToLower();
+
+                                            if (_markerIcons.TryGetValue
+                                            (
+                                                iconSplits[0]
+                                                    .ToLower(), out Texture2D value
+                                            ))
+                                            {
                                                 marker.MarkerIcon = value;
+                                            }
 
                                             markerFile.Markers.Add(marker);
                                         }
@@ -799,12 +1380,16 @@ namespace ClassicUO.Game.UI.Gumps
                                         string line = reader.ReadLine();
 
                                         if (string.IsNullOrEmpty(line))
+                                        {
                                             return;
+                                        }
 
                                         string[] splits = line.Split(',');
 
                                         if (splits.Length <= 1)
+                                        {
                                             continue;
+                                        }
 
                                         WMapMarker marker = new WMapMarker
                                         {
@@ -812,13 +1397,20 @@ namespace ClassicUO.Game.UI.Gumps
                                             Y = int.Parse(splits[1]),
                                             MapId = int.Parse(splits[2]),
                                             Name = splits[3],
-                                            MarkerIconName = splits[4].ToLower(),
+                                            MarkerIconName = splits[4]
+                                                .ToLower(),
                                             Color = GetColor(splits[5]),
                                             ZoomIndex = splits.Length == 7 ? int.Parse(splits[6]) : 3
                                         };
 
-                                        if (_markerIcons.TryGetValue(splits[4].ToLower(), out Texture2D value))
+                                        if (_markerIcons.TryGetValue
+                                        (
+                                            splits[4]
+                                                .ToLower(), out Texture2D value
+                                        ))
+                                        {
                                             marker.MarkerIcon = value;
+                                        }
 
                                         markerFile.Markers.Add(marker);
                                     }
@@ -836,6 +1428,7 @@ namespace ClassicUO.Game.UI.Gumps
                     BuildContextMenu();
 
                     int count = 0;
+
                     foreach (WMapMarkerFile file in _markerFiles)
                     {
                         count += file.Markers.Count;
@@ -846,36 +1439,9 @@ namespace ClassicUO.Game.UI.Gumps
                     GameActions.Print(string.Format(ResGumps.WorldMapMarkersLoaded0, count), 0x2A);
                 }
             }
+
             //);
         }
-
-        #endregion
-
-
-        #region Update
-
-        public override void Update(double totalMS, double frameMS)
-        {
-            base.Update(totalMS, frameMS);
-
-            // MobileUO: added logic
-            if (readyToCreateTexture)
-            {
-                GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
-                readyToCreateTexture = false;
-                _mapTexture = new UOTexture32(realWidth, realHeight);
-                _mapTexture.SetData(buffer);
-                buffer = null;
-            }
-
-            if (_mapIndex != World.MapIndex)
-            {
-                Load();
-            }
-
-            World.WMapManager.RequestServerPartyGuildInfo();
-        }
-
 
         #endregion
 
@@ -885,7 +1451,9 @@ namespace ClassicUO.Game.UI.Gumps
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
             if (IsDisposed || !World.InGame)
+            {
                 return false;
+            }
 
             if (!_isScrolling && !_freeView)
             {
@@ -925,13 +1493,16 @@ namespace ClassicUO.Game.UI.Gumps
 
                     int offset = size >> 1;
 
-                    batcher.Draw2D(_mapTexture, (gX - offset) + halfWidth, (gY - offset) + halfHeight,
+                    batcher.Draw2D
+                    (
+                        _mapTexture, gX - offset + halfWidth, gY - offset + halfHeight,
                         size, size,
                         sx - size_zoom_half,
                         sy - size_zoom_half,
                         size_zoom,
                         size_zoom,
-                        ref _hueVector, _flipMap ? 45 : 0);
+                        ref _hueVector, _flipMap ? 45 : 0
+                    );
 
                     DrawAll(batcher, gX, gY, halfWidth, halfHeight);
 
@@ -975,7 +1546,9 @@ namespace ClassicUO.Game.UI.Gumps
                 foreach (WMapMarkerFile file in _markerFiles)
                 {
                     if (file.Hidden)
+                    {
                         continue;
+                    }
 
                     foreach (WMapMarker marker in file.Markers)
                     {
@@ -991,7 +1564,9 @@ namespace ClassicUO.Game.UI.Gumps
                     Item item = World.Items.Get(house.Serial);
 
                     if (item != null)
+                    {
                         DrawMulti(batcher, item.X, item.Y, gX, gY, halfWidth, halfHeight, Zoom);
+                    }
                 }
             }
 
@@ -1000,24 +1575,37 @@ namespace ClassicUO.Game.UI.Gumps
                 foreach (Mobile mob in World.Mobiles)
                 {
                     if (mob == World.Player)
+                    {
                         continue;
+                    }
 
                     if (mob.NotorietyFlag != NotorietyFlag.Ally)
+                    {
                         DrawMobile(batcher, mob, gX, gY, halfWidth, halfHeight, Zoom, Color.Red);
+                    }
                     else
                     {
                         if (mob != null && mob.Distance <= World.ClientViewRange)
                         {
                             WMapEntity wme = World.WMapManager.GetEntity(mob);
+
                             if (wme != null)
+                            {
                                 wme.Name = mob.Name;
+                            }
                             else
-                                DrawMobile(batcher, mob, gX, gY, halfWidth, halfHeight, Zoom, Color.Lime, true, true,
-                                    _showGroupBar);
+                            {
+                                DrawMobile
+                                (
+                                    batcher, mob, gX, gY, halfWidth, halfHeight, Zoom, Color.Lime, true, true,
+                                    _showGroupBar
+                                );
+                            }
                         }
                         else
                         {
                             WMapEntity wme = World.WMapManager.GetEntity(mob.Serial);
+
                             if (wme != null && wme.IsGuild)
                             {
                                 DrawWMEntity(batcher, wme, gX, gY, halfWidth, halfHeight, Zoom);
@@ -1048,15 +1636,22 @@ namespace ClassicUO.Game.UI.Gumps
                         if (mob != null && mob.Distance <= World.ClientViewRange)
                         {
                             WMapEntity wme = World.WMapManager.GetEntity(mob);
-                            if (wme != null)
-                                wme.Name = partyMember.Name;
 
-                            DrawMobile(batcher, mob, gX, gY, halfWidth, halfHeight, Zoom, Color.Yellow, _showGroupName, true,
-                                _showGroupBar);
+                            if (wme != null)
+                            {
+                                wme.Name = partyMember.Name;
+                            }
+
+                            DrawMobile
+                            (
+                                batcher, mob, gX, gY, halfWidth, halfHeight, Zoom, Color.Yellow, _showGroupName, true,
+                                _showGroupBar
+                            );
                         }
                         else
                         {
                             WMapEntity wme = World.WMapManager.GetEntity(partyMember.Serial);
+
                             if (wme != null && !wme.IsGuild)
                             {
                                 DrawWMEntity(batcher, wme, gX, gY, halfWidth, halfHeight, Zoom);
@@ -1066,12 +1661,18 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
 
-            DrawMobile(batcher, World.Player, gX, gY, halfWidth, halfHeight, Zoom, Color.White, _showPlayerName, false,
-                _showPlayerBar);
+            DrawMobile
+            (
+                batcher, World.Player, gX, gY, halfWidth, halfHeight, Zoom, Color.White, _showPlayerName, false,
+                _showPlayerBar
+            );
         }
 
-        private void DrawMobile(UltimaBatcher2D batcher, Mobile mobile, int x, int y, int width, int height, float zoom,
-            Color color, bool drawName = false, bool isparty = false, bool drawHpBar = false)
+        private void DrawMobile
+        (
+            UltimaBatcher2D batcher, Mobile mobile, int x, int y, int width, int height, float zoom,
+            Color color, bool drawName = false, bool isparty = false, bool drawHpBar = false
+        )
         {
             ResetHueVector();
 
@@ -1088,19 +1689,30 @@ namespace ClassicUO.Game.UI.Gumps
             const int DOT_SIZE_HALF = DOT_SIZE >> 1;
 
             if (rotX < x)
+            {
                 rotX = x;
+            }
 
             if (rotX > x + Width - 8 - DOT_SIZE)
+            {
                 rotX = x + Width - 8 - DOT_SIZE;
+            }
 
             if (rotY < y)
+            {
                 rotY = y;
+            }
 
             if (rotY > y + Height - 8 - DOT_SIZE)
+            {
                 rotY = y + Height - 8 - DOT_SIZE;
+            }
 
-            batcher.Draw2D(Texture2DCache.GetTexture(color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF, DOT_SIZE,
-                DOT_SIZE, ref _hueVector);
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF, DOT_SIZE,
+                DOT_SIZE, ref _hueVector
+            );
 
             if (drawName && !string.IsNullOrEmpty(mobile.Name))
             {
@@ -1117,7 +1729,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (rotY + size.Y > y + Height)
                 {
-                    rotY = y + Height - (int) (size.Y);
+                    rotY = y + Height - (int) size.Y;
                 }
                 else if (rotY - size.Y < y)
                 {
@@ -1145,9 +1757,13 @@ namespace ClassicUO.Game.UI.Gumps
                     ww = mobile.Hits * 100 / ww;
 
                     if (ww > 100)
+                    {
                         ww = 100;
+                    }
                     else if (ww < 1)
+                    {
                         ww = 0;
+                    }
                 }
 
                 rotY += DOT_SIZE + 1;
@@ -1159,10 +1775,14 @@ namespace ClassicUO.Game.UI.Gumps
         private void DrawMarker(UltimaBatcher2D batcher, WMapMarker marker, int x, int y, int width, int height, float zoom)
         {
             if (marker.MapId != World.MapIndex)
+            {
                 return;
+            }
 
             if (_zoomIndex < marker.ZoomIndex && marker.Color == Color.Transparent)
+            {
                 return;
+            }
 
             ResetHueVector();
 
@@ -1181,15 +1801,20 @@ namespace ClassicUO.Game.UI.Gumps
                 rotX > x + Width - 8 - DOT_SIZE ||
                 rotY < y ||
                 rotY > y + Height - 8 - DOT_SIZE)
+            {
                 return;
+            }
 
             bool showMarkerName = _showMarkerNames && !string.IsNullOrEmpty(marker.Name) && _zoomIndex > 5;
 
             if (_zoomIndex < marker.ZoomIndex || !_showMarkerIcons || marker.MarkerIcon == null)
             {
-                batcher.Draw2D(Texture2DCache.GetTexture(marker.Color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF,
+                batcher.Draw2D
+                (
+                    Texture2DCache.GetTexture(marker.Color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF,
                     DOT_SIZE,
-                    DOT_SIZE, ref _hueVector);
+                    DOT_SIZE, ref _hueVector
+                );
 
                 if (Mouse.Position.X >= rotX - DOT_SIZE && Mouse.Position.X <= rotX + DOT_SIZE_HALF &&
                     Mouse.Position.Y >= rotY - DOT_SIZE && Mouse.Position.Y <= rotY + DOT_SIZE_HALF)
@@ -1226,12 +1851,13 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (rotY + size.Y > y + Height)
                 {
-                    rotY = y + Height - (int) (size.Y);
+                    rotY = y + Height - (int) size.Y;
                 }
                 else if (rotY - size.Y < y)
                 {
                     rotY = y + (int) size.Y;
                 }
+
                 int xx = (int) (rotX - size.X / 2);
                 int yy = (int) (rotY - size.Y - 5);
 
@@ -1262,15 +1888,23 @@ namespace ClassicUO.Game.UI.Gumps
                 rotX > x + Width - 8 - DOT_SIZE ||
                 rotY < y ||
                 rotY > y + Height - 8 - DOT_SIZE)
+            {
                 return;
+            }
 
-            batcher.Draw2D(Texture2DCache.GetTexture(Color.Aquamarine), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF,
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(Color.Aquamarine), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF,
                 DOT_SIZE,
-                DOT_SIZE, ref _hueVector);
+                DOT_SIZE, ref _hueVector
+            );
         }
 
-        private void DrawWMEntity(UltimaBatcher2D batcher, WMapEntity entity, int x, int y, int width, int height,
-            float zoom)
+        private void DrawWMEntity
+        (
+            UltimaBatcher2D batcher, WMapEntity entity, int x, int y, int width, int height,
+            float zoom
+        )
         {
             ResetHueVector();
 
@@ -1307,19 +1941,30 @@ namespace ClassicUO.Game.UI.Gumps
             const int DOT_SIZE_HALF = DOT_SIZE >> 1;
 
             if (rotX < x)
+            {
                 rotX = x;
+            }
 
             if (rotX > x + Width - 8 - DOT_SIZE)
+            {
                 rotX = x + Width - 8 - DOT_SIZE;
+            }
 
             if (rotY < y)
+            {
                 rotY = y;
+            }
 
             if (rotY > y + Height - 8 - DOT_SIZE)
+            {
                 rotY = y + Height - 8 - DOT_SIZE;
+            }
 
-            batcher.Draw2D(Texture2DCache.GetTexture(color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF, DOT_SIZE,
-                DOT_SIZE, ref _hueVector);
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(color), rotX - DOT_SIZE_HALF, rotY - DOT_SIZE_HALF, DOT_SIZE,
+                DOT_SIZE, ref _hueVector
+            );
 
             if (_showGroupName)
             {
@@ -1337,7 +1982,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                 if (rotY + size.Y > y + Height)
                 {
-                    rotY = y + Height - (int) (size.Y);
+                    rotY = y + Height - (int) size.Y;
                 }
                 else if (rotY - size.Y < y)
                 {
@@ -1374,10 +2019,17 @@ namespace ClassicUO.Game.UI.Gumps
             const int BAR_MAX_HEIGHT_HALF = BAR_MAX_HEIGHT / 2;
 
 
-            batcher.Draw2D(Texture2DCache.GetTexture(Color.Black), x - BAR_MAX_WIDTH_HALF - 1,
-                y - BAR_MAX_HEIGHT_HALF - 1, BAR_MAX_WIDTH + 2, BAR_MAX_HEIGHT + 2, ref _hueVector);
-            batcher.Draw2D(Texture2DCache.GetTexture(Color.Red), x - BAR_MAX_WIDTH_HALF, y - BAR_MAX_HEIGHT_HALF,
-                BAR_MAX_WIDTH, BAR_MAX_HEIGHT, ref _hueVector);
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(Color.Black), x - BAR_MAX_WIDTH_HALF - 1,
+                y - BAR_MAX_HEIGHT_HALF - 1, BAR_MAX_WIDTH + 2, BAR_MAX_HEIGHT + 2, ref _hueVector
+            );
+
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(Color.Red), x - BAR_MAX_WIDTH_HALF, y - BAR_MAX_HEIGHT_HALF,
+                BAR_MAX_WIDTH, BAR_MAX_HEIGHT, ref _hueVector
+            );
 
             int max = 100;
             int current = hp;
@@ -1387,16 +2039,22 @@ namespace ClassicUO.Game.UI.Gumps
                 max = current * 100 / max;
 
                 if (max > 100)
+                {
                     max = 100;
+                }
 
                 if (max > 1)
+                {
                     max = BAR_MAX_WIDTH * max / 100;
+                }
             }
 
-            batcher.Draw2D(Texture2DCache.GetTexture(Color.CornflowerBlue), x - BAR_MAX_WIDTH_HALF,
-                y - BAR_MAX_HEIGHT_HALF, max, BAR_MAX_HEIGHT, ref _hueVector);
+            batcher.Draw2D
+            (
+                Texture2DCache.GetTexture(Color.CornflowerBlue), x - BAR_MAX_WIDTH_HALF,
+                y - BAR_MAX_HEIGHT_HALF, max, BAR_MAX_HEIGHT, ref _hueVector
+            );
         }
-
 
         #endregion
 
@@ -1420,12 +2078,14 @@ namespace ClassicUO.Game.UI.Gumps
         {
             if (!ItemHold.Enabled)
             {
-                if ((button == MouseButtonType.Left && (Keyboard.Alt || _freeView)) || (button == MouseButtonType.Middle))
+                if (button == MouseButtonType.Left && (Keyboard.Alt || _freeView) || button == MouseButtonType.Middle)
                 {
                     if (x > 4 && x < Width - 8 && y > 4 && y < Height - 8)
                     {
                         if (button == MouseButtonType.Middle)
+                        {
                             FreeView = true;
+                        }
 
                         _lastScroll.X = x;
                         _lastScroll.Y = y;
@@ -1436,7 +2096,7 @@ namespace ClassicUO.Game.UI.Gumps
                     }
                 }
             }
-            
+
             base.OnMouseDown(x, y, button);
         }
 
@@ -1455,16 +2115,24 @@ namespace ClassicUO.Game.UI.Gumps
                 _center.Y += (int) (scrollY / Zoom);
 
                 if (_center.X < 0)
+                {
                     _center.X = 0;
+                }
 
                 if (_center.Y < 0)
+                {
                     _center.Y = 0;
+                }
 
                 if (_center.X > MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0])
+                {
                     _center.X = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
+                }
 
                 if (_center.Y > MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1])
+                {
                     _center.Y = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+                }
 
                 _lastScroll.X = x;
                 _lastScroll.Y = y;
@@ -1482,14 +2150,18 @@ namespace ClassicUO.Game.UI.Gumps
                 _zoomIndex++;
 
                 if (_zoomIndex >= _zooms.Length)
+                {
                     _zoomIndex = _zooms.Length - 1;
+                }
             }
             else
             {
                 _zoomIndex--;
 
                 if (_zoomIndex < 0)
+                {
                     _zoomIndex = 0;
+                }
             }
 
 
@@ -1499,7 +2171,9 @@ namespace ClassicUO.Game.UI.Gumps
         protected override bool OnMouseDoubleClick(int x, int y, MouseButtonType button)
         {
             if (button != MouseButtonType.Left || _isScrolling || Keyboard.Alt)
+            {
                 return base.OnMouseDoubleClick(x, y, button);
+            }
 
             TopMost = !TopMost;
 
@@ -1514,465 +2188,5 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
         #endregion
-
-
-
-
-
-
-
-        private (int, int) RotatePoint(int x, int y, float zoom, int dist, float angle = 45f)
-        {
-            x = (int) (x * zoom);
-            y = (int) (y * zoom);
-
-            if (angle == 0.0f)
-                return (x, y);
-
-            return ((int) Math.Round(Math.Cos(dist * Math.PI / 4.0) * x - Math.Sin(dist * Math.PI / 4.0) * y),
-                (int) Math.Round(Math.Sin(dist * Math.PI / 4.0) * x + Math.Cos(dist * Math.PI / 4.0) * y));
-        }
-
-        private void AdjustPosition(int x, int y, int centerX, int centerY, out int newX, out int newY)
-        {
-            int offset = GetOffset(x, y, centerX, centerY);
-            int currX = x;
-            int currY = y;
-
-            while (offset != 0)
-            {
-                if ((offset & 1) != 0)
-                {
-                    currY = centerY;
-                    currX = x * currY / y;
-                }
-                else if ((offset & 2) != 0)
-                {
-                    currY = -centerY;
-                    currX = x * currY / y;
-                }
-                else if ((offset & 4) != 0)
-                {
-                    currX = centerX;
-                    currY = y * currX / x;
-                }
-                else if ((offset & 8) != 0)
-                {
-                    currX = -centerX;
-                    currY = y * currX / x;
-                }
-
-                x = currX;
-                y = currY;
-                offset = GetOffset(x, y, centerX, centerY);
-            }
-
-            newX = x;
-            newY = y;
-        }
-
-        private int GetOffset(int x, int y, int centerX, int centerY)
-        {
-            const int offset = 0;
-            if (y > centerY)
-                return 1;
-            if (y < -centerY)
-                return 2;
-            if (x > centerX)
-                return offset + 4;
-            if (x >= -centerX)
-                return offset;
-            return offset + 8;
-        }
-
-        public override void Dispose()
-        {
-            SaveSettings();
-            World.WMapManager.SetEnable(false);
-
-            UIManager.GameCursor.IsDraggingCursorForced = false;
-
-            _mapTexture?.Dispose();
-            base.Dispose();
-        }
-
-        private Color GetColor(string name)
-        {
-            if (name.Equals("red", StringComparison.OrdinalIgnoreCase))
-                return Color.Red;
-
-            if (name.Equals("green", StringComparison.OrdinalIgnoreCase))
-                return Color.Green;
-
-            if (name.Equals("blue", StringComparison.OrdinalIgnoreCase))
-                return Color.Blue;
-
-            if (name.Equals("purple", StringComparison.OrdinalIgnoreCase))
-                return Color.Purple;
-
-            if (name.Equals("black", StringComparison.OrdinalIgnoreCase))
-                return Color.Black;
-
-            if (name.Equals("yellow", StringComparison.OrdinalIgnoreCase))
-                return Color.Yellow;
-
-            if (name.Equals("white", StringComparison.OrdinalIgnoreCase))
-                return Color.White;
-
-            if (name.Equals("none", StringComparison.OrdinalIgnoreCase))
-                return Color.Transparent;
-
-            return Color.White;
-        }
-
-        private void SetFont(int fontIndex)
-        {
-            _markerFontIndex = fontIndex;
-
-            switch (fontIndex)
-            {
-                case 1:
-                    _markerFont = Fonts.Map1;
-                    break;
-                case 2:
-                    _markerFont = Fonts.Map2;
-                    break;
-                case 3:
-                    _markerFont = Fonts.Map3;
-                    break;
-                case 4:
-                    _markerFont = Fonts.Map4;
-                    break;
-                case 5:
-                    _markerFont = Fonts.Map5;
-                    break;
-                case 6:
-                    _markerFont = Fonts.Map6;
-                    break;
-                default:
-                    _markerFontIndex = 1;
-                    _markerFont = Fonts.Map1;
-                    break;
-            }
-        }
-
-        private bool GetOptionValue(string key)
-        {
-            _options.TryGetValue(key, out ContextMenuItemEntry v);
-
-            return v != null && v.IsSelected;
-        }
-
-        public void SetOptionValue(string key, bool v)
-        {
-            if (_options.TryGetValue(key, out ContextMenuItemEntry entry) && entry != null)
-            {
-                entry.IsSelected = v;
-            }
-        }
-
-
-        private class WMapMarker
-        {
-            public string Name { get; set; }
-            public int X { get; set; }
-            public int Y { get; set; }
-            public int MapId { get; set; }
-            public Color Color { get; set; }
-            public Texture2D MarkerIcon { get; set; }
-            public string MarkerIconName { get; set; }
-            public int ZoomIndex { get; set; }
-        }
-
-        private class WMapMarkerFile
-        {
-            public string Name { get; set; }
-            public string FullPath { get; set; }
-            public List<WMapMarker> Markers { get; set; }
-            public bool Hidden { get; set; }
-        }
-
-        private class CurLoader
-        {
-            public unsafe static Texture2D CreateTextureFromICO_Cur(Stream stream)
-            {
-                byte[] buffer = new byte[stream.Length];
-                stream.Read(buffer, 0, buffer.Length);
-
-                DataReader reader = new DataReader();
-                reader.SetData(buffer, stream.Length);
-
-                bool was_error;
-                long fp_offset;
-                int bmp_pitch;
-                int i, pad;
-                SDL.SDL_Surface* surface;
-                uint r_mask, g_mask, b_mask;
-                byte* bits;
-                int expand_bmp;
-                int max_col = 0;
-                uint ico_of_s = 0;
-                uint* palette = stackalloc uint[256];
-
-                ushort bf_reserved, bf_type, bf_count;
-                uint bi_size, bi_width, bi_height;
-                ushort bi_planes, bi_bit_count;
-                uint bi_compression, bi_size_image, bi_x_perls_per_meter, bi_y_perls_per_meter, bi_clr_used, bi_clr_important;
-
-                bf_reserved = reader.ReadUShort();
-                bf_type = reader.ReadUShort();
-                bf_count = reader.ReadUShort();
-
-                for (i = 0; i < bf_count; i++)
-                {
-                    int b_width = reader.ReadByte();
-                    int b_height = reader.ReadByte();
-                    int b_color_count = reader.ReadByte();
-                    byte b_reserver = reader.ReadByte();
-                    ushort w_planes = reader.ReadUShort();
-                    ushort w_bit_count = reader.ReadUShort();
-                    uint dw_bytes_in_res = reader.ReadUInt();
-                    uint dw_image_offse = reader.ReadUInt();
-
-                    if (b_width == 0)
-                        b_width = 256;
-                    if (b_height == 0)
-                        b_height = 256;
-                    if (b_color_count == 0)
-                        b_color_count = 256;
-
-                    if (b_color_count > max_col)
-                    {
-                        max_col = b_color_count;
-                        ico_of_s = dw_image_offse;
-                    }
-                }
-
-                reader.Seek(ico_of_s);
-
-                bi_size = reader.ReadUInt();
-
-                if (bi_size == 40)
-                {
-                    bi_width = reader.ReadUInt();
-                    bi_height = reader.ReadUInt();
-                    bi_planes = reader.ReadUShort();
-                    bi_bit_count = reader.ReadUShort();
-                    bi_compression = reader.ReadUInt();
-                    bi_size_image = reader.ReadUInt();
-                    bi_x_perls_per_meter = reader.ReadUInt();
-                    bi_y_perls_per_meter = reader.ReadUInt();
-                    bi_clr_used = reader.ReadUInt();
-                    bi_clr_important = reader.ReadUInt();
-                }
-                else
-                {
-                    return null;
-                }
-
-                const int BI_RGB = 0;
-                const int BI_RLE = 1;
-                const int BI_RLE4 = 2;
-                const int BI_BITFIELDS = 3;
-
-                switch (bi_compression)
-                {
-                    case BI_RGB:
-
-                        switch (bi_bit_count)
-                        {
-                            case 1:
-                            case 4:
-                                expand_bmp = bi_bit_count;
-                                bi_bit_count = 8;
-                                break;
-                            case 8:
-                                expand_bmp = 8;
-                                break;
-                            case 32:
-                                r_mask = 0x00FF0000;
-                                g_mask = 0x0000FF00;
-                                b_mask = 0x000000FF;
-                                expand_bmp = 0;
-                                break;
-                            default:
-                                return null;
-                        }
-
-                        break;
-
-                    default:
-                        return null;
-
-                }
-
-
-                bi_height >>= 1;
-
-                surface = (SDL.SDL_Surface*) SDL.SDL_CreateRGBSurface(0, (int) bi_width, (int) bi_height, 32, 0x00FF0000,
-                                 0x0000FF00, 0x000000FF, 0xFF000000);
-
-                if (bi_bit_count <= 8)
-                {
-                    if (bi_clr_used == 0)
-                    {
-                        bi_clr_used = (uint) (1 << bi_bit_count);
-                    }
-
-                    for (i = 0; i < bi_clr_used; i++)
-                    {
-                        palette[i] = reader.ReadUInt();
-                    }
-                }
-
-                bits = (byte*) (surface->pixels + (surface->h * surface->pitch));
-
-                switch (expand_bmp)
-                {
-                    case 1:
-                        bmp_pitch = (int) (bi_width + 7) >> 3;
-                        pad = (((bmp_pitch) % 4) != 0 ? (4 - ((bmp_pitch) % 4)) : 0);
-                        break;
-                    case 4:
-                        bmp_pitch = (int) (bi_width + 1) >> 1;
-                        pad = (((bmp_pitch) % 4) != 0 ? (4 - ((bmp_pitch) % 4)) : 0);
-                        break;
-                    case 8:
-                        bmp_pitch = (int) bi_width;
-                        pad = (((bmp_pitch) % 4) != 0 ? (4 - ((bmp_pitch) % 4)) : 0);
-                        break;
-                    default:
-                        bmp_pitch = (int) bi_width * 4;
-                        pad = 0;
-                        break;
-                }
-
-
-                while (bits > (byte*) surface->pixels)
-                {
-                    bits -= surface->pitch;
-
-                    switch (expand_bmp)
-                    {
-                        case 1:
-                        case 4:
-                        case 8:
-                        {
-                            byte pixel = 0;
-                            int shift = (8 - expand_bmp);
-
-                            for (i = 0; i < surface->w; i++)
-                            {
-                                if (i % (8 / expand_bmp) == 0)
-                                {
-                                    pixel = reader.ReadByte();
-                                }
-
-                                *((uint*) bits + i) = (palette[pixel >> shift]);
-                                pixel <<= expand_bmp;
-                            }
-                        }
-                        break;
-
-                        default:
-
-                            for (int k = 0; k < surface->pitch; k++)
-                            {
-                                bits[k] = reader.ReadByte();
-                            }
-
-                            break;
-                    }
-
-                    if (pad != 0)
-                    {
-                        for (i = 0; i < pad; i++)
-                        {
-                            reader.ReadByte();
-                        }
-                    }
-
-                }
-
-
-
-                bits = (byte*) (surface->pixels + (surface->h * surface->pitch));
-                expand_bmp = 1;
-                bmp_pitch = (int) (bi_width + 7) >> 3;
-                pad = (((bmp_pitch) % 4) != 0 ? (4 - ((bmp_pitch) % 4)) : 0);
-
-                while (bits > (byte*) surface->pixels)
-                {
-                    byte pixel = 0;
-                    int shift = (8 - expand_bmp);
-
-                    bits -= surface->pitch;
-
-                    for (i = 0; i < surface->w; i++)
-                    {
-                        if (i % (8 / expand_bmp) == 0)
-                        {
-                            pixel = reader.ReadByte();
-                        }
-
-                        *((uint*) bits + i) |= ((pixel >> shift) != 0 ? 0 : 0xFF000000);
-
-                        pixel <<= expand_bmp;
-                    }
-
-                    if (pad != 0)
-                    {
-                        for (i = 0; i < pad; i++)
-                        {
-                            reader.ReadByte();
-                        }
-                    }
-                }
-
-                surface = (SDL.SDL_Surface*) INTERNAL_convertSurfaceFormat((IntPtr) surface);
-
-                int len = surface->w * surface->h * 4;
-                byte* pixels = (byte*) surface->pixels;
-
-                for (i = 0; i < len; i += 4, pixels += 4)
-                {
-                    if (pixels[3] == 0)
-                    {
-                        pixels[0] = 0;
-                        pixels[1] = 0;
-                        pixels[2] = 0;
-                    }
-                }
-
-                Texture2D texture = new Texture2D(Client.Game.GraphicsDevice, surface->w, surface->h);
-                texture.SetDataPointerEXT(0, new Microsoft.Xna.Framework.Rectangle(0, 0, surface->w, surface->h), surface->pixels, len);
-
-                SDL.SDL_FreeSurface((IntPtr) surface);
-
-                reader.ReleaseData();
-
-                return texture;
-            }
-
-            private static unsafe IntPtr INTERNAL_convertSurfaceFormat(IntPtr surface)
-            {
-                IntPtr result = surface;
-                unsafe
-                {
-                    SDL.SDL_Surface* surPtr = (SDL.SDL_Surface*) surface;
-                    SDL.SDL_PixelFormat* pixelFormatPtr = (SDL.SDL_PixelFormat*) surPtr->format;
-
-                    // SurfaceFormat.Color is SDL_PIXELFORMAT_ABGR8888
-                    if (pixelFormatPtr->format != SDL.SDL_PIXELFORMAT_ABGR8888)
-                    {
-                        // Create a properly formatted copy, free the old surface
-                        result = SDL.SDL_ConvertSurfaceFormat(surface, SDL.SDL_PIXELFORMAT_ABGR8888, 0);
-                        SDL.SDL_FreeSurface(surface);
-                    }
-                }
-                return result;
-            }
-        }
-
     }
 }
