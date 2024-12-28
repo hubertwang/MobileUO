@@ -1,31 +1,42 @@
 ﻿#region license
 
-// Copyright (C) 2020 ClassicUO Development Community on Github
+// Copyright (c) 2021, andreakarasho
+// All rights reserved.
 // 
-// This project is an alternative client for the game Ultima Online.
-// The goal of this is to develop a lightweight client considering
-// new technologies.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. All advertising materials mentioning features or use of this software
+//    must display the following acknowledgement:
+//    This product includes software developed by andreakarasho - https://github.com/andreakarasho
+// 4. Neither the name of the copyright holder nor the
+//    names of its contributors may be used to endorse or promote products
+//    derived from this software without specific prior written permission.
 // 
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-// 
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+// DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endregion
 
 using System;
 using System.IO;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using ClassicUO.Configuration;
 using ClassicUO.Data;
 using ClassicUO.Game.Data;
@@ -37,6 +48,7 @@ using ClassicUO.Game.UI.Gumps.Login;
 using ClassicUO.IO;
 using ClassicUO.IO.Resources;
 using ClassicUO.Network;
+using ClassicUO.Network.Encryption;
 using ClassicUO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
@@ -63,7 +75,7 @@ namespace ClassicUO.Game.Scenes
         private Gump _currentGump;
         private LoginSteps _lastLoginStep;
         private uint _pingTime;
-        private long? _reconnectTime;
+        private long _reconnectTime;
         private int _reconnectTryCounter = 1;
 
 
@@ -100,7 +112,7 @@ namespace ClassicUO.Game.Scenes
             UIManager.Add(_currentGump = new LoginGump(this));
 
             // Registering Packet Events
-            NetClient.PacketReceived += NetClient_PacketReceived;
+            //NetClient.PacketReceived += NetClient_PacketReceived;
             NetClient.Socket.Disconnected += NetClient_Disconnected;
             NetClient.LoginSocket.Connected += NetClient_Connected;
             NetClient.LoginSocket.Disconnected += Login_NetClient_Disconnected;
@@ -109,8 +121,7 @@ namespace ClassicUO.Game.Scenes
 
             Audio.PlayMusic(music, false, true);
 
-            if ((Settings.GlobalSettings.AutoLogin || Reconnect) && CurrentLoginStep != LoginSteps.Main ||
-                CUOEnviroment.SkipLoginScreen)
+            if ((Settings.GlobalSettings.AutoLogin || Reconnect) && CurrentLoginStep != LoginSteps.Main || CUOEnviroment.SkipLoginScreen)
             {
                 if (!string.IsNullOrEmpty(Settings.GlobalSettings.Username))
                 {
@@ -142,7 +153,7 @@ namespace ClassicUO.Game.Scenes
             NetClient.Socket.Disconnected -= NetClient_Disconnected;
             NetClient.LoginSocket.Connected -= NetClient_Connected;
             NetClient.LoginSocket.Disconnected -= Login_NetClient_Disconnected;
-            NetClient.PacketReceived -= NetClient_PacketReceived;
+            //NetClient.PacketReceived -= NetClient_PacketReceived;
 
             // MobileUO: NOTE: We force the login socket to disconnect in case it hasn't already been disposed
             //This is good practice since the Client can be quit while the socket is still active
@@ -173,15 +184,8 @@ namespace ClassicUO.Game.Scenes
                 _lastLoginStep = CurrentLoginStep;
             }
 
-            if (Reconnect && (CurrentLoginStep == LoginSteps.PopUpMessage || CurrentLoginStep == LoginSteps.Main))
+            if (Reconnect && (CurrentLoginStep == LoginSteps.PopUpMessage || CurrentLoginStep == LoginSteps.Main) && !NetClient.Socket.IsConnected && !NetClient.LoginSocket.IsConnected)
             {
-                long rt = (long) totalTime + Settings.GlobalSettings.ReconnectTime * 1000;
-
-                if (_reconnectTime == null)
-                {
-                    _reconnectTime = rt;
-                }
-
                 if (_reconnectTime < totalTime)
                 {
                     if (!string.IsNullOrEmpty(Account))
@@ -193,7 +197,14 @@ namespace ClassicUO.Game.Scenes
                         Connect(Settings.GlobalSettings.Username, Crypter.Decrypt(Settings.GlobalSettings.Password));
                     }
 
-                    _reconnectTime = rt;
+                    int timeT = Settings.GlobalSettings.ReconnectTime * 1000;
+
+                    if (timeT < 1000)
+                    {
+                        timeT = 1000;
+                    }
+
+                    _reconnectTime = (long) totalTime + timeT;
                     _reconnectTryCounter++;
                 }
             }
@@ -202,11 +213,11 @@ namespace ClassicUO.Game.Scenes
             {
                 if (NetClient.Socket != null && NetClient.Socket.IsConnected)
                 {
-                    NetClient.Socket.Send(new PPing());
+                    NetClient.Socket.Statistics.SendPing();
                 }
                 else if (NetClient.LoginSocket != null && NetClient.LoginSocket.IsConnected)
                 {
-                    NetClient.LoginSocket.Send(new PPing());
+                    NetClient.LoginSocket.Statistics.SendPing();
                 }
 
                 _pingTime = Time.Ticks + 60000;
@@ -282,22 +293,19 @@ namespace ClassicUO.Game.Scenes
                         break;
 
                     case LoginSteps.VerifyingAccount:
-                        labelText = ClilocLoader.Instance.GetString
-                            (3000003, ResGeneral.VerifyingAccount); // "Verifying Account..."
+                        labelText = ClilocLoader.Instance.GetString(3000003, ResGeneral.VerifyingAccount); // "Verifying Account..."
 
                         showButtons = LoginButtons.Cancel;
 
                         break;
 
                     case LoginSteps.LoginInToServer:
-                        labelText = ClilocLoader.Instance.GetString
-                            (3000053, ResGeneral.LoggingIntoShard); // logging into shard
+                        labelText = ClilocLoader.Instance.GetString(3000053, ResGeneral.LoggingIntoShard); // logging into shard
 
                         break;
 
                     case LoginSteps.EnteringBritania:
-                        labelText = ClilocLoader.Instance.GetString
-                            (3000001, ResGeneral.EnteringBritannia); // Entering Britania...
+                        labelText = ClilocLoader.Instance.GetString(3000001, ResGeneral.EnteringBritannia); // Entering Britania...
 
                         break;
 
@@ -321,7 +329,7 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
-        public void Connect(string account, string password)
+        public async void Connect(string account, string password)
         {
             if (CurrentLoginStep == LoginSteps.Connecting)
             {
@@ -342,18 +350,18 @@ namespace ClassicUO.Game.Scenes
             Log.Trace($"Start login to: {Settings.GlobalSettings.IP},{Settings.GlobalSettings.Port}");
 
 
-            EncryptionHelper.Initialize
-                (true, NetClient.ClientAddress, (ENCRYPTION_TYPE) Settings.GlobalSettings.Encryption);
-
-            if (!NetClient.LoginSocket.Connect(Settings.GlobalSettings.IP, Settings.GlobalSettings.Port))
-            {
-                PopupMessage = ResGeneral.CheckYourConnectionAndTryAgain;
-                Log.Error("No Internet Access");
-            }
-
             if (!Reconnect)
             {
                 CurrentLoginStep = LoginSteps.Connecting;
+            }
+
+            EncryptionHelper.Initialize(true, NetClient.ClientAddress, (ENCRYPTION_TYPE) Settings.GlobalSettings.Encryption);
+
+            if (!await NetClient.LoginSocket.Connect(Settings.GlobalSettings.IP, Settings.GlobalSettings.Port))
+            {
+                PopupMessage = ResGeneral.CheckYourConnectionAndTryAgain;
+                CurrentLoginStep = LoginSteps.PopUpMessage;
+                Log.Error("No Internet Access");
             }
         }
 
@@ -417,7 +425,15 @@ namespace ClassicUO.Game.Scenes
 
             NetClient.Socket.Send
             (
-                new PCreateCharacter(character, cityIndex, NetClient.ClientAddress, ServerIndex, (uint) i, profession)
+                new PCreateCharacter
+                (
+                    character,
+                    cityIndex,
+                    NetClient.ClientAddress,
+                    ServerIndex,
+                    (uint) i,
+                    profession
+                )
             );
 
             CurrentLoginStep = LoginSteps.CharacterCreationDone;
@@ -445,7 +461,7 @@ namespace ClassicUO.Game.Scenes
                 case LoginSteps.Connecting:
                 case LoginSteps.VerifyingAccount:
                 case LoginSteps.ServerSelection:
-                    Servers = null;
+                    DisposeAllServerEntries();
                     CurrentLoginStep = LoginSteps.Main;
                     NetClient.LoginSocket.Disconnect();
 
@@ -454,7 +470,7 @@ namespace ClassicUO.Game.Scenes
                 case LoginSteps.LoginInToServer:
                     NetClient.Socket.Disconnect();
                     Characters = null;
-                    Servers = null;
+                    DisposeAllServerEntries();
                     Connect(Account, Password);
 
                     break;
@@ -469,7 +485,7 @@ namespace ClassicUO.Game.Scenes
                     NetClient.LoginSocket.Disconnect();
                     NetClient.Socket.Disconnect();
                     Characters = null;
-                    Servers = null;
+                    DisposeAllServerEntries();
                     CurrentLoginStep = LoginSteps.Main;
 
                     break;
@@ -500,7 +516,14 @@ namespace ClassicUO.Game.Scenes
                 byte build = (byte) (clientVersion >> 8);
                 byte extra = (byte) clientVersion;
 
-                PSeed packet = new PSeed(NetClient.ClientAddress, major, minor, build, extra);
+                PSeed packet = new PSeed
+                (
+                    NetClient.ClientAddress,
+                    major,
+                    minor,
+                    build,
+                    extra
+                );
 
                 NetClient.LoginSocket.Send(packet.ToArray(), packet.Length, true, true);
             }
@@ -508,6 +531,7 @@ namespace ClassicUO.Game.Scenes
             {
                 uint address = NetClient.ClientAddress;
 
+                // TODO: stackalloc
                 byte[] packet = new byte[4];
                 packet[0] = (byte) (address >> 24);
                 packet[1] = (byte) (address >> 16);
@@ -530,7 +554,7 @@ namespace ClassicUO.Game.Scenes
             }
 
             Characters = null;
-            Servers = null;
+            DisposeAllServerEntries();
             PopupMessage = string.Format(ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
             CurrentLoginStep = LoginSteps.PopUpMessage;
         }
@@ -542,154 +566,116 @@ namespace ClassicUO.Game.Scenes
             if (e > 0)
             {
                 Characters = null;
-                Servers = null;
+                DisposeAllServerEntries();
 
                 if (Settings.GlobalSettings.Reconnect)
                 {
                     Reconnect = true;
 
-                    PopupMessage = string.Format
-                    (
-                        ResGeneral.ReconnectPleaseWait01, _reconnectTryCounter,
-                        StringHelper.AddSpaceBeforeCapital(e.ToString())
-                    );
+                    PopupMessage = string.Format(ResGeneral.ReconnectPleaseWait01, _reconnectTryCounter, StringHelper.AddSpaceBeforeCapital(e.ToString()));
 
                     UIManager.GetGump<LoadingGump>()?.SetText(PopupMessage);
                 }
                 else
                 {
-                    PopupMessage = string.Format
-                        (ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
+                    PopupMessage = string.Format(ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
                 }
 
                 CurrentLoginStep = LoginSteps.PopUpMessage;
             }
         }
 
-        private void NetClient_PacketReceived(object sender, Packet e)
+        public void ServerListReceived(ref PacketBufferReader p)
         {
-            e.MoveToData();
+            byte flags = p.ReadByte();
+            ushort count = p.ReadUShort();
+            DisposeAllServerEntries();
+            Servers = new ServerListEntry[count];
 
-            switch (e.ID)
+            for (ushort i = 0; i < count; i++)
             {
-                case 0xA8: // ServerListReceived
-                    ParseServerList(e);
+                Servers[i] = ServerListEntry.Create(ref p);
+            }
 
-                    CurrentLoginStep = LoginSteps.ServerSelection;
+            CurrentLoginStep = LoginSteps.ServerSelection;
 
-                    if (Settings.GlobalSettings.AutoLogin || Reconnect)
+            if (Settings.GlobalSettings.AutoLogin || Reconnect)
+            {
+                if (Servers.Length != 0)
+                {
+                    int index = Settings.GlobalSettings.LastServerNum;
+
+                    if (index <= 0 || index > Servers.Length)
                     {
-                        if (Servers.Length != 0)
-                        {
-                            int index = Settings.GlobalSettings.LastServerNum;
-
-                            if (index <= 0 || index > Servers.Length)
-                            {
-                                Log.Warn($"Wrong server index: {index}");
-                                index = 1;
-                            }
-
-                            SelectServer((byte) Servers[index - 1].Index);
-                        }
+                        Log.Warn($"Wrong server index: {index}");
+                        index = 1;
                     }
 
-                    break;
-
-                case 0x8C: // ReceiveServerRelay
-                    // On OSI, upon receiving this packet, the client would disconnect and
-                    // log in to the specified server. Since emulated servers use the same
-                    // server for both shard selection and world, we don't need to disconnect.
-                    HandleRelayServerPacket(e);
-
-                    break;
-
-                case 0x86: // UpdateCharacterList
-                    ParseCharacterList(e);
-
-                    CurrentLoginStep = LoginSteps.CharacterSelection;
-                    UIManager.GetGump<CharacterSelectionGump>()?.Dispose();
-
-                    _currentGump?.Dispose();
-
-                    UIManager.Add(_currentGump = new CharacterSelectionGump());
-
-                    break;
-
-                case 0xA9: // ReceiveCharacterList
-                    ParseCharacterList(e);
-                    ParseCities(e);
-                    ParseFlags(e);
-                    CurrentLoginStep = LoginSteps.CharacterSelection;
-
-                    uint charToSelect = 0;
-
-                    bool haveAnyCharacter = false;
-                    bool tryAutologin = Settings.GlobalSettings.AutoLogin || Reconnect;
-
-                    for (byte i = 0; i < Characters.Length; i++)
-                    {
-                        if (Characters[i].Length > 0)
-                        {
-                            haveAnyCharacter = true;
-
-                            if (Characters[i] == Settings.GlobalSettings.LastCharacterName)
-                            {
-                                charToSelect = i;
-
-                                break;
-                            }
-                        }
-                    }
-
-                    if (tryAutologin && haveAnyCharacter)
-                    {
-                        SelectCharacter(charToSelect);
-                    }
-                    else if (!haveAnyCharacter)
-                    {
-                        StartCharCreation();
-                    }
-
-                    break;
-
-                case 0xBD: // ReceiveVersionRequest
-                    NetClient.Socket.Send(new PClientVersion(Settings.GlobalSettings.ClientVersion));
-
-                    break;
-
-                case 0x82: // ReceiveLoginRejection
-                case 0x85: // character list notification
-                case 0x53: // Error Code
-                    byte code = e.ReadByte();
-
-                    PopupMessage = ServerErrorMessages.GetError(e.ID, code);
-                    CurrentLoginStep = LoginSteps.PopUpMessage;
-
-                    break;
-
-                case 0xB9:
-                    uint flags = 0;
-
-                    if (Client.Version >= ClientVersion.CV_60142)
-                    {
-                        flags = e.ReadUInt();
-                    }
-                    else
-                    {
-                        flags = e.ReadUShort();
-                    }
-
-                    World.ClientLockedFeatures.SetFlags((LockedFeatureFlags) flags);
-
-                    break;
+                    SelectServer((byte) Servers[index - 1].Index);
+                }
             }
         }
 
-        private void HandleRelayServerPacket(Packet p)
+        public void UpdateCharacterList(ref PacketBufferReader p)
         {
-            p.Seek(0);
-            p.MoveToData();
+            ParseCharacterList(ref p);
 
+            CurrentLoginStep = LoginSteps.CharacterSelection;
+            UIManager.GetGump<CharacterSelectionGump>()?.Dispose();
+
+            _currentGump?.Dispose();
+
+            UIManager.Add(_currentGump = new CharacterSelectionGump());
+        }
+
+        public void ReceiveCharacterList(ref PacketBufferReader p)
+        {
+            ParseCharacterList(ref p);
+            ParseCities(ref p);
+
+            World.ClientFeatures.SetFlags((CharacterListFlags) p.ReadUInt());
+            CurrentLoginStep = LoginSteps.CharacterSelection;
+
+            uint charToSelect = 0;
+
+            bool haveAnyCharacter = false;
+            bool tryAutologin = Settings.GlobalSettings.AutoLogin || Reconnect;
+
+            for (byte i = 0; i < Characters.Length; i++)
+            {
+                if (Characters[i].Length > 0)
+                {
+                    haveAnyCharacter = true;
+
+                    if (Characters[i] == Settings.GlobalSettings.LastCharacterName)
+                    {
+                        charToSelect = i;
+
+                        break;
+                    }
+                }
+            }
+
+            if (tryAutologin && haveAnyCharacter)
+            {
+                SelectCharacter(charToSelect);
+            }
+            else if (!haveAnyCharacter)
+            {
+                StartCharCreation();
+            }
+        }
+
+        public void HandleErrorCode(ref PacketBufferReader p)
+        {
+            byte code = p.ReadByte();
+
+            PopupMessage = ServerErrorMessages.GetError(p.ID, code);
+            CurrentLoginStep = LoginSteps.PopUpMessage;
+        }
+
+        public void HandleRelayServerPacket(ref PacketBufferReader p)
+        {
             byte[] ip =
             {
                 p.ReadByte(), p.ReadByte(), p.ReadByte(), p.ReadByte()
@@ -700,26 +686,26 @@ namespace ClassicUO.Game.Scenes
             NetClient.LoginSocket.Disconnect();
             EncryptionHelper.Initialize(false, seed, (ENCRYPTION_TYPE) Settings.GlobalSettings.Encryption);
 
-            NetClient.Socket.Connect(new IPAddress(ip), port);
-            NetClient.Socket.EnableCompression();
-            byte[] ss = new byte[4] { (byte) (seed >> 24), (byte) (seed >> 16), (byte) (seed >> 8), (byte) seed };
-            NetClient.Socket.Send(ss, 4, true, true);
-            NetClient.Socket.Send(new PSecondLogin(Account, Password, seed));
+            NetClient.Socket.Connect(new IPAddress(ip), port)
+                     .ContinueWith
+                     (
+                         t =>
+                         {
+                             if (!t.IsFaulted)
+                             {
+                                 NetClient.Socket.EnableCompression();
+                                 // TODO: stackalloc
+                                 byte[] ss = new byte[4] { (byte) (seed >> 24), (byte) (seed >> 16), (byte) (seed >> 8), (byte) seed };
+                                 NetClient.Socket.Send(ss, 4, true, true);
+                                 NetClient.Socket.Send(new PSecondLogin(Account, Password, seed));
+                             }
+                         },
+                         TaskContinuationOptions.ExecuteSynchronously
+                     );
         }
 
-        private void ParseServerList(Packet reader)
-        {
-            byte flags = reader.ReadByte();
-            ushort count = reader.ReadUShort();
-            Servers = new ServerListEntry[count];
 
-            for (ushort i = 0; i < count; i++)
-            {
-                Servers[i] = new ServerListEntry(reader);
-            }
-        }
-
-        private void ParseCharacterList(Packet p)
+        private void ParseCharacterList(ref PacketBufferReader p)
         {
             int count = p.ReadByte();
             Characters = new string[count];
@@ -732,7 +718,7 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
-        private void ParseCities(Packet p)
+        private void ParseCities(ref PacketBufferReader p)
         {
             byte count = p.ReadByte();
             Cities = new CityInfo[count];
@@ -772,8 +758,15 @@ namespace ClassicUO.Game.Scenes
 
                     cityInfo = new CityInfo
                     (
-                        cityIndex, cityName, cityBuilding, ClilocLoader.Instance.GetString((int) cityDescription),
-                        cityX, cityY, cityZ, cityMapIndex, isNew
+                        cityIndex,
+                        cityName,
+                        cityBuilding,
+                        ClilocLoader.Instance.GetString((int) cityDescription),
+                        cityX,
+                        cityY,
+                        cityZ,
+                        cityMapIndex,
+                        isNew
                     );
                 }
                 else
@@ -784,8 +777,15 @@ namespace ClassicUO.Game.Scenes
 
                     cityInfo = new CityInfo
                     (
-                        cityIndex, cityName, cityBuilding, descriptions != null ? descriptions[i] : string.Empty,
-                        (ushort) oldtowns[i].X, (ushort) oldtowns[i].Y, 0, 0, isNew
+                        cityIndex,
+                        cityName,
+                        cityBuilding,
+                        descriptions != null ? descriptions[i] : string.Empty,
+                        (ushort) oldtowns[i].X,
+                        (ushort) oldtowns[i].Y,
+                        0,
+                        0,
+                        isNew
                     );
                 }
 
@@ -804,6 +804,7 @@ namespace ClassicUO.Game.Scenes
 
             string[] descr = new string[count];
 
+            // TODO: stackalloc ? 
             byte[] data = new byte[4];
 
             StringBuilder name = new StringBuilder();
@@ -903,30 +904,152 @@ namespace ClassicUO.Game.Scenes
             return descr;
         }
 
-        private void ParseFlags(Packet p)
+        private void DisposeAllServerEntries()
         {
-            World.ClientFeatures.SetFlags((CharacterListFlags) p.ReadUInt());
+            if (Servers != null)
+            {
+                for (int i = 0; i < Servers.Length; i++)
+                {
+                    if (Servers[i] != null)
+                    {
+                        Servers[i].Dispose();
+                        Servers[i] = null;
+                    }
+                }
+
+                Servers = null;
+            }
         }
     }
 
     internal class ServerListEntry
     {
-        public ServerListEntry(Packet reader)
+        private IPAddress _ipAddress;
+        private readonly Ping _pinger = new Ping();
+        private bool _sending;
+        private readonly bool[] _last10Results = new bool[10];
+        private int _resultIndex;
+
+        private ServerListEntry()
         {
-            Index = reader.ReadUShort();
-
-            Name = reader.ReadASCII(32).MakeSafe();
-
-            PercentFull = reader.ReadByte();
-            Timezone = reader.ReadByte();
-            Address = reader.ReadUInt();
         }
 
-        public readonly uint Address;
-        public readonly ushort Index;
-        public readonly string Name;
-        public readonly byte PercentFull;
-        public readonly byte Timezone;
+        public static ServerListEntry Create(ref PacketBufferReader p)
+        {
+            ServerListEntry entry = new ServerListEntry()
+            {
+                Index = p.ReadUShort(),
+                Name = p.ReadASCII(32).MakeSafe(),
+                PercentFull = p.ReadByte(),
+                Timezone = p.ReadByte(),
+                Address = p.ReadUInt()
+            };
+
+            // some server sends invalid ip.
+            try
+            {
+                entry._ipAddress = new IPAddress
+                (
+                    new byte[]
+                    {
+                        (byte) ((entry.Address >> 24) & 0xFF),
+                        (byte) ((entry.Address >> 16) & 0xFF),
+                        (byte) ((entry.Address >> 8) & 0xFF),
+                        (byte) (entry.Address & 0xFF)
+                    }
+                );
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.ToString());
+            }
+
+            entry._pinger.PingCompleted += entry.PingerOnPingCompleted;
+
+            return entry;
+        }
+
+
+        public uint Address;
+        public ushort Index;
+        public string Name;
+        public byte PercentFull;
+        public byte Timezone;
+        public int Ping = -1;
+        public int PacketLoss;
+        public IPStatus PingStatus;
+
+        private static byte[] _buffData = new byte[32];
+        private static PingOptions _pingOptions = new PingOptions(64, true);
+
+        public void DoPing()
+        {
+            if (_ipAddress != null && !_sending)
+            {
+                if (_resultIndex >= _last10Results.Length)
+                {
+                    _resultIndex = 0;
+                }
+
+                _sending = true;
+
+                _pinger.SendAsync
+                (
+                    _ipAddress,
+                    1000,
+                    _buffData,
+                    _pingOptions,
+                    _resultIndex++
+                );
+            }
+        }
+
+        private void PingerOnPingCompleted(object sender, PingCompletedEventArgs e)
+        {
+            int index = (int) e.UserState;
+
+            if (e.Reply != null)
+            {
+                Ping = (int) e.Reply.RoundtripTime;
+                PingStatus = e.Reply.Status;
+
+                _last10Results[index] = e.Reply.Status == IPStatus.Success;
+            }
+
+            //if (index >= _last10Results.Length - 1)
+            {
+                PacketLoss = 0;
+
+                for (int i = 0; i < _resultIndex; i++)
+                {
+                    if (!_last10Results[i])
+                    {
+                        ++PacketLoss;
+                    }
+                }
+
+                PacketLoss = (Math.Max(1, PacketLoss) / Math.Max(1, _resultIndex)) * 100;
+
+                //_resultIndex = 0;
+            }
+
+            _sending = false;
+        }
+
+        public void Dispose()
+        {
+            if (_pinger != null)
+            {
+                _pinger.PingCompleted -= PingerOnPingCompleted;
+
+                if (_sending)
+                {
+                    _pinger.SendAsyncCancel();
+                }
+
+                _pinger.Dispose();
+            }
+        }
     }
 
     internal class CityInfo

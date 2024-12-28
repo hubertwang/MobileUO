@@ -19,6 +19,7 @@ using Microsoft.Xna.Framework;
 using SDL2;
 using GameObject = UnityEngine.GameObject;
 using Texture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
+using ClassicUO.Network.Encryption;
 
 public class ClientRunner : MonoBehaviour
 {
