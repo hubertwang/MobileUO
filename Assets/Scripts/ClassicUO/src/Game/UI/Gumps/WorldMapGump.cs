@@ -1098,14 +1098,16 @@ namespace ClassicUO.Game.UI.Gumps
                         const int OFFSET_PIX = 2;
                         const int OFFSET_PIX_HALF = OFFSET_PIX / 2;
 
-                        int realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
-                        int realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
+                        // MobileUO: remove int or else world map gump breaks
+                        realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
+                        realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
 
                         int fixedWidth = MapLoader.Instance.MapBlocksSize[World.MapIndex, 0];
                         int fixedHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
 
                         int size = (realWidth + OFFSET_PIX) * (realHeight + OFFSET_PIX);
-                        Color[] buffer = new Color[size];
+                        // MobileUO: remove Color[] or else world map gump breaks
+                        buffer = new Color[size];
                         sbyte[] allZ = new sbyte[size];
 
                         int bx, by, mapX, mapY, x, y;
