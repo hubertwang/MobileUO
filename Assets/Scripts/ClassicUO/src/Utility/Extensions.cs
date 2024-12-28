@@ -50,8 +50,7 @@ namespace ClassicUO.Utility
         {
             if (handler != null)
             {
-                Task.Run(() => handler(sender, EventArgs.Empty))
-                    .Catch();
+                Task.Run(() => handler(sender, EventArgs.Empty)).Catch();
             }
         }
 
@@ -59,8 +58,7 @@ namespace ClassicUO.Utility
         {
             if (handler != null)
             {
-                Task.Run(() => handler(sender, e))
-                    .Catch();
+                Task.Run(() => handler(sender, e)).Catch();
             }
         }
 

@@ -38,14 +38,18 @@ namespace ClassicUO.IO.Audio
         private MP3Stream m_Stream;
         private readonly byte[] m_WaveBuffer = new byte[NUMBER_OF_PCM_BYTES_TO_READ_PER_CHUNK];
 
-        public UOMusic(int index, string name, bool loop)
-            : base(name, index)
+        public UOMusic(int index, string name, bool loop) : base(name, index)
         {
             m_Repeat = loop;
             m_Playing = false;
             Channels = AudioChannels.Stereo;
             Delay = 0;
-            Path = System.IO.Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, Client.Version > ClientVersion.CV_5090 ? $"Music/Digital/{Name}.mp3" : $"music/{Name}.mp3");
+
+            Path = System.IO.Path.Combine
+            (
+                Settings.GlobalSettings.UltimaOnlineDirectory,
+                Client.Version > ClientVersion.CV_5090 ? $"Music/Digital/{Name}.mp3" : $"music/{Name}.mp3"
+            );
         }
 
         private string Path { get; }
@@ -61,7 +65,7 @@ namespace ClassicUO.IO.Audio
         {
             try
             {
-                if (m_Playing && _sound_instance != null)
+                if (m_Playing && SoundInstance != null)
                 {
                     int bytesReturned = m_Stream.Read(m_WaveBuffer, 0, m_WaveBuffer.Length);
 
@@ -98,7 +102,7 @@ namespace ClassicUO.IO.Audio
         {
             if (m_Playing)
             {
-                if (_sound_instance == null)
+                if (SoundInstance == null)
                 {
                     Stop();
 
@@ -106,16 +110,16 @@ namespace ClassicUO.IO.Audio
                 }
 
                 // MobileUO: commented out
-                //while (_sound_instance.PendingBufferCount < 3)
+                //while (SoundInstance.PendingBufferCount < 3)
                 //{
                 //    byte[] buffer = GetBuffer();
 
-                //    if (_sound_instance.IsDisposed || buffer == null)
+                //    if (SoundInstance.IsDisposed || buffer == null)
                 //    {
                 //        break;
                 //    }
 
-                //    _sound_instance.SubmitBuffer(buffer);
+                //    SoundInstance.SubmitBuffer(buffer);
                 //}
             }
         }

@@ -47,8 +47,7 @@ namespace ClassicUO.Game.UI.Controls
         private bool _entered;
         private readonly RenderedText[] _fontTexture;
         private readonly ushort[] _gumpGraphics = new ushort[3];
-        private readonly UOTexture32[] _textures = new UOTexture32[3];
-
+        private readonly UOTexture[] _textures = new UOTexture[3];
 
         // MobileUO: NOTE: Added for enlarging small buttons in MobileUO
         private bool enlarged;
@@ -80,7 +79,18 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
-        public Button(int buttonID, ushort normal, ushort pressed, ushort over = 0, string caption = "", byte font = 0, bool isunicode = true, ushort normalHue = ushort.MaxValue, ushort hoverHue = ushort.MaxValue)
+        public Button
+        (
+            int buttonID,
+            ushort normal,
+            ushort pressed,
+            ushort over = 0,
+            string caption = "",
+            byte font = 0,
+            bool isunicode = true,
+            ushort normalHue = ushort.MaxValue,
+            ushort hoverHue = ushort.MaxValue
+        )
         {
             ButtonID = buttonID;
             _gumpGraphics[NORMAL] = normal;
@@ -94,7 +104,7 @@ namespace ClassicUO.Game.UI.Controls
                 _textures[OVER] = GumpsLoader.Instance.GetTexture(over);
             }
 
-            UOTexture32 t = _textures[NORMAL];
+            UOTexture t = _textures[NORMAL];
 
             if (t == null)
             {
@@ -128,7 +138,10 @@ namespace ClassicUO.Game.UI.Controls
             CanCloseWithEsc = false;
         }
 
-        public Button(List<string> parts) : this(parts.Count >= 8 ? int.Parse(parts[7]) : 0, UInt16Converter.Parse(parts[3]), UInt16Converter.Parse(parts[4]))
+        public Button(List<string> parts) : this
+        (
+            parts.Count >= 8 ? int.Parse(parts[7]) : 0, UInt16Converter.Parse(parts[3]), UInt16Converter.Parse(parts[4])
+        )
         {
             X = int.Parse(parts[1]);
             Y = int.Parse(parts[2]);
@@ -165,11 +178,10 @@ namespace ClassicUO.Game.UI.Controls
                 _gumpGraphics[NORMAL] = value;
                 // MobileUO: added if
                 if (_textures[NORMAL] == null) return;
-                Width = _textures[NORMAL]
-                    .Width;
 
-                Height = _textures[NORMAL]
-                    .Height;
+                Width = _textures[NORMAL].Width;
+
+                Height = _textures[NORMAL].Height;
             }
         }
 
@@ -182,11 +194,10 @@ namespace ClassicUO.Game.UI.Controls
                 _gumpGraphics[PRESSED] = value;
                 // MobileUO: added if
                 if (_textures[PRESSED] == null) return;
-                Width = _textures[PRESSED]
-                    .Width;
 
-                Height = _textures[PRESSED]
-                    .Height;
+                Width = _textures[PRESSED].Width;
+
+                Height = _textures[PRESSED].Height;
             }
         }
 
@@ -199,11 +210,9 @@ namespace ClassicUO.Game.UI.Controls
                 _gumpGraphics[OVER] = value;
                 // MobileUO: added if
                 if (_textures[OVER] == null) return;
-                Width = _textures[OVER]
-                    .Width;
+                Width = _textures[OVER].Width;
 
-                Height = _textures[OVER]
-                    .Height;
+                Height = _textures[OVER].Height;
             }
         }
 
@@ -215,9 +224,9 @@ namespace ClassicUO.Game.UI.Controls
 
         public bool ContainsByBounds { get; set; }
 
-        public override void Update(double totalMS, double frameMS)
+        public override void Update(double totalTime, double frameTime)
         {
-            base.Update(totalMS, frameMS);
+            base.Update(totalTime, frameTime);
 
             if (IsDisposed)
             {
@@ -226,7 +235,7 @@ namespace ClassicUO.Game.UI.Controls
 
             for (int i = 0; i < _textures.Length; i++)
             {
-                UOTexture32 t = _textures[i];
+                UOTexture t = _textures[i];
 
                 if (t != null)
                 {
@@ -250,13 +259,13 @@ namespace ClassicUO.Game.UI.Controls
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
-            UOTexture32 texture = GetTextureByState();
+            UOTexture texture = GetTextureByState();
 
             ResetHueVector();
 
-            _hueVector.Z = Alpha;
+            HueVector.Z = Alpha;
 
-            batcher.Draw2D(texture, x, y, Width, Height, ref _hueVector);
+            batcher.Draw2D(texture, x, y, Width, Height, ref HueVector);
 
             if (!string.IsNullOrEmpty(_caption))
             {
@@ -265,7 +274,12 @@ namespace ClassicUO.Game.UI.Controls
                 if (FontCenter)
                 {
                     int yoffset = IsClicked ? 1 : 0;
-                    textTexture.Draw(batcher, x + ((Width - textTexture.Width) >> 1), y + yoffset + ((Height - textTexture.Height) >> 1));
+
+                    textTexture.Draw
+                    (
+                        batcher, x + ((Width - textTexture.Width) >> 1),
+                        y + yoffset + ((Height - textTexture.Height) >> 1)
+                    );
                 }
                 else
                 {
@@ -316,7 +330,7 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
-        private UOTexture32 GetTextureByState()
+        private UOTexture GetTextureByState()
         {
             if (_entered || IsClicked)
             {
@@ -360,10 +374,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            return ContainsByBounds
-                ? base.Contains(x, y)
-                : _textures[NORMAL]
-                    .Contains(x, y);
+            return ContainsByBounds ? base.Contains(x, y) : _textures[NORMAL].Contains(x - Offset.X, y - Offset.Y);
         }
 
         public sealed override void Dispose()

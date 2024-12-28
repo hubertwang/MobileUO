@@ -1394,9 +1394,9 @@ namespace ClassicUO.Renderer
                 CurrentTechnique = Techniques["HueTechnique"];
             }
 
-            protected IsometricEffect(Effect cloneSource) : base(cloneSource)
-            {
-            }
+            //protected IsometricEffect(Effect cloneSource) : base(cloneSource)
+            //{
+            //}
 
 
             public EffectParameter WorldMatrix { get; }

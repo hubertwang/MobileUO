@@ -100,7 +100,8 @@ namespace ClassicUO.Utility
                 return ZLibError.Okay;
             }
 
-            public ZLibError Compress(byte[] dest, ref int destLength, byte[] source, int sourceLength, ZLibQuality quality)
+            public ZLibError Compress
+                (byte[] dest, ref int destLength, byte[] source, int sourceLength, ZLibQuality quality)
             {
                 return Compress(dest, ref destLength, source, sourceLength);
             }

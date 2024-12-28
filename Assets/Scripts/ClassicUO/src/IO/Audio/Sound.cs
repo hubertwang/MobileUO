@@ -80,9 +80,9 @@ namespace ClassicUO.IO.Audio
 
                 float instanceVolume = Math.Max(value - VolumeFactor, 0.0f);
 
-                if (_sound_instance != null && !_sound_instance.IsDisposed)
+                if (SoundInstance != null && !SoundInstance.IsDisposed)
                 {
-                    _sound_instance.Volume = instanceVolume;
+                    SoundInstance.Volume = instanceVolume;
                 }
             }
         }
@@ -97,7 +97,8 @@ namespace ClassicUO.IO.Audio
             }
         }
 
-        public bool IsPlaying => _sound_instance != null && _sound_instance.State == SoundState.Playing && DurationTime > Time.Ticks;
+        public bool IsPlaying => SoundInstance != null && SoundInstance.State == SoundState.Playing &&
+                                 DurationTime > Time.Ticks;
 
         public int CompareTo(Sound other)
         {
@@ -106,21 +107,21 @@ namespace ClassicUO.IO.Audio
 
         public void Dispose()
         {
-            if (_sound_instance != null)
+            if (SoundInstance != null)
             {
-                _sound_instance.BufferNeeded -= OnBufferNeeded;
+                SoundInstance.BufferNeeded -= OnBufferNeeded;
 
-                if (!_sound_instance.IsDisposed)
+                if (!SoundInstance.IsDisposed)
                 {
-                    _sound_instance.Stop();
-                    _sound_instance.Dispose();
+                    SoundInstance.Stop();
+                    SoundInstance.Dispose();
                 }
 
-                _sound_instance = null;
+                SoundInstance = null;
             }
         }
 
-        protected DynamicSoundEffectInstance _sound_instance;
+        protected DynamicSoundEffectInstance SoundInstance;
         protected AudioChannels Channels = AudioChannels.Mono;
         protected uint Delay = 250;
 
@@ -150,13 +151,13 @@ namespace ClassicUO.IO.Audio
 
             BeforePlay();
 
-            if (_sound_instance != null && !_sound_instance.IsDisposed)
+            if (SoundInstance != null && !SoundInstance.IsDisposed)
             {
-                _sound_instance.Stop();
+                SoundInstance.Stop();
             }
             else
             {
-                _sound_instance = new DynamicSoundEffectInstance(Frequency, Channels);
+                SoundInstance = new DynamicSoundEffectInstance(Frequency, Channels);
             }
 
 
@@ -167,17 +168,16 @@ namespace ClassicUO.IO.Audio
                 // MobileUO: added distortion fix
                 _lastPlayedTime = Time.Ticks + Delay - DistortionFix;
 
-                _sound_instance.BufferNeeded += OnBufferNeeded;
+                SoundInstance.BufferNeeded += OnBufferNeeded;
                 // MobileUO: keep this version of SubmitBuffer
-                _sound_instance.SubmitBuffer(buffer, this is UOMusic, buffer.Length);
+                SoundInstance.SubmitBuffer(buffer, this is UOMusic, buffer.Length);
                 VolumeFactor = volumeFactor;
                 Volume = volume;
 
-                DurationTime = Time.Ticks + _sound_instance.GetSampleDuration(buffer.Length)
-                                                           .TotalMilliseconds;
+                DurationTime = Time.Ticks + SoundInstance.GetSampleDuration(buffer.Length).TotalMilliseconds;
 
                 // MobileUO: keep this version of Play
-                _sound_instance.Play(Name);
+                SoundInstance.Play(Name);
 
                 return true;
             }
@@ -187,12 +187,12 @@ namespace ClassicUO.IO.Audio
 
         public void Stop()
         {
-            if (_sound_instance != null)
+            if (SoundInstance != null)
             {
                 // MobileUO: set volume
-                _sound_instance.Volume = 0.0f;
-                _sound_instance.BufferNeeded -= OnBufferNeeded;
-                _sound_instance.Stop();
+                SoundInstance.Volume = 0.0f;
+                SoundInstance.BufferNeeded -= OnBufferNeeded;
+                SoundInstance.Stop();
             }
 
             AfterStop();

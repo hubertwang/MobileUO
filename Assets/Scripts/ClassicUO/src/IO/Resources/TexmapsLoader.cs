@@ -30,7 +30,7 @@ using ClassicUO.Utility;
 
 namespace ClassicUO.IO.Resources
 {
-    internal class TexmapsLoader : UOFileLoader<UOTexture32>
+    internal class TexmapsLoader : UOFileLoader<UOTexture>
     {
         // MobileUO: keep these variables for getting map texture
         private readonly uint[] _textmapPixels128 = new uint[128 * 128];
@@ -38,12 +38,12 @@ namespace ClassicUO.IO.Resources
         private static TexmapsLoader _instance;
         private UOFile _file;
 
-        private TexmapsLoader(int count)
-            : base(count)
+        private TexmapsLoader(int count) : base(count)
         {
         }
 
-        public static TexmapsLoader Instance => _instance ?? (_instance = new TexmapsLoader(Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT));
+        public static TexmapsLoader Instance =>
+            _instance ?? (_instance = new TexmapsLoader(Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT));
 
         public override Task Load()
         {
@@ -143,14 +143,14 @@ namespace ClassicUO.IO.Resources
         }
 
         // MobileUO: added keepData parameter
-        public override UOTexture32 GetTexture(uint g, bool keepData = false)
+        public override UOTexture GetTexture(uint g, bool keepData = false)
         {
             if (g >= Resources.Length)
             {
                 return null;
             }
 
-            ref UOTexture32 texture = ref Resources[g];
+            ref UOTexture texture = ref Resources[g];
 
             if (texture == null || texture.IsDisposed)
             {
@@ -162,7 +162,7 @@ namespace ClassicUO.IO.Resources
                     return null;
                 }
 
-                texture = new UOTexture32(size, size);
+                texture = new UOTexture(size, size);
                 texture.SetData(pixels);
 
                 SaveId(g);

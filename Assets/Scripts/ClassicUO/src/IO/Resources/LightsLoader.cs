@@ -28,17 +28,17 @@ using ClassicUO.Utility;
 
 namespace ClassicUO.IO.Resources
 {
-    internal class LightsLoader : UOFileLoader<UOTexture32>
+    internal class LightsLoader : UOFileLoader<UOTexture>
     {
         private static LightsLoader _instance;
         private UOFileMul _file;
 
-        private LightsLoader(int count)
-            : base(count)
+        private LightsLoader(int count) : base(count)
         {
         }
 
-        public static LightsLoader Instance => _instance ?? (_instance = new LightsLoader(Constants.MAX_LIGHTS_DATA_INDEX_COUNT));
+        public static LightsLoader Instance =>
+            _instance ?? (_instance = new LightsLoader(Constants.MAX_LIGHTS_DATA_INDEX_COUNT));
 
         public override Task Load()
         {
@@ -69,14 +69,14 @@ namespace ClassicUO.IO.Resources
         }
 
         // MobileUO: added keepData parameter
-        public override UOTexture32 GetTexture(uint id, bool keepData = false)
+        public override UOTexture GetTexture(uint id, bool keepData = false)
         {
             if (id >= Resources.Length)
             {
                 return null;
             }
 
-            ref UOTexture32 texture = ref Resources[id];
+            ref UOTexture texture = ref Resources[id];
 
             if (texture == null || texture.IsDisposed)
             {
@@ -87,7 +87,7 @@ namespace ClassicUO.IO.Resources
                     return null;
                 }
 
-                texture = new UOTexture32(w, h);
+                texture = new UOTexture(w, h);
                 texture.PushData(pixels);
 
                 SaveId(id);

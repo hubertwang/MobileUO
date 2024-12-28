@@ -153,9 +153,9 @@ public class ClientRunner : MonoBehaviour
 
 	private void OnForceUseXbrChanged(int currentValue)
 	{
-		if (ProfileManager.Current != null)
+		if (ProfileManager.CurrentProfile != null)
 		{
-			ProfileManager.Current.UseXBR = currentValue == (int) PreferenceEnums.ForceUseXbr.On;
+			ProfileManager.CurrentProfile.UseXBR = currentValue == (int) PreferenceEnums.ForceUseXbr.On;
 		}
 	}
 
@@ -389,11 +389,11 @@ public class ClientRunner : MonoBehaviour
     private void OnProfileLoaded()
     {
 	    //Disable auto move on mobile platform
-	    ProfileManager.Current.DisableAutoMove = Application.isMobilePlatform;
+	    ProfileManager.CurrentProfile.DisableAutoMove = Application.isMobilePlatform;
 	    //Prevent stack split gump from appearing on mobile
 	    //ProfileManager.Current.HoldShiftToSplitStack = Application.isMobilePlatform;
 	    //Scale items inside containers by default on mobile (won't have any effect if container scale isn't changed)
-	    ProfileManager.Current.ScaleItemsInsideContainers = Application.isMobilePlatform;
+	    ProfileManager.CurrentProfile.ScaleItemsInsideContainers = Application.isMobilePlatform;
 	    OnForceUseXbrChanged(UserPreferences.ForceUseXbr.CurrentValue);
     }
 

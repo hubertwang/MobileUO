@@ -47,14 +47,8 @@ namespace ClassicUO
                                              Environment.OSVersion.Platform != PlatformID.Win32S &&
                                              Environment.OSVersion.Platform != PlatformID.WinCE;
 
-        public static readonly Version Version = Assembly.GetExecutingAssembly()
-                                                         .GetName()
-                                                         .Version;
+        public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
         // MobileUO: removed readonly
-        public static string ExecutablePath = Path.GetDirectoryName
-        (
-            Assembly.GetEntryAssembly()
-                    ?.Location
-        );
+        public static string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
     }
 }
