@@ -181,10 +181,17 @@ namespace ClassicUO.Renderer
                                 ) * axisDirY;
 
 
-                Draw2D(textureValue,
-                    Mathf.RoundToInt((x + (int) offsetX)), Mathf.RoundToInt((y + (int) offsetY)),
-                    cGlyph.X, cGlyph.Y, cGlyph.Width, cGlyph.Height,
-                    ref color);
+                Draw2D
+                (
+                    textureValue,
+                    x + (int) Math.Round(offsetX),
+                    y + (int) Math.Round(offsetY),
+                    cGlyph.X,
+                    cGlyph.Y,
+                    cGlyph.Width,
+                    cGlyph.Height,
+                    ref color
+                );
 
                 curOffset.X += cKern.Y + cKern.Z;
             }
@@ -308,26 +315,26 @@ namespace ClassicUO.Renderer
         }
 
         [MethodImpl(256)]
-        public void DrawSpriteRotated(Texture2D texture, int x, int y, int destX, int destY, ref XnaVector3 hue, float angle)
+        public void DrawSpriteRotated(Texture2D texture, int x, int y, float width, float height, int destX, int destY, ref XnaVector3 hue, float angle)
         {
             if (texture.UnityTexture == null)
             {
                 return;
             }
-            
-            float ww = texture.Width * 0.5f;
-            float hh = texture.Height * 0.5f;
 
-            float startX = x - (destX + ww);
-            float startY = y - (destY + hh);
+            //float ww = texture.Width * 0.5f;
+            //float hh = texture.Height * 0.5f;
+
+            float startX = x - (destX + width);
+            float startY = y - (destY + height);
 
             float sin = (float) Math.Sin(angle);
             float cos = (float) Math.Cos(angle);
 
-            float sinx = sin * ww;
-            float cosx = cos * ww;
-            float siny = sin * hh;
-            float cosy = cos * hh;
+            float sinx = sin * width;
+            float cosx = cos * width;
+            float siny = sin * height;
+            float cosy = cos * height;
 
             var vertex = new PositionTextureColor4();
 

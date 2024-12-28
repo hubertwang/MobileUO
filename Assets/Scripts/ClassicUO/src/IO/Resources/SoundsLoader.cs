@@ -34,7 +34,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ClassicUO.Configuration;
 using ClassicUO.Data;
 using ClassicUO.Game;
 using ClassicUO.IO.Audio;
@@ -145,7 +147,7 @@ namespace ClassicUO.IO.Resources
                         }
                     }
 
-                    path = UOFileManager.GetUOFilePath(@"Music/Digital/Config.txt");
+                    path = UOFileManager.GetUOFilePath(Client.Version >= ClientVersion.CV_4011C ?  @"Music/Digital/Config.txt" : @"Music/Config.txt");
 
                     if (File.Exists(path))
                     {
@@ -167,7 +169,7 @@ namespace ClassicUO.IO.Resources
                             }
                         }
                     }
-                    else if (Client.Version <= ClientVersion.CV_5090)
+                    else if (Client.Version < ClientVersion.CV_4011C)
                     {
                         _musicData.Add(0, new Tuple<string, bool>("oldult01", true));
                         _musicData.Add(1, new Tuple<string, bool>("create1", false));

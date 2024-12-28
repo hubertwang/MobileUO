@@ -77,7 +77,7 @@ namespace ClassicUO.IO
         public static void Load()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            // MobileUO: refactor load one by one
+                        // MobileUO: refactor load one by one
             // List<Task> tasks = new List<Task>
             // {
             //     AnimationsLoader.Instance.Load(),
@@ -103,6 +103,8 @@ namespace ClassicUO.IO
             //     Log.Panic("Loading files timeout.");
             // }
             
+            UOFilesOverrideMap.Instance.Load(); // need to load this first so that it manages can perform the file overrides if needed
+
             AnimationsLoader.Instance.Load().Wait();
             AnimDataLoader.Instance.Load().Wait();
             ArtLoader.Instance.Load().Wait();
@@ -121,8 +123,7 @@ namespace ClassicUO.IO
             SoundsLoader.Instance.Load().Wait();
             MultiMapLoader.Instance.Load().Wait();
 
-
-
+            Read_Art_def();
 
             UOFileMul verdata = Verdata.File;
 
@@ -313,6 +314,78 @@ namespace ClassicUO.IO
         {
             MapLoader.Instance?.Dispose();
             MapLoader.Instance = newloader;
+        }
+
+        private static void Read_Art_def()
+        {
+            string pathdef = GetUOFilePath("art.def");
+
+            if (File.Exists(pathdef))
+            {
+                TileDataLoader tiledataLoader =  TileDataLoader.Instance;
+                ArtLoader artLoader = ArtLoader.Instance;
+                
+                using (DefReader reader = new DefReader(pathdef, 1))
+                {
+                    while (reader.Next())
+                    {
+                        int index = reader.ReadInt();
+
+                        if (index < 0 || index >= Constants.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
+                        {
+                            continue;
+                        }
+
+                        int[] group = reader.ReadGroup();
+
+                        if (group == null)
+                        {
+                            continue;
+                        }
+
+                        for (int i = 0; i < group.Length; i++)
+                        {
+                            int checkIndex = group[i];
+
+                            if (checkIndex < 0 || checkIndex >= Constants.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
+                            {
+                                continue;
+                            }
+
+                            if (index < artLoader.Entries.Length && checkIndex < artLoader.Entries.Length)
+                            {
+                                ref UOFileIndex currentEntry = ref artLoader.GetValidRefEntry(index);
+                                ref UOFileIndex checkEntry = ref artLoader.GetValidRefEntry(checkIndex);
+
+                                if (currentEntry.Equals(UOFileIndex.Invalid) && !checkEntry.Equals(UOFileIndex.Invalid))
+                                {
+                                    artLoader.Entries[index] = artLoader.Entries[checkIndex];
+                                }
+                            }
+
+                            if (index < Constants.MAX_LAND_DATA_INDEX_COUNT &&
+                                checkIndex < Constants.MAX_LAND_DATA_INDEX_COUNT && 
+                                checkIndex < tiledataLoader.LandData.Length && 
+                                index < tiledataLoader.LandData.Length &&
+                                !tiledataLoader.LandData[checkIndex].Equals(default) &&
+                                tiledataLoader.LandData[index].Equals(default))
+                            {
+                                tiledataLoader.LandData[index] = tiledataLoader.LandData[checkIndex];
+
+                                break;
+                            }
+
+                            if (index >= Constants.MAX_LAND_DATA_INDEX_COUNT && checkIndex >= Constants.MAX_LAND_DATA_INDEX_COUNT &&
+                                tiledataLoader.StaticData[index].Equals(default) && !tiledataLoader.StaticData[checkIndex].Equals(default))
+                            {
+                                tiledataLoader.StaticData[index] = tiledataLoader.StaticData[checkIndex];
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

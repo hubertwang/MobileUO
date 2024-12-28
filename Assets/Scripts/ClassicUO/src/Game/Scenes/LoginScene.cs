@@ -365,6 +365,40 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
+        public int GetServerIndexByName(string name)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                for (int i = 0; i < Servers.Length; i++)
+                {
+                    if (Servers[i].Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        public int GetServerIndexFromSettings()
+        {
+            string name = Settings.GlobalSettings.LastServerName;
+            int index = GetServerIndexByName(name);
+
+            if (index == -1)
+            {
+                index = Settings.GlobalSettings.LastServerNum;
+            }
+
+            if (index < 0 || index >= Servers.Length)
+            {
+                index = 0;
+            }
+
+            return index;
+        }
+
         public void SelectServer(byte index)
         {
             if (CurrentLoginStep == LoginSteps.ServerSelection)
@@ -380,6 +414,7 @@ namespace ClassicUO.Game.Scenes
                 }
 
                 Settings.GlobalSettings.LastServerNum = (ushort) (1 + ServerIndex);
+                Settings.GlobalSettings.LastServerName = Servers[ServerIndex].Name;
                 Settings.GlobalSettings.Save();
 
                 CurrentLoginStep = LoginSteps.LoginInToServer;
@@ -563,7 +598,7 @@ namespace ClassicUO.Game.Scenes
         {
             Log.Warn("Disconnected (login socket)!");
 
-            if (e > 0)
+            if (e != 0)
             {
                 Characters = null;
                 DisposeAllServerEntries();
@@ -603,15 +638,9 @@ namespace ClassicUO.Game.Scenes
             {
                 if (Servers.Length != 0)
                 {
-                    int index = Settings.GlobalSettings.LastServerNum;
+                    int index = GetServerIndexFromSettings();
 
-                    if (index <= 0 || index > Servers.Length)
-                    {
-                        Log.Warn($"Wrong server index: {index}");
-                        index = 1;
-                    }
-
-                    SelectServer((byte) Servers[index - 1].Index);
+                    SelectServer((byte)Servers[index].Index);
                 }
             }
         }
@@ -620,12 +649,23 @@ namespace ClassicUO.Game.Scenes
         {
             ParseCharacterList(ref p);
 
+            if (CurrentLoginStep != LoginSteps.PopUpMessage)
+            {
+                PopupMessage = null;
+            }
             CurrentLoginStep = LoginSteps.CharacterSelection;
             UIManager.GetGump<CharacterSelectionGump>()?.Dispose();
 
             _currentGump?.Dispose();
 
             UIManager.Add(_currentGump = new CharacterSelectionGump());
+            if (!string.IsNullOrWhiteSpace(PopupMessage))
+            {
+                Gump g = null;
+                g = new LoadingGump(PopupMessage, LoginButtons.OK, (but) => g.Dispose()) { IsModal = true };
+                UIManager.Add(g);
+                PopupMessage = null;
+            }
         }
 
         public void ReceiveCharacterList(ref PacketBufferReader p)
@@ -781,8 +821,8 @@ namespace ClassicUO.Game.Scenes
                         cityName,
                         cityBuilding,
                         descriptions != null ? descriptions[i] : string.Empty,
-                        (ushort) oldtowns[i].X,
-                        (ushort) oldtowns[i].Y,
+                        (ushort) oldtowns[i % oldtowns.Length].X,
+                        (ushort) oldtowns[i % oldtowns.Length].Y,
                         0,
                         0,
                         isNew
@@ -925,7 +965,7 @@ namespace ClassicUO.Game.Scenes
     internal class ServerListEntry
     {
         private IPAddress _ipAddress;
-        private readonly Ping _pinger = new Ping();
+        private Ping _pinger = new Ping();
         private bool _sending;
         private readonly bool[] _last10Results = new bool[10];
         private int _resultIndex;
@@ -984,23 +1024,31 @@ namespace ClassicUO.Game.Scenes
 
         public void DoPing()
         {
-            if (_ipAddress != null && !_sending)
+            if (_ipAddress != null && !_sending && _pinger != null)
             {
                 if (_resultIndex >= _last10Results.Length)
                 {
                     _resultIndex = 0;
                 }
 
-                _sending = true;
+                try
+                {
+                    _pinger.SendAsync
+                    (
+                        _ipAddress,
+                        1000,
+                        _buffData,
+                        _pingOptions,
+                        _resultIndex++
+                    );
 
-                _pinger.SendAsync
-                (
-                    _ipAddress,
-                    1000,
-                    _buffData,
-                    _pingOptions,
-                    _resultIndex++
-                );
+                    _sending = true;
+                }
+                catch
+                {
+                    _ipAddress = null;
+                    Dispose();
+                }
             }
         }
 
@@ -1044,10 +1092,16 @@ namespace ClassicUO.Game.Scenes
 
                 if (_sending)
                 {
-                    _pinger.SendAsyncCancel();
+                    try
+                    {
+                        _pinger.SendAsyncCancel();
+                    }
+                    catch { }
+                   
                 }
 
                 _pinger.Dispose();
+                _pinger = null;
             }
         }
     }

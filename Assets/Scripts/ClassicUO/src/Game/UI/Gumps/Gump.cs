@@ -146,16 +146,6 @@ namespace ClassicUO.Game.UI.Gumps
             }
         }
 
-        public virtual void Save(BinaryWriter writer)
-        {
-            // the header         
-            Type type = GetType();
-            ushort typeLen = (ushort) type.FullName.Length;
-            writer.Write(typeLen);
-            writer.WriteUTF8String(type.FullName);
-            writer.Write(X);
-            writer.Write(Y);
-        }
 
         public virtual void Save(XmlTextWriter writer)
         {
@@ -174,10 +164,6 @@ namespace ClassicUO.Game.UI.Gumps
 
             X = 0;
             Y = 0;
-        }
-
-        public virtual void Restore(BinaryReader reader)
-        {
         }
 
         public virtual void Restore(XmlElement xml)
@@ -253,7 +239,8 @@ namespace ClassicUO.Game.UI.Gumps
                 GameActions.ReplyGump
                 (
                     LocalSerial,
-                    MasterGumpSerial != 0 ? MasterGumpSerial : ServerSerial,
+                    // Seems like MasterGump serial does not work as expected.
+                    /*MasterGumpSerial != 0 ? MasterGumpSerial :*/ ServerSerial,
                     buttonID,
                     switches.ToArray(),
                     entries.ToArray()

@@ -643,6 +643,7 @@ namespace ClassicUO.Game.Managers
                 if (attemptAlwaysSuccessful || !_isDraggingControl)
                 {
                     DraggingControl = dragTarget;
+                    // MobileUO: don't change this or dragging gumps goes wrong
                     _dragOrigin = Mouse.Position;
 
                     for (int i = 0; i < (int) MouseButtonType.Size; i++)

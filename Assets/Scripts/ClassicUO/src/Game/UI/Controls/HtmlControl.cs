@@ -314,7 +314,7 @@ namespace ClassicUO.Game.UI.Controls
                         ref WebLinkRect link = ref _gameText.Links[i];
 
                         bool inbounds = link.Bounds.Contains(x, (_scrollBar == null ? 0 : _scrollBar.Value) + y);
-
+                        
                         if (inbounds && FontsLoader.Instance.GetWebLink(link.LinkID, out WebLink result))
                         {
                             Log.Info("LINK CLICKED: " + result.Link);
@@ -328,6 +328,8 @@ namespace ClassicUO.Game.UI.Controls
                             {
                                 PlatformHelper.LaunchBrowser(result.Link);
                             }
+
+                            _gameText.CreateTexture();
 
                             break;
                         }

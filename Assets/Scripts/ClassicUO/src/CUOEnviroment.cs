@@ -56,6 +56,11 @@ namespace ClassicUO
 
         public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
         // MobileUO: removed readonly
-        public static string ExecutablePath = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+        public static string ExecutablePath = 
+#if NETFRAMEWORK
+            Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+#else
+            Environment.CurrentDirectory;
+#endif
     }
 }
