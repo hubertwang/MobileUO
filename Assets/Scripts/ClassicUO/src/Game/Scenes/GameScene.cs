@@ -949,8 +949,8 @@ namespace ClassicUO.Game.Scenes
                 batcher.Draw2D
                 (
                     _world_render_target,
-                    0,
-                    0,
+                    posX,
+                    posY,
                     width,
                     height,
                     ref hue
@@ -979,8 +979,8 @@ namespace ClassicUO.Game.Scenes
                 batcher.Draw2D
                 (
                     _lightRenderTarget,
-                    0,
-                    0,
+                    posX,
+                    posY,
                     width,
                     height,
                     ref hue
