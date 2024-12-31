@@ -1187,9 +1187,10 @@ namespace ClassicUO.Game.Scenes
 
                 batcher.Draw2D
                 (
+                    // MobileUO: remove camera bounds to fix mouse selection
                     SolidColorTextureCache.GetTexture(Color.Black),
-                    _selectionStart.X - Camera.Bounds.X,
-                    _selectionStart.Y - Camera.Bounds.Y,
+                    _selectionStart.X,
+                    _selectionStart.Y,
                     Mouse.Position.X - _selectionStart.X,
                     Mouse.Position.Y - _selectionStart.Y,
                     ref _selectionLines
@@ -1199,9 +1200,10 @@ namespace ClassicUO.Game.Scenes
 
                 batcher.DrawRectangle
                 (
+                    // MobileUO: remove camera bounds to fix mouse selection
                     SolidColorTextureCache.GetTexture(Color.DeepSkyBlue),
-                    _selectionStart.X - Camera.Bounds.X,
-                    _selectionStart.Y - Camera.Bounds.Y,
+                    _selectionStart.X,
+                    _selectionStart.Y,
                     Mouse.Position.X - _selectionStart.X,
                     Mouse.Position.Y - _selectionStart.Y,
                     ref _selectionLines
