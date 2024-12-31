@@ -140,14 +140,15 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (Mouse.IsDragging)
             {
-                Point offset = Mouse.LDragOffset;
+                // MobileUO: fix issue with resizing the world viewport window
+                Point offset = Mouse.Position - _scene.Camera.Bounds.Location;
 
-                _lastSize = _savedSize;
+			    _lastSize = _savedSize;
 
-                if (_clicked && offset != Point.Zero)
-                {
-                    int w = _lastSize.X + offset.X;
-                    int h = _lastSize.Y + offset.Y;
+			    if (_clicked && offset != _lastSize)
+			    {
+				    int w = offset.X;
+				    int h = offset.Y;
 
                     // MobileUO: use MinimumViewportWidth and MinimumViewportHeight variables
                     if (w < GameScene.MinimumViewportWidth)
