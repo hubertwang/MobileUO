@@ -258,27 +258,4 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
     }
-
-    // MobileUO: keep only for assistant
-    internal class ScrollAreaItem : Control
-    {
-        public override void Update(double totalMS, double frameMS)
-        {
-            base.Update(totalMS, frameMS);
-
-            if (Children.Count == 0)
-            {
-                Dispose();
-            }
-
-            WantUpdateSize = true;
-        }
-        public override void OnPageChanged()
-        {
-            int maxheight = Children.Count > 0 ? Children.Sum(o => o.IsVisible ? o.Y < 0 ? o.Height + o.Y : o.Height : 0) : 0;
-            IsVisible = maxheight > 0;
-            Height = maxheight;
-            Parent?.OnPageChanged();
-        }
-    }
 }

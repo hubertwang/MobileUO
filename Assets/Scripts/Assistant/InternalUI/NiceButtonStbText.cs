@@ -137,7 +137,7 @@ namespace ClassicUO.Game.UI.Controls
 
         internal static NiceButtonStbText GetSelected(Control p, int group)
         {
-            IEnumerable<NiceButtonStbText> list = p is ScrollArea ? p.FindControls<ScrollAreaItem>().SelectMany(s => s.Children.OfType<NiceButtonStbText>()) : p.FindControls<NiceButtonStbText>();
+            IEnumerable<NiceButtonStbText> list = p is AssistScrollArea ? p.FindControls<ScrollAreaItem>().SelectMany(s => s.Children.OfType<NiceButtonStbText>()) : p.FindControls<NiceButtonStbText>();
 
             foreach (var b in list)
                 if (b._groupnumber == group && b.IsSelected)
