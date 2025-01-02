@@ -154,7 +154,8 @@ namespace ClassicUO.IO.Resources
                 }
 
                 texture = new UOTexture(w, h);
-                texture.PushData(pixels);
+                // MobileUO: added keepData = true parameter
+                texture.PushData(pixels, true);
 
                 SaveId(g);
             }
