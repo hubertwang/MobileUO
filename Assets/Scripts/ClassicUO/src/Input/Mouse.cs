@@ -109,8 +109,6 @@ namespace ClassicUO.Input
 
         public static Point Position;
         
-        // MobileUO: keeping this variable
-        public static Point RealPosition;
 
         public static Point LClickPosition;
 
@@ -136,12 +134,11 @@ namespace ClassicUO.Input
 
         public static bool IsDragging { get; set; }
 
-        // MobileUO: fix for mouse dragging events by using RealPosition
-        public static Point LDragOffset => LButtonPressed ? RealPosition - LClickPosition : Point.Zero;
+        public static Point LDragOffset => LButtonPressed ? Position - LClickPosition : Point.Zero;
 
-        public static Point RDragOffset => RButtonPressed ? RealPosition - RClickPosition : Point.Zero;
+        public static Point RDragOffset => RButtonPressed ? Position - RClickPosition : Point.Zero;
 
-        public static Point MDragOffset => MButtonPressed ? RealPosition - MClickPosition : Point.Zero;
+        public static Point MDragOffset => MButtonPressed ? Position - MClickPosition : Point.Zero;
 
         public static bool MouseInWindow { get; set; }
 
@@ -165,9 +162,6 @@ namespace ClassicUO.Input
             Position.Y = (int) ((double) Position.Y * Client.Game.GraphicManager.PreferredBackBufferHeight / Client.Game.Window.ClientBounds.Height);
 
             IsDragging = LButtonPressed || RButtonPressed || MButtonPressed;
-
-            // MobileUO: needed for mouse fix
-            RealPosition = Position;
         }
     }
 }

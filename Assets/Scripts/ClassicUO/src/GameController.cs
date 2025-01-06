@@ -571,6 +571,7 @@ namespace ClassicUO
             }
         }
 
+        // MobileUO: NOTE: SDL events are not handled in Unity! This function will NOT be hit!
         private int HandleSdlEvent(IntPtr userData, IntPtr ptr)
         {
             SDL_Event* sdlEvent = (SDL_Event*) ptr;
@@ -1237,7 +1238,7 @@ namespace ClassicUO
             
             if (leftMouseDown)
             {
-                //Mouse.LDropPosition = Mouse.Position;
+                Mouse.LClickPosition = Mouse.Position;
                 Mouse.CancelDoubleClick = false;
                 uint ticks = Time.Ticks;
                 if (Mouse.LastLeftButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks)
@@ -1284,7 +1285,7 @@ namespace ClassicUO
 
             if (rightMouseDown)
             {
-                //Mouse.RDropPosition = Mouse.Position;
+                Mouse.RClickPosition = Mouse.Position;
                 Mouse.CancelDoubleClick = false;
                 uint ticks = Time.Ticks;
 
