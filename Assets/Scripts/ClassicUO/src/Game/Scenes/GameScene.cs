@@ -897,6 +897,9 @@ namespace ClassicUO.Game.Scenes
 
             DrawWorld(batcher, ref matrix, _use_render_target);
 
+            // MobileUO: Return to original scaling
+            batcher.scale = originalBatcherScale;
+
             if (_use_render_target)
             {
                 // MobileUO: commented out
@@ -946,6 +949,7 @@ namespace ClassicUO.Game.Scenes
 
                 batcher.Begin(null, Camera.ViewTransformMatrix);
 
+                // MobileUO: fix game window being deattached from view port
                 batcher.Draw2D
                 (
                     _world_render_target,
@@ -976,6 +980,7 @@ namespace ClassicUO.Game.Scenes
                     batcher.SetBlendState(_darknessBlend.Value);
                 }
 
+                // MobileUO: fix game window being deattached from view port
                 batcher.Draw2D
                 (
                     _lightRenderTarget,
