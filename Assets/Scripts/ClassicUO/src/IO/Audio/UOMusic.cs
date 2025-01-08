@@ -36,7 +36,6 @@ using ClassicUO.Data;
 using ClassicUO.IO.Audio.MP3Sharp;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework.Audio;
-using UnityEditorInternal;
 
 namespace ClassicUO.IO.Audio
 {
