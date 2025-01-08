@@ -36,6 +36,7 @@ using ClassicUO.Data;
 using ClassicUO.IO.Audio.MP3Sharp;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework.Audio;
+using UnityEditorInternal;
 
 namespace ClassicUO.IO.Audio
 {
@@ -116,16 +117,17 @@ namespace ClassicUO.IO.Audio
 
                 // MobileUO: commented out
                 //while (SoundInstance.PendingBufferCount < 3)
-                //{
-                //    byte[] buffer = GetBuffer();
+                {
+                    byte[] buffer = GetBuffer();
 
-                //    if (SoundInstance.IsDisposed || buffer == null)
-                //    {
-                //        break;
-                //    }
+                    if (SoundInstance.IsDisposed || buffer == null)
+                    {
+                        // MobileUO: return instead of break
+                        return;
+                    }
 
-                //    SoundInstance.SubmitBuffer(buffer);
-                //}
+                    SoundInstance.SubmitBuffer(buffer);
+                }
             }
         }
 
