@@ -186,6 +186,9 @@ namespace ClassicUO
             UOFileManager.Load();
             StaticFilters.Load();
 
+            BuffTable.Load();
+            ChairTable.Load();
+
             Log.Trace("Network calibration...");
             PacketHandlers.Load();
             //ATTENTION: you will need to enable ALSO ultimalive server-side, or this code will have absolutely no effect!

@@ -108,7 +108,6 @@ namespace ClassicUO.Input
         }
 
         public static Point Position;
-        
 
         public static Point LClickPosition;
 

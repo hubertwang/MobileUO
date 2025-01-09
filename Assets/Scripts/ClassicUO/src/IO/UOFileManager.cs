@@ -48,36 +48,44 @@ namespace ClassicUO.IO
     {
         public static string GetUOFilePath(string file)
         {
-            var filePath = Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
+            // MobileUO: TODO: do we need to keep or merge this into the other new function??
+            //var filePath = Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
             
-            // MobileUO: NOTE: Potential fix file not found issues on iOS due to filesystem case sensitivity
-            //If the file with the given name doesn't exist, check for it with alternative casing
-            if (File.Exists(filePath) == false)
+            //// MobileUO: NOTE: Potential fix file not found issues on iOS due to filesystem case sensitivity
+            ////If the file with the given name doesn't exist, check for it with alternative casing
+            //if (File.Exists(filePath) == false)
+            //{
+            //    var firstChar = file[0];
+            //    if (char.IsUpper(firstChar))
+            //    {
+            //        file = char.ToLowerInvariant(firstChar) + file.Substring(1);
+            //    }
+            //    else
+            //    {
+            //        file = char.ToUpperInvariant(firstChar) + file.Substring(1);
+            //    }
+            //    var newFilePath = Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
+            //    if (File.Exists(newFilePath))
+            //    {
+            //        return newFilePath;
+            //    }
+            //}
+
+            //return filePath;
+
+            if (UOFilesOverrideMap.Instance.TryGetValue(file.ToLowerInvariant(), out string uoFilePath))
             {
-                var firstChar = file[0];
-                if (char.IsUpper(firstChar))
-                {
-                    file = char.ToLowerInvariant(firstChar) + file.Substring(1);
-                }
-                else
-                {
-                    file = char.ToUpperInvariant(firstChar) + file.Substring(1);
-                }
-                var newFilePath = Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
-                if (File.Exists(newFilePath))
-                {
-                    return newFilePath;
-                }
+                return uoFilePath;
             }
 
-            return filePath;
+            return Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
         }
 
 
         public static void Load()
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-                        // MobileUO: refactor load one by one
+            // MobileUO: refactor load one by one
             // List<Task> tasks = new List<Task>
             // {
             //     AnimationsLoader.Instance.Load(),
@@ -109,7 +117,7 @@ namespace ClassicUO.IO
             AnimDataLoader.Instance.Load().Wait();
             ArtLoader.Instance.Load().Wait();
             MapLoader.Instance.Load().Wait();
-            ClilocLoader.Instance.Load(Settings.GlobalSettings.ClilocFile).Wait();
+            ClilocLoader.Instance.Load(Settings.GlobalSettings.Language).Wait();
             GumpsLoader.Instance.Load().Wait();
             FontsLoader.Instance.Load().Wait();
             HuesLoader.Instance.Load().Wait();
@@ -199,13 +207,15 @@ namespace ClassicUO.IO
 
                             if (skill != null)
                             {
-                                DataReader reader = new DataReader();
-                                reader.SetData(verdata.StartAddress, verdata.Length);
+                                unsafe
+                                {
+                                    StackDataReader reader = new StackDataReader(new ReadOnlySpan<byte>((byte*)verdata.StartAddress, (int) verdata.Length));
 
-                                skill.HasAction = reader.ReadBool();
-                                skill.Name = reader.ReadASCII((int) (vh.Length - 1));
+                                    skill.HasAction = reader.ReadUInt8() != 0;
+                                    skill.Name = reader.ReadASCII((int)(vh.Length - 1));
 
-                                reader.ReleaseData();
+                                    reader.Release();
+                                }
                             }
                         }
                         else if (vh.FileID == 30)

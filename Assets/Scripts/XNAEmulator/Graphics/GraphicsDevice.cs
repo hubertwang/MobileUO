@@ -26,7 +26,7 @@ namespace Microsoft.Xna.Framework.Graphics
         public BlendState BlendState { get; set; }
         public DepthStencilState DepthStencilState { get; set; }
         public RasterizerState RasterizerState { get; set; }
-        public Texture2D[] Textures = new Texture2D[3];
+        public Texture2D[] Textures = new Texture2D[4];
         public SamplerStateCollection SamplerStates { get; }
         private PresentationParameters pPublicCachedParams;
         public PresentationParameters PresentationParameters

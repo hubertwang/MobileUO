@@ -32,7 +32,7 @@
 
 using System;
 using System.Runtime.InteropServices;
-using SDL2;
+using ClassicUO.Utility.Platforms;
 
 namespace ClassicUO.Utility
 {
@@ -47,7 +47,6 @@ namespace ClassicUO.Utility
             // MobileUO: removed switch (SDL2.SDL.SDL_GetPlatform())
             _compressor = new ManagedUniversal();
         }
-
 
         public static void Decompress(byte[] source, int offset, byte[] dest, int length)
         {

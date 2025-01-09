@@ -98,7 +98,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     if (Client.Version >= ClientVersion.CV_200)
                     {
-                        NetClient.Socket.Send(new PGameWindowSize((uint) n.X, (uint) n.Y));
+                        NetClient.Socket.Send_GameWindowSize((uint)n.X, (uint)n.Y);
                     }
 
                     _clicked = false;
@@ -143,7 +143,7 @@ namespace ClassicUO.Game.UI.Gumps
                 // MobileUO: fix issue with resizing the world viewport window
                 Point offset = Mouse.Position - _scene.Camera.Bounds.Location;
 
-			    _lastSize = _savedSize;
+                _lastSize = _savedSize;
 
 			    if (_clicked && offset != _lastSize)
 			    {

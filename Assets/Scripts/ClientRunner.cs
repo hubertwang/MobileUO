@@ -196,6 +196,7 @@ public class ClientRunner : MonoBehaviour
 			}
 			Client.Game.GraphicsDevice.Textures[1].UnityTexture.filterMode = FilterMode.Point;
 			Client.Game.GraphicsDevice.Textures[2].UnityTexture.filterMode = FilterMode.Point;
+			Client.Game.GraphicsDevice.Textures[3].UnityTexture.filterMode = FilterMode.Point;
 		}
 	}
 	

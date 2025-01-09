@@ -132,8 +132,9 @@ namespace ClassicUO.Game.UI.Gumps
                 Add(new SelectableReadOnlyBox(FONT, -1, 0, true, FontStyle.None, ScriptTextBox.GREEN_HUE) { X = x + mw, Y = y, Width = w - (40 + mw), Text = $"{inspected.Hue}" });
                 if (inspected.Hue > 0 && inspected.Hue <= HuesLoader.Instance.HuesCount)
                 {
+                    // MobileUO: TODO: ColorBox dropped a parameter in CUO 0.1.9.0, this may need to be revisited
                     for(ushort i = 0; i < 32; ++i)
-                        Add(new ColorBox(3, 14, inspected.Hue, HuesLoader.Instance.GetPolygoneColor(i, inspected.Hue)) { X = 190 + (3 * i), Y = y + 3 });
+                        Add(new ColorBox(3, 14, inspected.Hue/*, HuesLoader.Instance.GetPolygoneColor(i, inspected.Hue)*/) { X = 190 + (3 * i), Y = y + 3 });
                 }
                 y += mh + 2;
                 Add(new Label("Position (X Y Z):", true, ScriptTextBox.GRAY_HUE, mw) { X = x, Y = y });
@@ -3741,7 +3742,8 @@ namespace ClassicUO.Game.UI.Gumps
             if (hue != 0xFFFF)
                 color = HuesLoader.Instance.GetPolygoneColor(12, hue);
 
-            ClickableColorBox box = new ClickableColorBox(x, y, 13, 14, hue, color);
+            // MobileUO: TODO: ClickableColorBox dropped a parameter in CUO 0.1.9.0, this may need to be revisited
+            ClickableColorBox box = new ClickableColorBox(x, y, 13, 14, hue/*, color*/);
             Add(box, page);
             Add(new Label(text, true, ScriptTextBox.GRAY_HUE) { X = x + box.Width * 2, Y = y }, page);
             return box;
@@ -3901,8 +3903,9 @@ namespace ClassicUO.Game.UI.Gumps
         internal ushort HLTargetHue => _highlightCurrentTarget.IsChecked ? _highlightCurrentTargetHue.Hue : (ushort)0;
         internal ushort HighlightCurrentTargetHue
         {
+            // MobileUO: TODO: ClickableColorBox dropped SetColor in CUO 0.1.9.0, this may need to be revisited
             get => _highlightCurrentTargetHue.Hue;
-            set => _highlightCurrentTargetHue.SetColor(value, HuesLoader.Instance.GetPolygoneColor(12, value));
+            set => _highlightCurrentTargetHue.Hue = value; //SetColor(value, HuesLoader.Instance.GetPolygoneColor(12, value));
         }
 
         internal bool BlockInvalidHeal

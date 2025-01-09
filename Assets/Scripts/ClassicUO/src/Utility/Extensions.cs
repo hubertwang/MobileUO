@@ -167,65 +167,42 @@ namespace ClassicUO.Utility
             return inrect;
         }
 
-        public static string MakeSafe(this string s)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (StringHelper.IsSafeChar(s[i]))
-                {
-                    sb.Append(s[i]);
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        public static string ReadUTF8String(this BinaryReader reader, int length)
-        {
-            byte[] data = new byte[length];
-            reader.Read(data, 0, length);
-
-            return Encoding.UTF8.GetString(data);
-        }
-
-        public static void WriteUTF8String(this BinaryWriter writer, string str)
-        {
-            writer.Write(Encoding.UTF8.GetBytes(str));
-        }
-
         // MobileUO: NOTE: Commented out because ZipArchive is not available in Unity's .NET version, it seems, and also not needed
         //NOTE: since this is only used by the Updater class
-        // public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, bool overwrite)
-        // {
-        //     if (!overwrite)
-        //     {
-        //         archive.ExtractToDirectory(destinationDirectoryName);
-        //         return;
-        //     }
-        //
-        //     DirectoryInfo di = Directory.CreateDirectory(destinationDirectoryName);
-        //     string destinationDirectoryFullPath = di.FullName;
-        //
-        //     foreach (ZipArchiveEntry file in archive.Entries)
-        //     {
-        //         string completeFileName = Path.GetFullPath(Path.Combine(destinationDirectoryFullPath, file.FullName));
-        //
-        //         if (!completeFileName.StartsWith(destinationDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
-        //         {
-        //             throw new IOException("Trying to extract file outside of destination directory. See this link for more info: https://snyk.io/research/zip-slip-vulnerability");
-        //         }
-        //
-        //         // Assuming Empty for Directory
-        //         if (file.Name == "")
-        //         {
-        //             Directory.CreateDirectory(Path.GetDirectoryName(completeFileName));
-        //             continue;
-        //         }
-        //         file.ExtractToFile(completeFileName, true);
-        //     }
-        // }
+//#if NETFRAMEWORK
+//        public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, bool overwrite)
+//        {
+//            if (!overwrite)
+//            {
+//                archive.ExtractToDirectory(destinationDirectoryName);
+
+//                return;
+//            }
+
+//            DirectoryInfo di = Directory.CreateDirectory(destinationDirectoryName);
+//            string destinationDirectoryFullPath = di.FullName;
+
+//            foreach (ZipArchiveEntry file in archive.Entries)
+//            {
+//                string completeFileName = Path.GetFullPath(Path.Combine(destinationDirectoryFullPath, file.FullName));
+
+//                if (!completeFileName.StartsWith(destinationDirectoryFullPath, StringComparison.OrdinalIgnoreCase))
+//                {
+//                    throw new IOException("Trying to extract file outside of destination directory. See this link for more info: https://snyk.io/research/zip-slip-vulnerability");
+//                }
+
+//                // Assuming Empty for Directory
+//                if (file.Name == "")
+//                {
+//                    Directory.CreateDirectory(Path.GetDirectoryName(completeFileName));
+
+//                    continue;
+//                }
+
+//                file.ExtractToFile(completeFileName, true);
+//            }
+//        }
+//#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToHex(this uint serial)

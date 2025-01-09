@@ -22,12 +22,15 @@ namespace ClassicUO.Renderer
 {
     internal sealed class UltimaBatcher2D : IDisposable
     {
+        private static readonly float[] _cornerOffsetX = new float[] { 0.0f, 1.0f, 0.0f, 1.0f };
+        private static readonly float[] _cornerOffsetY = new float[] { 0.0f, 0.0f, 1.0f, 1.0f };
+
         private BlendState _blendState;
         private SamplerState _sampler;
         private RasterizerState _rasterizerState;
         private bool _started;
         private DepthStencilState _stencil;
-        private bool _useScissor;
+        //private bool _useScissor;
         private int _numSprites;
         private Matrix _transformMatrix;
         private Matrix _projectionMatrix = new Matrix(0f,                         //(float)( 2.0 / (double)viewport.Width ) is the actual value we will use
@@ -49,6 +52,7 @@ namespace ClassicUO.Renderer
         private static readonly int Hue = Shader.PropertyToID("_Hue");
         private static readonly int HueTex1 = Shader.PropertyToID("_HueTex1");
         private static readonly int HueTex2 = Shader.PropertyToID("_HueTex2");
+        private static readonly int HueTex3 = Shader.PropertyToID("_HueTex3");
         private static readonly int UvMirrorX = Shader.PropertyToID("_uvMirrorX");
         private static readonly int Scissor = Shader.PropertyToID("_Scissor");
         private static readonly int ScissorRect = Shader.PropertyToID("_ScissorRect");
@@ -77,6 +81,8 @@ namespace ClassicUO.Renderer
             hueMaterial = new Material(UnityEngine.Resources.Load<Shader>("HueShader"));
             xbrMaterial = new Material(UnityEngine.Resources.Load<Shader>("XbrShader"));
         }
+
+        public Matrix TransformMatrix => _transformMatrix;
 
         private MatrixEffect DefaultEffect { get; }
 
@@ -315,59 +321,60 @@ namespace ClassicUO.Renderer
         }
 
         [MethodImpl(256)]
-        public void DrawSpriteRotated(Texture2D texture, int x, int y, float width, float height, int destX, int destY, ref XnaVector3 hue, float angle)
+        public void DrawSpriteRotated(Texture2D texture, int x, int y, float width, float height, ref XnaVector3 hue, float angle)
         {
             if (texture.UnityTexture == null)
             {
                 return;
             }
 
-            //float ww = texture.Width * 0.5f;
-            //float hh = texture.Height * 0.5f;
-
-            float startX = x - (destX + width);
-            float startY = y - (destY + height);
-
-            float sin = (float) Math.Sin(angle);
-            float cos = (float) Math.Cos(angle);
-
-            float sinx = sin * width;
-            float cosx = cos * width;
-            float siny = sin * height;
-            float cosy = cos * height;
-
             var vertex = new PositionTextureColor4();
 
-            vertex.Position0.x = startX;
-            vertex.Position0.y = startY;
-            vertex.Position0.x += cosx - -siny;
-            vertex.Position0.y -= sinx + -cosy;
-            vertex.TextureCoordinate0.x = 0;
-            vertex.TextureCoordinate0.y = 0;
+            float sin = (float)Math.Sin(angle);
+            float cos = (float)Math.Cos(angle);
+
+             // Rotation Calculations
+            float rotationMatrix1X = cos;
+            float rotationMatrix1Y = sin;
+            float rotationMatrix2X = -sin;
+            float rotationMatrix2Y = cos;
+
+            var cornerX = (_cornerOffsetX[0] - 0) * width;
+            var cornerY = (_cornerOffsetY[0] - 0) * height;
+            vertex.Position0.x = x + rotationMatrix2X * cornerY + rotationMatrix1X * cornerX;
+            vertex.Position0.y = y + rotationMatrix2Y * cornerY + rotationMatrix1Y * cornerX;
+            vertex.Normal0.x = 0;
+            vertex.Normal0.y = 0;
+            vertex.Normal0.z = 1;
+            vertex.TextureCoordinate0.x = _cornerOffsetX[0];
+            vertex.TextureCoordinate0.y = _cornerOffsetY[0];
             vertex.TextureCoordinate0.z = 0;
 
-            vertex.Position1.x = startX;
-            vertex.Position1.y = startY;
-            vertex.Position1.x += cosx - siny;
-            vertex.Position1.y += -sinx + -cosy;
-            vertex.TextureCoordinate1.x = 0;
-            vertex.TextureCoordinate1.y = 1;
+            cornerX = (_cornerOffsetX[1] - 0) * width;
+            cornerY = (_cornerOffsetY[1] - 0) * height;
+            vertex.Position1.x = x + rotationMatrix2X * cornerY + rotationMatrix1X * cornerX;
+            vertex.Position1.y = y + rotationMatrix2Y * cornerY + rotationMatrix1Y * cornerX;
+            vertex.Normal1.x = 0;
+            vertex.Normal1.y = 0;
+            vertex.Normal1.z = 1;
+            vertex.TextureCoordinate1.x = _cornerOffsetX[1];
+            vertex.TextureCoordinate1.y = _cornerOffsetY[1];
             vertex.TextureCoordinate1.z = 0;
 
-            vertex.Position2.x = startX;
-            vertex.Position2.y = startY;
-            vertex.Position2.x += -cosx - -siny;
-            vertex.Position2.y += sinx + cosy;
-            vertex.TextureCoordinate2.x = 1;
-            vertex.TextureCoordinate2.y = 0;
+            cornerX = (_cornerOffsetX[2] - 0) * width;
+            cornerY = (_cornerOffsetY[2] - 0) * height;
+            vertex.Position2.x = x + rotationMatrix2X * cornerY + rotationMatrix1X * cornerX;
+            vertex.Position2.y = y + rotationMatrix2Y * cornerY + rotationMatrix1Y * cornerX;
+            vertex.TextureCoordinate2.x = _cornerOffsetX[2];
+            vertex.TextureCoordinate2.y = _cornerOffsetY[2];
             vertex.TextureCoordinate2.z = 0;
 
-            vertex.Position3.x = startX;
-            vertex.Position3.y = startY;
-            vertex.Position3.x += -cosx - siny;
-            vertex.Position3.y += sinx + -cosy;
-            vertex.TextureCoordinate3.x = 1;
-            vertex.TextureCoordinate3.y = 1;
+            cornerX = (_cornerOffsetX[3] - 0) * width;
+            cornerY = (_cornerOffsetY[3] - 0) * height;
+            vertex.Position3.x = x + rotationMatrix2X * cornerY + rotationMatrix1X * cornerX;
+            vertex.Position3.y = y + rotationMatrix2Y * cornerY + rotationMatrix1Y * cornerX;
+            vertex.TextureCoordinate3.x = _cornerOffsetX[3];
+            vertex.TextureCoordinate3.y = _cornerOffsetY[3];
             vertex.TextureCoordinate3.z = 0;
 
             vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
@@ -375,8 +382,16 @@ namespace ClassicUO.Renderer
             RenderVertex(vertex, texture, hue);
         }
 
+        public struct YOffsets
+        {
+            public int Top;
+            public int Right;
+            public int Left;
+            public int Bottom;
+        }
+
         [MethodImpl(256)]
-        public bool DrawSpriteLand(Texture2D texture, int x, int y, ref Rectangle rect, ref XnaVector3 normal0, ref XnaVector3 normal1, ref XnaVector3 normal2, ref XnaVector3 normal3, ref XnaVector3 hue)
+        public bool DrawSpriteLand(Texture2D texture, int x, int y, ref YOffsets yOffsets, ref XnaVector3 normalTop, ref XnaVector3 normalRight, ref XnaVector3 normalLeft, ref XnaVector3 normalBottom, ref XnaVector3 hue)
         {
             if (texture.UnityTexture == null)
             {
@@ -398,28 +413,32 @@ namespace ClassicUO.Renderer
             vertex.TextureCoordinate3.x = vertex.TextureCoordinate3.y = 1;
             vertex.TextureCoordinate3.z = 0;
 
+            // Top
             vertex.Position0.x = x + 22;
-            vertex.Position0.y = y - rect.Left;
+            vertex.Position0.y = y - yOffsets.Top;
             vertex.Position0.z = 0;
 
+            // Right
             vertex.Position1.x = x + 44;
-            vertex.Position1.y = y + (22 - rect.Bottom);
+            vertex.Position1.y = y + (22 - yOffsets.Right);
             vertex.Position1.z = 0;
 
+            // Left
             vertex.Position2.x = x;
-            vertex.Position2.y = y + (22 - rect.Top);
+            vertex.Position2.y = y + (22 - yOffsets.Left);
             vertex.Position2.z = 0;
 
+            // Bottom
             vertex.Position3.x = x + 22;
-            vertex.Position3.y = y + (44 - rect.Right);
+            vertex.Position3.y = y + (44 - yOffsets.Bottom);
             vertex.Position3.z = 0;
 
             vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
 
-            vertex.Normal0 = normal0;
-            vertex.Normal1 = normal1;
-            vertex.Normal3 = normal2; // right order!
-            vertex.Normal2 = normal3;
+            vertex.Normal0 = normalTop;
+            vertex.Normal1 = normalRight;
+            vertex.Normal2 = normalLeft;
+            vertex.Normal3 = normalBottom;
 
             RenderVertex(vertex, texture, hue);
 
@@ -1248,6 +1267,7 @@ namespace ClassicUO.Renderer
         {
             hueMaterial.SetTexture(HueTex1, GraphicsDevice.Textures[1].UnityTexture);
             hueMaterial.SetTexture(HueTex2, GraphicsDevice.Textures[2].UnityTexture);
+            hueMaterial.SetTexture(HueTex3, GraphicsDevice.Textures[3].UnityTexture);
             Begin(null, Matrix.Identity);
         }
 
@@ -1323,18 +1343,31 @@ namespace ClassicUO.Renderer
 
             // GraphicsDevice.RasterizerState = _useScissor ? _rasterizerState : RasterizerState.CullNone;
             // GraphicsDevice.SamplerStates[0] = _sampler;
-            hueMaterial.SetFloat(Scissor, _useScissor ? 1 : 0);
-            if (_useScissor)
-            {
-                var scissorRect = GraphicsDevice.ScissorRectangle;
-                var scissorVector4 = new Vector4(scissorRect.X * scale,
-                    scissorRect.Y * scale,
-                    scissorRect.X * scale + scissorRect.Width * scale,
-                    scissorRect.Y * scale + scissorRect.Height * scale);
-                hueMaterial.SetVector(ScissorRect, scissorVector4);
-            }
+
+            // MobileUO: TODO: useScissor was removed in CUO 0.1.9.0 - will this cause issues? we don't have 
+            //hueMaterial.SetFloat(Scissor, _useScissor ? 1 : 0);
+            //if (_useScissor)
+            //{
+            //    var scissorRect = GraphicsDevice.ScissorRectangle;
+            //    var scissorVector4 = new Vector4(scissorRect.X * scale,
+            //        scissorRect.Y * scale,
+            //        scissorRect.X * scale + scissorRect.Width * scale,
+            //        scissorRect.Y * scale + scissorRect.Height * scale);
+            //    hueMaterial.SetVector(ScissorRect, scissorVector4);
+            //}
+
+            GraphicsDevice.RasterizerState = _rasterizerState;
+            GraphicsDevice.SamplerStates[0] = _sampler;
+            GraphicsDevice.SamplerStates[1] = SamplerState.PointClamp;
+            GraphicsDevice.SamplerStates[2] = SamplerState.PointClamp;
+            GraphicsDevice.SamplerStates[3] = SamplerState.PointClamp;
 
             SetMatrixForEffect(DefaultEffect);
+        }
+
+        private void Flush()
+        {
+            ApplyStates();
         }
 
         private void SetMatrixForEffect(MatrixEffect effect)
@@ -1349,15 +1382,76 @@ namespace ClassicUO.Renderer
             effect.ApplyStates(matrix);
         }
 
+        public bool ClipBegin(int x, int y, int width, int height)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                return false;
+            }
+
+            Rectangle scissor = ScissorStack.CalculateScissors
+            (
+                TransformMatrix,
+                x,
+                y,
+                width,
+                height
+            );
+
+            // MobileUO: TODO: add it?
+            Flush();
+
+            if (ScissorStack.PushScissors(GraphicsDevice, scissor))
+            {
+                EnableScissorTest(true);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public void ClipEnd()
+        {
+            EnableScissorTest(false);
+            ScissorStack.PopScissors(GraphicsDevice);
+
+            // MobileUO: TODO: add it?
+            Flush();
+        }
+
         public void EnableScissorTest(bool enable)
         {
-            if (enable == _useScissor)
-                return;
+            // MobileUO: TODO: will this cause issues?
+            //if (enable == _useScissor)
+            //    return;
 
-            if (!enable && _useScissor && ScissorStack.HasScissors)
-                return;
+            //if (!enable && _useScissor && ScissorStack.HasScissors)
+            //    return;
 
-            _useScissor = enable;
+            //_useScissor = enable;
+
+            // MobileUO: TODO: 2025-01-09: GraphicsDevice.RasterizerState is null. it isn't getting initialized
+            // I think we are missing an ApplyStates() somewhere before this call
+            // Compare UnityBatcher vs Batcher2D more closely
+            bool rasterize = GraphicsDevice.RasterizerState.ScissorTestEnable;
+
+            if (ScissorStack.HasScissors)
+            {
+                enable = true;
+            }
+
+            if (enable == rasterize)
+            {
+                return;
+            }
+
+            // MobileUO: TODO: add it?
+            //Flush();
+
+            GraphicsDevice.RasterizerState.ScissorTestEnable = enable;
+
+            // MobileUO: TODO: this isn't in Batcher2D.cs
             ApplyStates();
         }
 
@@ -1375,7 +1469,8 @@ namespace ClassicUO.Renderer
 
         public void SetSampler(SamplerState sampler)
         {
-            //Flush(); // TODO: add it?
+            // MobileUO: TODO: add it?
+            //Flush();
 
             _sampler = sampler ?? SamplerState.PointClamp;
         }

@@ -201,7 +201,7 @@ namespace ClassicUO.Network
 
             PluginHeader header = new PluginHeader
             {
-                ClientVersion = (int) Client.Version,
+                ClientVersion = (int)Client.Version,
                 Recv = Marshal.GetFunctionPointerForDelegate(_recv),
                 Send = Marshal.GetFunctionPointerForDelegate(_send),
                 GetPacketLength = Marshal.GetFunctionPointerForDelegate(_getPacketLength),
@@ -277,7 +277,7 @@ namespace ClassicUO.Network
                         return;
                     }
 
-                    meth.Invoke(null, new object[] { (IntPtr) func });
+                    meth.Invoke(null, new object[] { (IntPtr)func });
                 }
                 catch (Exception err)
                 {
@@ -412,7 +412,10 @@ namespace ClassicUO.Network
 
             IsValid = true;
 
-            _onInitialize?.Invoke();
+            if (_onInitialize != null)
+            {
+                _onInitialize();
+            }
         }
 
         private static string GetUOFilePath()
@@ -442,7 +445,7 @@ namespace ClassicUO.Network
             {
                 ref StaticTiles st = ref TileDataLoader.Instance.StaticData[index];
 
-                flags = (ulong) st.Flags;
+                flags = (ulong)st.Flags;
                 weight = st.Weight;
                 layer = st.Layer;
                 count = st.Count;
@@ -463,7 +466,7 @@ namespace ClassicUO.Network
             {
                 ref LandTiles st = ref TileDataLoader.Instance.LandData[index];
 
-                flags = (ulong) st.Flags;
+                flags = (ulong)st.Flags;
                 textid = st.TexID;
                 name = st.Name;
 
@@ -490,7 +493,7 @@ namespace ClassicUO.Network
 
         private static bool RequestMove(int dir, bool run)
         {
-            return World.Player.Walk((Direction) dir, run);
+            return World.Player.Walk((Direction)dir, run);
         }
 
         private static bool GetPlayerPosition(out int x, out int y, out int z)
@@ -513,12 +516,15 @@ namespace ClassicUO.Network
         {
             foreach (Plugin t in Plugins)
             {
-                t._tick?.Invoke();
+                if (t._tick != null)
+                {
+                    t._tick();
+                }
             }
         }
 
 
-        internal static bool ProcessRecvPacket(ref byte[] data, ref int length)
+        internal static bool ProcessRecvPacket(byte[] data, ref int length)
         {
             bool result = true;
 
@@ -531,16 +537,24 @@ namespace ClassicUO.Network
                         result = false;
                     }
                 }
-                else if (plugin._onRecv != null && !plugin._onRecv(ref data, ref length))
+                else if (plugin._onRecv != null)
                 {
-                    result = false;
+                    byte[] tmp = new byte[length];
+                    Array.Copy(data, tmp, length);
+
+                    if (!plugin._onRecv(ref tmp, ref length))
+                    {
+                        result = false;
+                    }
+
+                    Array.Copy(tmp, data, length);
                 }
             }
 
             return result;
         }
 
-        internal static bool ProcessSendPacket(ref byte[] data, ref int length)
+        internal static bool ProcessSendPacket(byte[] data, ref int length)
         {
             bool result = true;
 
@@ -553,9 +567,17 @@ namespace ClassicUO.Network
                         result = false;
                     }
                 }
-                else if (plugin._onSend != null && !plugin._onSend(ref data, ref length))
+                else if (plugin._onSend != null)
                 {
-                    result = false;
+                    byte[] tmp = new byte[length];
+                    Array.Copy(data, tmp, length);
+
+                    if (!plugin._onSend(ref tmp, ref length))
+                    {
+                        result = false;
+                    }
+
+                    Array.Copy(tmp, data, length);
                 }
             }
 
@@ -566,17 +588,23 @@ namespace ClassicUO.Network
         {
             for (int i = 0; i < Plugins.Count; i++)
             {
-                Plugins[i]._onClientClose?.Invoke();
-
-                Plugins.RemoveAt(i--);
+                if (Plugins[i]._onClientClose != null)
+                {
+                    Plugins[i]._onClientClose();
+                }
             }
+
+            Plugins.Clear();
         }
 
         internal static void OnFocusGained()
         {
             foreach (Plugin t in Plugins)
             {
-                t._onFocusGained?.Invoke();
+                if (t._onFocusGained != null)
+                {
+                    t._onFocusGained();
+                }
             }
         }
 
@@ -584,7 +612,10 @@ namespace ClassicUO.Network
         {
             foreach (Plugin t in Plugins)
             {
-                t._onFocusLost?.Invoke();
+                if (t._onFocusLost != null)
+                {
+                    t._onFocusLost();
+                }
             }
         }
 
@@ -593,7 +624,10 @@ namespace ClassicUO.Network
         {
             foreach (Plugin t in Plugins)
             {
-                t._onConnected?.Invoke();
+                if (t._onConnected != null)
+                {
+                    t._onConnected();
+                }
             }
         }
 
@@ -601,7 +635,10 @@ namespace ClassicUO.Network
         {
             foreach (Plugin t in Plugins)
             {
-                t._onDisconnected?.Invoke();
+                if (t._onDisconnected != null)
+                {
+                    t._onDisconnected();
+                }
             }
         }
 
@@ -656,7 +693,10 @@ namespace ClassicUO.Network
 
             foreach (Plugin plugin in Plugins)
             {
-                result |= plugin._on_wnd_proc?.Invoke(e) ?? 0;
+                if (plugin._on_wnd_proc != null)
+                {
+                    result |= plugin._on_wnd_proc(e);
+                }
             }
 
             return result;
@@ -671,7 +711,10 @@ namespace ClassicUO.Network
                     // TODO: need fixed on razor side
                     // if you quick entry (0.5-1 sec after start, without razor window loaded) - breaks CUO.
                     // With this fix - the razor does not work, but client does not crashed.
-                    plugin._onUpdatePlayerPosition?.Invoke(x, y, z);
+                    if (plugin._onUpdatePlayerPosition != null)
+                    {
+                        plugin._onUpdatePlayerPosition(x, y, z);
+                    }
                 }
                 catch
                 {
@@ -689,18 +732,6 @@ namespace ClassicUO.Network
 
         private static bool OnPluginSend(ref byte[] data, ref int length)
         {
-            //if (data != null && data.Length != 0)
-            //{
-            //    // horrible workaround to avoid ghosting item when a plugin sends drag request item
-            //    switch (data[0])
-            //    {
-            //        case 0x07:
-            //            ItemHold.Clear();
-            //            break;
-            //    }
-            //}
-
-
             if (NetClient.LoginSocket.IsDisposed && NetClient.Socket.IsConnected)
             {
                 NetClient.Socket.Send(data, length, true);
@@ -840,7 +871,7 @@ namespace ClassicUO.Network
 
             for (int i = 0; i < length; i++)
             {
-                BatchCommand command = ((BatchCommand*) ptr)[i];
+                BatchCommand command = ((BatchCommand*)ptr)[i];
 
                 switch (command.type)
                 {
@@ -999,7 +1030,7 @@ namespace ClassicUO.Network
 
                         for (int j = 0; j < elements.Length; j++)
                         {
-                            elements[j] = ((VertexElement*) createVertexBufferCommand.Declarations)[j];
+                            elements[j] = ((VertexElement*)createVertexBufferCommand.Declarations)[j];
                         }
 
                         VertexBuffer vb = createVertexBufferCommand.IsDynamic ? new DynamicVertexBuffer(device, new VertexDeclaration(createVertexBufferCommand.Size, elements), createVertexBufferCommand.VertexElementsCount, createVertexBufferCommand.BufferUsage) : new VertexBuffer(device, new VertexDeclaration(createVertexBufferCommand.Size, elements), createVertexBufferCommand.VertexElementsCount, createVertexBufferCommand.BufferUsage);
@@ -1212,7 +1243,7 @@ namespace ClassicUO.Network
 
         [return: MarshalAs(UnmanagedType.I1)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate bool OnGetCliloc(int cliloc, [MarshalAs(UnmanagedType.LPStr)] string args, bool capitalize, [Out] [MarshalAs(UnmanagedType.LPStr)] out string buffer);
+        private delegate bool OnGetCliloc(int cliloc, [MarshalAs(UnmanagedType.LPStr)] string args, bool capitalize, [Out][MarshalAs(UnmanagedType.LPStr)] out string buffer);
 
 
         private struct PluginHeader

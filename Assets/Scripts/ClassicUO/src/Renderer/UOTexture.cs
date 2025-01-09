@@ -49,6 +49,7 @@ namespace ClassicUO.Renderer
         }
 
         public long Ticks { get; set; }
+        // MobileUO: TODO: here and below was removed in 0.1.9.0. Verify if we need to use it elsewhere!
         public uint[] Data { get; private set; }
 
         // MobileUO: added keepData optional parameter

@@ -63,6 +63,7 @@
 
             sampler2D _HueTex1;
             sampler2D _HueTex2;
+            sampler2D _HueTex3;
 
             float3 get_rgb(float red, float hue)
             {
@@ -83,6 +84,13 @@
                 float3 light = normalize(LIGHT_DIRECTION);
                 float3 normal = normalize(norm);
                 return max((dot(normal, light) + 0.5f), 0.0f);
+            }
+
+            float3 get_colored_light(float shader, float gray)
+            {
+	            float2 texcoord = float2(gray, (shader - 0.5) / 63);
+
+	            return tex2D(_HueTex3, texcoord).rgb;
             }
 
             v2f vert (appdata v)

@@ -31,130 +31,136 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
-using ClassicUO.Utility.Platforms;
 
 namespace ClassicUO.Utility
 {
+    public unsafe struct UnmanagedMemoryPool
+    {
+        public byte* Alloc;
+        public void* Free;
+        public int BlockSize;
+        public int NumBlocks;
+    }
+
+
+    // UnmanagedMemoryPool and stuff from --> https://www.jacksondunstan.com/articles/3770
     public static unsafe class UnsafeMemoryManager
     {
         // MobileUO: commented out
-        // static UnsafeMemoryManager()
-        // {
-        //     Console.WriteLine("Platform: {0}", PlatformHelper.IsMonoRuntime ? "Mono" : ".NET");
-        // }
+        //public static readonly int SizeOfPointer = sizeof(void*);
 
-        // MobileUO: commented out
-        // [MethodImpl(256)]
-        // public static void* AsPointer<T>(ref T v)
-        // {
-        //     TypedReference t = __makeref(v);
-        //
-        //     return (void*) *((IntPtr*) &t + (PlatformHelper.IsMonoRuntime ? 1 : 0));
-        // }
+        //public static readonly int MinimumPoolBlockSize = SizeOfPointer;
 
-        public static T ToStruct<T>(IntPtr ptr)
-        {
-            // MobileUO: NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
-            return Marshal.PtrToStructure<T>(ptr);
-            // return ToStruct<T>(ptr, SizeOf<T>());
-        }
 
-        // MobileUO: commented out
-        //[MethodImpl(256)]
-        //public static T ToStruct<T>(IntPtr ptr, int size)
+        //public static void Memset(void* ptr, byte value, int count)
         //{
-        //    byte* str = (byte*) ptr;
+        //    long* c = (long*) ptr;
 
-        //    T result = default;
-        //    byte* resultPtr = (byte*) AsPointer(ref result);
-        //    Buffer.MemoryCopy(str, resultPtr, size, size);
+        //    count /= 8;
 
-        //    return result;
+        //    for (int i = 0; i < count; ++i)
+        //    {
+        //        *c++ = (long) value;
+        //    }
         //}
 
-        // MobileUO: commented out
-        //[MethodImpl(256)]
-        //public static T As<T>(object v)
+        //public static IntPtr Alloc(int size)
         //{
-        //    int size = SizeOf<T>();
+        //    size = ((size + 7) & (-8));
 
-        //    return Reinterpret<object, T>(v, size);
+        //    IntPtr ptr = Marshal.AllocHGlobal(size);
+
+        //    return ptr;
         //}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int SizeOf<T>()
-        {
-            // MobileUO: NOTE: __makeref and TypedReference usage breaks IL2CPP compiler, use Marshal class instead
-            return Marshal.SizeOf<T>();
-            // DoubleStruct<T> doubleStruct = DoubleStruct<T>.Value;
-            // TypedReference tRef0 = __makeref(doubleStruct.First);
-            // TypedReference tRef1 = __makeref(doubleStruct.Second);
-            // IntPtr ptrToT0, ptrToT1;
-            //
-            // if (PlatformHelper.IsMonoRuntime)
-            // {
-            //     ptrToT0 = *((IntPtr*) &tRef0 + 1);
-            //     ptrToT1 = *((IntPtr*) &tRef1 + 1);
-            // }
-            // else
-            // {
-            //     ptrToT0 = *(IntPtr*) &tRef0;
-            //     ptrToT1 = *(IntPtr*) &tRef1;
-            // }
-            //
-            // return (int) ((byte*) ptrToT1 - (byte*) ptrToT0);
-        }
-
-        // MobileUO: commented out
-        //[MethodImpl(256)]
-        //public static TOut Reinterpret<TIn, TOut>(TIn curValue, int sizeBytes) //where TIn : struct where TOut : struct
+        //public static IntPtr Calloc(int size)
         //{
-        //    TOut result = default;
+        //    IntPtr ptr = Alloc(size);
 
-        //    //SingleStruct<TIn> inS = SingleStruct<TIn>.Value;
-        //    //SingleStruct<TOut> outS = SingleStruct<TOut>.Value;
+        //    Memset((void*) ptr, 0, size);
 
-        //    TypedReference resultRef = __makeref(result);
-        //    TypedReference curValueRef = __makeref(curValue);
-
-
-        //    int offset = PlatformHelper.IsMonoRuntime ? 1 : 0;
-
-        //    byte* resultPtr = (byte*) *((IntPtr*) &resultRef + offset);
-        //    byte* curValuePtr = (byte*) *((IntPtr*) &curValueRef + offset);
-
-        //    //for (int i = 0; i < sizeBytes; ++i)
-        //    //    resultPtr[i] = curValuePtr[i];
-
-        //    Buffer.MemoryCopy(curValuePtr, resultPtr, sizeBytes, sizeBytes);
-
-        //    return result;
+        //    return ptr;
         //}
 
-        // MobileUO: commented out
-        //[StructLayout(LayoutKind.Sequential, Pack = 1)]
-        //private struct DoubleStruct<T>
+        //public static void* Alloc(ref UnmanagedMemoryPool pool)
         //{
-        //    public T First;
-        //    public T Second;
-        //    public static readonly DoubleStruct<T> Value;
+        //    void* pRet = pool.Free;
+
+        //    pool.Free = *((byte**) pool.Free);
+
+        //    return pRet;
         //}
 
-        //[StructLayout(LayoutKind.Sequential, Pack = 1)]
-        //private struct DoubleStruct<T> //where T : struct
+        //public static void* Calloc(ref UnmanagedMemoryPool pool)
         //{
-        //    public T First;
-        //    public T Second;
-        //    public static readonly DoubleStruct<T> Value;
+        //    void* ptr = Alloc(ref pool);
+
+        //    Memset(ptr, 0, pool.BlockSize);
+
+        //    return ptr;
         //}
 
-        //[StructLayout(LayoutKind.Sequential, Pack = 1)]
-        //private struct SingleStruct<T> //where T : struct
+        //public static UnmanagedMemoryPool AllocPool(int blockSize, int numBlocks)
         //{
-        //    public T First;
-        //    public static readonly SingleStruct<T> Value;
+        //    Debug.Assert(blockSize >= MinimumPoolBlockSize);
+        //    Debug.Assert(numBlocks > 0);
+
+        //    blockSize = ((blockSize + 7) & (-8));
+
+        //    UnmanagedMemoryPool pool = new UnmanagedMemoryPool();
+        //    pool.Free = null;
+        //    pool.NumBlocks = numBlocks;
+        //    pool.BlockSize = blockSize;
+
+        //    pool.Alloc = (byte*) Alloc(blockSize * numBlocks);
+
+        //    FreeAll(&pool);
+
+        //    return pool;
+        //}
+
+        //public static void Free(IntPtr ptr)
+        //{
+        //    if (ptr != IntPtr.Zero)
+        //    {
+        //        Marshal.FreeHGlobal(ptr);
+        //    }
+        //}
+
+        //public static void Free(UnmanagedMemoryPool* pool, void* ptr)
+        //{
+        //    if (ptr != null)
+        //    {
+        //        void** pHead = (void**) ptr;
+        //        *pHead = pool->Free;
+        //        pool->Free = pHead;
+        //    }
+        //}
+
+        //public static void FreeAll(UnmanagedMemoryPool* pool)
+        //{
+        //    void** pCur = (void**) pool->Alloc;
+        //    byte* pNext = pool->Alloc + pool->BlockSize;
+
+        //    for (int i = 0, count = pool->NumBlocks - 1; i < count; ++i)
+        //    {
+        //        *pCur = pNext;
+        //        pCur = (void**) pNext;
+        //        pNext += pool->BlockSize;
+        //    }
+
+        //    *pCur = default(void*);
+
+        //    pool->Free = pool->Alloc;
+        //}
+
+        //public static void FreePool(UnmanagedMemoryPool* pool)
+        //{
+        //    Free((IntPtr) pool->Alloc);
+        //    pool->Alloc = null;
+        //    pool->Free = null;
         //}
     }
 }

@@ -65,7 +65,7 @@ namespace ClassicUO.Game.GameObjects
                     return ushort.MaxValue;
                 }
 
-                if (this == World.Player)
+                if (ReferenceEquals(this, World.Player))
                 {
                     return 0;
                 }
@@ -273,6 +273,7 @@ namespace ClassicUO.Game.GameObjects
                 }
 
                 int startY = item.RealScreenPosition.Y;
+                // MobileUO: fixed viewport boundary condition check
                 int endY = startY + item.RenderedText.Height;
 
                 if (startY < minY && offsetY == 0)
@@ -280,6 +281,7 @@ namespace ClassicUO.Game.GameObjects
                     offsetY = minY - startY;
                 }
 
+                // MobileUO: fixed viewport boundary condition check
                 if (endY > maxY)
                 {
                     offsetY = -(endY - maxY);

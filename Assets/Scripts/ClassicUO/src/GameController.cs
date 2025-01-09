@@ -63,7 +63,7 @@ namespace ClassicUO
 
         private SDL_EventFilter _filter;
 
-        private readonly Texture2D[] _hueSamplers = new Texture2D[2];
+        private readonly Texture2D[] _hueSamplers = new Texture2D[3];
         private bool _ignoreNextTextInput;
         private readonly float[] _intervalFixedUpdate = new float[2];
         private double _statisticsTimer;
@@ -127,29 +127,57 @@ namespace ClassicUO
             const int TEXTURE_WIDTH = 32;
             const int TEXTURE_HEIGHT = 2048;
 
-            uint[] buffer = new uint[TEXTURE_WIDTH * TEXTURE_HEIGHT * 2];
-            HuesLoader.Instance.CreateShaderColors(buffer);
+            const int LIGHTS_TEXTURE_WIDTH = 32;
+            const int LIGHTS_TEXTURE_HEIGHT = 63;
 
-            // MobileUO: true parameters for invertY
-            _hueSamplers[0] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            uint[] buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(TEXTURE_WIDTH * TEXTURE_HEIGHT * 2);
 
-            _hueSamplers[0].SetData(buffer, 0, TEXTURE_WIDTH * TEXTURE_HEIGHT, true);
+            try
+            {
+                 HuesLoader.Instance.CreateShaderColors(buffer);
 
-            _hueSamplers[1] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+                // MobileUO: true parameters for invertY
+                _hueSamplers[0] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+                _hueSamplers[0].SetData(buffer, 0, TEXTURE_WIDTH * TEXTURE_HEIGHT, true);
 
-            _hueSamplers[1].SetData(buffer, TEXTURE_WIDTH * TEXTURE_HEIGHT, TEXTURE_WIDTH * TEXTURE_HEIGHT, true);
+                // MobileUO: true parameters for invertY
+                _hueSamplers[1] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+                _hueSamplers[1].SetData(buffer, TEXTURE_WIDTH * TEXTURE_HEIGHT, TEXTURE_WIDTH * TEXTURE_HEIGHT, true);
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
+            }
+
+
+            buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(LIGHTS_TEXTURE_WIDTH * LIGHTS_TEXTURE_HEIGHT);
+
+            try
+            {
+                LightColors.CreateLookupTables(buffer);
+
+                // MobileUO: true parameters for invertY
+                _hueSamplers[2] = new Texture2D(GraphicsDevice, LIGHTS_TEXTURE_WIDTH, LIGHTS_TEXTURE_HEIGHT);
+                _hueSamplers[2].SetData(buffer, 0, LIGHTS_TEXTURE_WIDTH * LIGHTS_TEXTURE_HEIGHT, true);
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
+            }
+           
 
             GraphicsDevice.Textures[1] = _hueSamplers[0];
             GraphicsDevice.Textures[2] = _hueSamplers[1];
+            GraphicsDevice.Textures[3] = _hueSamplers[2];
 
             // MobileUO: filter mode
             GraphicsDevice.Textures[1].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
             GraphicsDevice.Textures[2].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
+            GraphicsDevice.Textures[3].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
             
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue1.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[0].UnityTexture as UnityEngine.Texture2D));
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue2.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[1].UnityTexture as UnityEngine.Texture2D));
 
-            AuraManager.CreateAuraTexture();
             UIManager.InitializeGameCursor();
             AnimatedStaticsManager.Initialize();
 
@@ -659,7 +687,7 @@ namespace ClassicUO
                         // MobileUO: commented out
                         // TakeScreenshot();
                     }
-
+                    
                     break;
 
                 case SDL_EventType.SDL_TEXTINPUT:
@@ -750,6 +778,11 @@ namespace ClassicUO
 
                         case MouseButtonType.Right:
                             lastClickTime = Mouse.LastRightButtonClickTime;
+
+                            break;
+
+                        default: 
+                            Log.Warn($"No mouse button handled: {mouse.button}");
 
                             break;
                     }
@@ -843,7 +876,12 @@ namespace ClassicUO
                             lastClickTime = Mouse.LastRightButtonClickTime;
 
                             break;
-                    }
+
+                        default:
+                            Log.Warn($"No mouse button handled: {mouse.button}");
+
+                            break;
+                        }
 
                     if (lastClickTime != 0xFFFF_FFFF)
                     {
