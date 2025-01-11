@@ -147,24 +147,25 @@ namespace ClassicUO.IO.Resources
 
             if (texture == null || texture.IsDisposed)
             {
-                // MobileUO: TODO: do we need to keep old logic??
-                //uint[] pixels = GetGumpPixels(g, out int w, out int h);
+                // MobileUO: keep old logic
+                uint[] pixels = GetGumpPixels(g, out int w, out int h);
 
-                //if (pixels == null || pixels.Length == 0)
-                //{
-                //    return null;
-                //}
-
-                //texture = new UOTexture(w, h);
-                //// MobileUO: added keepData = true parameter
-                //texture.PushData(pixels, true);
-
-                //SaveId(g);
-
-                if (GetGumpPixels(ref texture, g))
+                if (pixels == null || pixels.Length == 0)
                 {
-                    SaveId(g);
+                    return null;
                 }
+
+                texture = new UOTexture(w, h);
+                // MobileUO: added keepData = true parameter
+                texture.PushData(pixels, true);
+
+                SaveId(g);
+
+                // MobileUO: newer logic
+                //if (GetGumpPixels(ref texture, g))
+                //{
+                //    SaveId(g);
+                //}
             }
             else
             {
@@ -188,6 +189,80 @@ namespace ClassicUO.IO.Resources
         {
             // MobileUO: TODO: implement pixelCheck flag?
             return _picker.Get((ulong) index, x, y);
+        }
+
+        // MobileUO: keep old version of this function
+        private unsafe uint[] GetGumpPixels(uint index, out int width, out int height)
+        {
+            ref UOFileIndex entry = ref GetValidRefEntry((int) index);
+
+            if (entry.Width <= 0 && entry.Height <= 0)
+            {
+                width = 0;
+                height = 0;
+
+                return null;
+            }
+
+            width = entry.Width;
+            height = entry.Height;
+            ushort color = entry.Hue;
+
+            if (width == 0 || height == 0)
+            {
+                return null;
+            }
+
+            _file.SetData(entry.Address, entry.FileSize);
+            _file.Seek(entry.Offset);
+
+            IntPtr dataStart = _file.PositionAddress;
+
+            uint[] pixels = new uint[width * height];
+            int* lookuplist = (int*) dataStart;
+
+            int gsize;
+
+            for (int y = 0, half_len = entry.Length >> 2; y < height; y++)
+            {
+                if (y < height - 1)
+                {
+                    gsize = lookuplist[y + 1] - lookuplist[y];
+                }
+                else
+                {
+                    gsize = half_len - lookuplist[y];
+                }
+
+                GumpBlock* gmul = (GumpBlock*) (dataStart + (lookuplist[y] << 2));
+
+                int pos = y * width;
+
+                for (int i = 0; i < gsize; i++)
+                {
+                    uint val = gmul[i].Value;
+
+                    if (color != 0 && val != 0)
+                    {
+                        val = HuesLoader.Instance.GetColor16(gmul[i].Value, color);
+                    }
+
+                    if (val != 0)
+                    {
+                        //val = 0x8000 | val;
+                        val = HuesHelper.Color16To32(gmul[i].Value) | 0xFF_00_00_00;
+                    }
+
+                    int count = gmul[i].Run;
+
+                    for (int j = 0; j < count; j++)
+                    {
+                        pixels[pos++] = val;
+                    }
+                }
+            }
+
+            return pixels;
         }
 
         private unsafe bool GetGumpPixels(ref UOTexture texture, uint index)
