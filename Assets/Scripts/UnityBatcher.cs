@@ -30,7 +30,7 @@ namespace ClassicUO.Renderer
         private RasterizerState _rasterizerState;
         private bool _started;
         private DepthStencilState _stencil;
-        //private bool _useScissor;
+        private bool _useScissor;
         private int _numSprites;
         private Matrix _transformMatrix;
         private Matrix _projectionMatrix = new Matrix(0f,                         //(float)( 2.0 / (double)viewport.Width ) is the actual value we will use
@@ -1358,17 +1358,17 @@ namespace ClassicUO.Renderer
             // GraphicsDevice.RasterizerState = _useScissor ? _rasterizerState : RasterizerState.CullNone;
             // GraphicsDevice.SamplerStates[0] = _sampler;
 
-            // MobileUO: TODO: useScissor was removed in CUO 0.1.9.0 - will this cause issues? we don't have 
-            //hueMaterial.SetFloat(Scissor, _useScissor ? 1 : 0);
-            //if (_useScissor)
-            //{
-            //    var scissorRect = GraphicsDevice.ScissorRectangle;
-            //    var scissorVector4 = new Vector4(scissorRect.X * scale,
-            //        scissorRect.Y * scale,
-            //        scissorRect.X * scale + scissorRect.Width * scale,
-            //        scissorRect.Y * scale + scissorRect.Height * scale);
-            //    hueMaterial.SetVector(ScissorRect, scissorVector4);
-            //}
+            // MobileUO: keep old scissor logic or else gumps like world map won't be clipped!
+            hueMaterial.SetFloat(Scissor, _useScissor ? 1 : 0);
+            if (_useScissor)
+            {
+                var scissorRect = GraphicsDevice.ScissorRectangle;
+                var scissorVector4 = new Vector4(scissorRect.X * scale,
+                    scissorRect.Y * scale,
+                    scissorRect.X * scale + scissorRect.Width * scale,
+                    scissorRect.Y * scale + scissorRect.Height * scale);
+                hueMaterial.SetVector(ScissorRect, scissorVector4);
+            }
 
             GraphicsDevice.RasterizerState = _rasterizerState;
             GraphicsDevice.SamplerStates[0] = _sampler;
@@ -1434,38 +1434,16 @@ namespace ClassicUO.Renderer
             Flush();
         }
 
+        // MobileUO: keep old Scissor test logic
         public void EnableScissorTest(bool enable)
         {
-            // MobileUO: TODO: will this cause issues?
-            //if (enable == _useScissor)
-            //    return;
-
-            //if (!enable && _useScissor && ScissorStack.HasScissors)
-            //    return;
-
-            //_useScissor = enable;
-
-            // MobileUO: TODO: 2025-01-09: GraphicsDevice.RasterizerState is null. it isn't getting initialized
-            // I think we are missing an ApplyStates() somewhere before this call
-            // Compare UnityBatcher vs Batcher2D more closely
-            bool rasterize = GraphicsDevice.RasterizerState.ScissorTestEnable;
-
-            if (ScissorStack.HasScissors)
-            {
-                enable = true;
-            }
-
-            if (enable == rasterize)
-            {
+            if (enable == _useScissor)
                 return;
-            }
 
-            // MobileUO: TODO: add it?
-            //Flush();
+            if (!enable && _useScissor && ScissorStack.HasScissors)
+                return;
 
-            GraphicsDevice.RasterizerState.ScissorTestEnable = enable;
-
-            // MobileUO: TODO: this isn't in Batcher2D.cs
+            _useScissor = enable;
             ApplyStates();
         }
 
