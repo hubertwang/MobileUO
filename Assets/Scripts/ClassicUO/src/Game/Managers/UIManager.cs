@@ -563,7 +563,14 @@ namespace ClassicUO.Game.Managers
 
         public static void MakeTopMostGump(Control control)
         {
-            if (control?.RootParent is Gump gump)
+            // MobileUO: TODO: this is a fix from 0.1.10.0. Comment can be deleted after promoting to that version. Fixes issue with map gumps not moving to top
+            Gump gump = control as Gump;
+            if (gump == null && control?.RootParent is Gump)
+            {
+                gump = control.RootParent as Gump;
+            }
+
+            if (gump != null)
             {
                 for (LinkedListNode<Gump> start = Gumps.First; start != null; start = start.Next)
                 {
