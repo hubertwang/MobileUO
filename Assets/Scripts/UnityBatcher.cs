@@ -53,6 +53,7 @@ namespace ClassicUO.Renderer
         private static readonly int HueTex1 = Shader.PropertyToID("_HueTex1");
         private static readonly int HueTex2 = Shader.PropertyToID("_HueTex2");
         private static readonly int HueTex3 = Shader.PropertyToID("_HueTex3");
+        private static readonly int Brightlight = Shader.PropertyToID("_Brightlight");
         private static readonly int UvMirrorX = Shader.PropertyToID("_uvMirrorX");
         private static readonly int Scissor = Shader.PropertyToID("_Scissor");
         private static readonly int ScissorRect = Shader.PropertyToID("_ScissorRect");
@@ -104,6 +105,8 @@ namespace ClassicUO.Renderer
 
         public void SetBrightlight(float f)
         {
+            // MobileUO: pass Brightlight value to shader
+            hueMaterial.SetFloat(Brightlight, f);
             ((IsometricEffect)DefaultEffect).Brighlight.SetValue(f);
         }
 
