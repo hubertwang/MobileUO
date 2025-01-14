@@ -66,6 +66,28 @@ namespace ClassicUO.IO
             return false;
         }
 
+        // MobileUO: this logic existed in the old UOTexture class
+        // MobileUO: TODO: ideally, it would be better if we could somehow grab the texture by the textureID instead of passing it down to the function
+        // MobileUO: TODO: or figure out how to get the other Get() function to work correctly
+        public bool Get(ulong textureID, Microsoft.Xna.Framework.Graphics.Texture2D texture, int x, int y, int extraRange = 0, bool pixelCheck = true)
+        {
+            if (x >= 0 && y >= 0 && x < texture.Width && y < texture.Height)
+            {
+                if (!pixelCheck)
+                {
+                    return true;
+                }
+
+                if (texture.UnityTexture == null)
+                    return false;
+                
+                int pos = y * texture.Width + x;
+                return GetDataAtPos(pos, texture) != 0;
+            }
+
+            return false;
+        }
+
         public void GetDimensions(ulong textureID, out int width, out int height)
         {
             int index;
@@ -134,6 +156,27 @@ namespace ClassicUO.IO
                 }
                 shift += 7;
             }
+        }
+
+        // MobileUO: Used for Contains checks in texture using Unity's own texture data, instead of keeping a copy of the data in _data field
+        private uint GetDataAtPos(int pos, Microsoft.Xna.Framework.Graphics.Texture2D texture)
+        {
+            //The index calculation here is the same as in Texture2D.SetData
+            var width = texture.Width;
+            int x = pos % width;
+            int y = pos / width;
+            y *= width;
+            var index = y + (width - x - 1);
+            
+            var data = (texture.UnityTexture as UnityEngine.Texture2D).GetRawTextureData<uint>();
+            //We reverse the index because we had already reversed it in Texture2D.SetData
+            var reversedIndex = data.Length - index - 1;
+            if (reversedIndex < data.Length && reversedIndex >= 0)
+            {
+                return data[reversedIndex];
+            }
+
+            return 0;
         }
     }
 }

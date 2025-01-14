@@ -185,10 +185,10 @@ namespace ClassicUO.IO.Resources
             _instance = null;
         }
 
-        public bool PixelCheck(int index, int x, int y, bool pixelCheck = true)
+        // MobileUO: added texture and pixelCheck
+        public bool PixelCheck(int index, Microsoft.Xna.Framework.Graphics.Texture2D texture, int x, int y, bool pixelCheck = true)
         {
-            // MobileUO: TODO: implement pixelCheck flag?
-            return _picker.Get((ulong) index, x, y);
+            return _picker.Get((ulong) index, texture, x, y);
         }
 
         // MobileUO: keep old version of this function

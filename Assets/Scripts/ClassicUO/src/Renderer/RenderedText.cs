@@ -37,6 +37,7 @@ using ClassicUO.IO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Collections;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StbTextEditSharp;
 
 namespace ClassicUO.Renderer
@@ -269,7 +270,8 @@ namespace ClassicUO.Renderer
             return _info;
         }
 
-        public bool PixelCheck(int x, int y)
+        // MobileUO: added texture
+        public bool PixelCheck(Texture2D texture, int x, int y)
         {
             if (string.IsNullOrWhiteSpace(Text))
             {
@@ -285,7 +287,7 @@ namespace ClassicUO.Renderer
 
             ulong b = (ulong)(Text.GetHashCode() ^ hue ^ ((int)Align) ^ ((int)FontStyle) ^ Font ^ (IsUnicode ? 0x01 : 0x00));
 
-            return _picker.Get(b, x, y);
+            return _picker.Get(b, texture, x, y);
         }
 
         public TextEditRow GetLayoutRow(int startIndex)

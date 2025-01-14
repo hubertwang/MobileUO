@@ -40,6 +40,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using SDL2;
 
 namespace ClassicUO.IO.Resources
@@ -211,10 +212,10 @@ namespace ClassicUO.IO.Resources
             return IntPtr.Zero;
         }
 
-        public bool PixelCheck(int index, int x, int y, bool pixelCheck = true)
+        // MobileUO: added texture and pixel check
+        public bool PixelCheck(int index, Texture2D texture, int x, int y, bool pixelCheck = true)
         {
-            // MobileUO: TODO: implement pixelCheck flag?
-            return _picker.Get((ulong) index, x, y);
+            return _picker.Get((ulong) index, texture, x, y);
         }
 
         public override bool TryGetEntryInfo(int entry, out long address, out long size, out long compressedSize)

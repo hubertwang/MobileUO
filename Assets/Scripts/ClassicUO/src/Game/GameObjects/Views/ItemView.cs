@@ -202,33 +202,30 @@ namespace ClassicUO.Game.GameObjects
                 posX -= index.Width;
                 posY -= index.Height;
 
-                // MobileUO: use old method
-                if (SelectedObject.IsPointInStatic(texture, posX, posY))
+                // MobileUO: pass in texture
+                if (ArtLoader.Instance.PixelCheck
+                (
+                    graphic,
+                    texture,
+                    SelectedObject.TranslatedMousePositionByViewport.X - posX,
+                    SelectedObject.TranslatedMousePositionByViewport.Y - posY
+                ))
                 {
                     SelectedObject.Object = this;
                 }
-
-                //if (ArtLoader.Instance.PixelCheck
-                //(
-                //    graphic,
-                //    SelectedObject.TranslatedMousePositionByViewport.X - posX,
-                //    SelectedObject.TranslatedMousePositionByViewport.Y - posY
-                //))
-                //{
-                //    SelectedObject.Object = this;
-                //}
-                //else if (!IsMulti && !IsCoin && Amount > 1 && ItemData.IsStackable)
-                //{
-                //    if (ArtLoader.Instance.PixelCheck
-                //    (
-                //        graphic,
-                //        SelectedObject.TranslatedMousePositionByViewport.X - posX + 5,
-                //        SelectedObject.TranslatedMousePositionByViewport.Y - posY + 5
-                //    ))
-                //    {
-                //        SelectedObject.Object = this;
-                //    }
-                //}
+                else if (!IsMulti && !IsCoin && Amount > 1 && ItemData.IsStackable)
+                {
+                    if (ArtLoader.Instance.PixelCheck
+                    (
+                        graphic,
+                        texture,
+                        SelectedObject.TranslatedMousePositionByViewport.X - posX + 5,
+                        SelectedObject.TranslatedMousePositionByViewport.Y - posY + 5
+                    ))
+                    {
+                        SelectedObject.Object = this;
+                    }
+                }
             }
 
             return true;
@@ -462,9 +459,8 @@ namespace ClassicUO.Game.GameObjects
                     return;
                 }
 
-                // MobileUO: use old method
-                if (frame.Contains(flipped ? posX + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - posX, SelectedObject.TranslatedMousePositionByViewport.Y - posY))
-                //if (AnimationsLoader.Instance.PixelCheck(graphic, animGroup, dir, direction.IsUOP, animIndex, flipped ? posX + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - posX, SelectedObject.TranslatedMousePositionByViewport.Y - posY))
+                // MobileUO: pass in texture
+                if (AnimationsLoader.Instance.PixelCheck(graphic, frame, animGroup, dir, direction.IsUOP, animIndex, flipped ? posX + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - posX, SelectedObject.TranslatedMousePositionByViewport.Y - posY))
                 {
                     SelectedObject.Object = owner;
                 }

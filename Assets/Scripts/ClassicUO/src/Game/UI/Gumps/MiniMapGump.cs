@@ -468,9 +468,8 @@ namespace ClassicUO.Game.UI.Gumps
 
         public override bool Contains(int x, int y)
         {
-            // MobileUO: use old method
-            return _mapTexture.Contains(x - Offset.X, y - Offset.Y);
-            //return _picker.Get((ulong) (_useLargeMap ? 0x01 : 0x00), x - Offset.X, y - Offset.Y);
+            // MobileUO: pass in texture
+            return _picker.Get((ulong) (_useLargeMap ? 0x01 : 0x00), _mapTexture, x - Offset.X, y - Offset.Y);
         }
 
         public override void Dispose()

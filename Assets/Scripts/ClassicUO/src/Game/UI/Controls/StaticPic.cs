@@ -109,11 +109,10 @@ namespace ClassicUO.Game.UI.Controls
 
         public override bool Contains(int x, int y)
         {
-            // MobileUO: use old method
+            // MobileUO: pass in texture
             ArtTexture texture = ArtLoader.Instance.GetTexture(Graphic);
 
-            return texture != null && texture.Contains(x - Offset.X, y - Offset.Y);
-            //return ArtLoader.Instance.PixelCheck(Graphic, x - Offset.X, y - Offset.Y);
+            return ArtLoader.Instance.PixelCheck(Graphic, texture, x - Offset.X, y - Offset.Y);
         }
     }
 }
