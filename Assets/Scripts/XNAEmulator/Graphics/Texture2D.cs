@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Microsoft.Xna.Framework.Graphics
@@ -191,9 +192,72 @@ namespace Microsoft.Xna.Framework.Graphics
 
         }
 
-        public void SetDataPointerEXT(int level, Rectangle rectangle, IntPtr data, int dataLength)
+        // https://github.com/FNA-XNA/FNA/blob/85a8457420278087dc7a81f16661ff68e67b75af/src/Graphics/Texture2D.cs#L213
+        public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
         {
-            Console.WriteLine("Texture2D.SetDataPointerEXT is not implemented yet.");
+            UnityMainThreadDispatcher.Dispatch(() => SetDataPointerEXTInt(level, rect, data, dataLength));
+        }
+
+        // MobileUO: TODO: this work but has graphical issues with some items and the game cursor
+        private void SetDataPointerEXTInt(int level, Rectangle? rect, IntPtr data, int dataLength)
+        {
+            if (data == IntPtr.Zero)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            var destTex = UnityTexture as UnityEngine.Texture2D;
+            if (destTex == null)
+            {
+                throw new InvalidOperationException("UnityTexture is not a Texture2D");
+            }
+
+            // Create a temporary buffer to hold the data
+            byte[] buffer = new byte[dataLength];
+            Marshal.Copy(data, buffer, 0, dataLength);
+
+            int x, y, w, h;
+            if (rect.HasValue)
+            {
+                x = rect.Value.X;
+                y = rect.Value.Y;
+                w = rect.Value.Width;
+                h = rect.Value.Height;
+            }
+            else
+            {
+                x = 0;
+                y = 0;
+                w = Math.Max(Width >> level, 1);
+                h = Math.Max(Height >> level, 1);
+            }
+
+            var colors = new Color32[w * h];
+
+            // Copy data from the buffer to the colors array, flipping vertically
+            for (int row = 0; row < h; row++)
+            {
+                for (int col = 0; col < w; col++)
+                {
+                    int bufferIndex = (row * w + col) * 4;
+                    int colorIndex = ((h - 1 - row) * w) + col;
+
+                    // Ensure the buffer index is within bounds
+                    if (bufferIndex + 3 < buffer.Length)
+                    {
+                        // Create the Color32 object, assuming the buffer is in RGBA format
+                        colors[colorIndex] = new Color32(
+                            buffer[bufferIndex + 0], // R
+                            buffer[bufferIndex + 1], // G
+                            buffer[bufferIndex + 2], // B
+                            buffer[bufferIndex + 3]  // A
+                        );
+                    }
+                }
+            }
+
+            destTex.SetPixels32(x, y, w, h, colors, level);
+            destTex.Apply();
         }
     }
 }
