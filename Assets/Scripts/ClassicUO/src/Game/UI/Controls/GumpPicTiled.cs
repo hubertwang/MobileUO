@@ -175,9 +175,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            // MobileUO: use old method
-            return texture.Contains(x, y);
-            //return GumpsLoader.Instance.PixelCheck(Graphic, x, y);
+            return GumpsLoader.Instance.PixelCheck(Graphic, x, y);
         }
     }
 }

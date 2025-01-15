@@ -207,10 +207,7 @@ namespace ClassicUO.Game.UI.Controls
 
             if (_is_gump)
             {
-                // MobileUO: added PixelCheck
-                // MobileUO: use old method
-                if (texture.Contains(x, y, PixelCheck))
-                //if (GumpsLoader.Instance.PixelCheck(Graphic, x, y, PixelCheck))
+                if (GumpsLoader.Instance.PixelCheck(Graphic, x, y))
                 {
                     return true;
                 }
@@ -219,10 +216,7 @@ namespace ClassicUO.Game.UI.Controls
 
                 if (item != null && !item.IsCoin && item.Amount > 1 && item.ItemData.IsStackable)
                 {
-                    // MobileUO: added PixelCheck
-                    // MobileUO: use old method
-                    if (texture.Contains(x - 5, y - 5, PixelCheck))
-                    //if (GumpsLoader.Instance.PixelCheck(Graphic, x - 5, y - 5, PixelCheck))
+                    if (GumpsLoader.Instance.PixelCheck(Graphic, x - 5, y - 5))
                     {
                         return true;
                     }
@@ -230,10 +224,7 @@ namespace ClassicUO.Game.UI.Controls
             }
             else
             {
-                // MobileUO: added PixelCheck
-                // MobileUO: use old method
-                if (texture.Contains(x, y, PixelCheck))
-                //if (ArtLoader.Instance.PixelCheck(Graphic, x, y, PixelCheck))
+                if (ArtLoader.Instance.PixelCheck(Graphic, x, y))
                 {
                     return true;
                 }
@@ -242,10 +233,7 @@ namespace ClassicUO.Game.UI.Controls
 
                 if (item != null && !item.IsCoin && item.Amount > 1 && item.ItemData.IsStackable)
                 {
-                    // MobileUO: added PixelCheck
-                    // MobileUO: use old method
-                    if (texture.Contains(x - 5, y - 5, PixelCheck))
-                    //if (ArtLoader.Instance.PixelCheck(Graphic, x - 5, y - 5, PixelCheck))
+                    if (ArtLoader.Instance.PixelCheck(Graphic, x - 5, y - 5))
                     {
                         return true;
                     }

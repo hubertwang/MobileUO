@@ -352,9 +352,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            // MobileUO: use old method
-            return texture.Contains(x, y);
-            //return GumpsLoader.Instance.PixelCheck(graphic, x, y);
+            return GumpsLoader.Instance.PixelCheck(graphic, x, y);
         }
 
         public override bool Draw(UltimaBatcher2D batcher, int x, int y)

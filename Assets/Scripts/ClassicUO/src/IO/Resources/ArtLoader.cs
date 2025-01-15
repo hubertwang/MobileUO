@@ -40,6 +40,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using SDL2;
 
 namespace ClassicUO.IO.Resources
@@ -211,9 +212,8 @@ namespace ClassicUO.IO.Resources
             return IntPtr.Zero;
         }
 
-        public bool PixelCheck(int index, int x, int y, bool pixelCheck = true)
+        public bool PixelCheck(int index, int x, int y)
         {
-            // MobileUO: TODO: implement pixelCheck flag?
             return _picker.Get((ulong) index, x, y);
         }
 
@@ -387,172 +387,51 @@ namespace ClassicUO.IO.Resources
             bounds.Height = maxY - minY;
         }
 
-        // MobileUO: keeping function since SetDataPointerEXT is not implemented
-        public unsafe uint[] ReadStaticArt(ushort graphic, out short width, out short height, out Rectangle bounds)
+        private unsafe void ReadStaticArt(ref ArtTexture texture, ushort graphic)
         {
             ref UOFileIndex entry = ref GetValidRefEntry(graphic + 0x4000);
 
-            bounds = Rectangle.Empty;
-
-            if (entry.Length == 0)
+            if (ReadHeader(_file, ref entry, out short width, out short height))
             {
-                width = 0;
-                height = 0;
+                uint[] buffer = null;
 
-                return null;
-            }
+                // MobileUO: we get graphical issues with smaller art when using stackalloc uint[1024]
+                Span<uint> pixels = width * height <= 1024 ? stackalloc uint[width * height] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(width * height));
 
-            _file.SetData(entry.Address, entry.FileSize);
-            _file.Seek(entry.Offset);
-            _file.Skip(4);
-            width = _file.ReadShort();
-            height = _file.ReadShort();
-
-            if (width == 0 || height == 0)
-            {
-                return null;
-            }
-
-            uint[] pixels = new uint[width * height];
-            ushort* ptr = (ushort*) _file.PositionAddress;
-            ushort* lineoffsets = ptr;
-            byte* datastart = (byte*) ptr + height * 2;
-            int x = 0;
-            int y = 0;
-            ptr = (ushort*) (datastart + lineoffsets[0] * 2);
-            int minX = width, minY = height, maxX = 0, maxY = 0;
-
-            while (y < height)
-            {
-                ushort xoffs = *ptr++;
-                ushort run = *ptr++;
-
-                if (xoffs + run >= 2048)
+                try
                 {
-                    return null;
-                }
-
-                if (xoffs + run != 0)
-                {
-                    x += xoffs;
-                    int pos = y * width + x;
-
-                    for (int j = 0; j < run; ++j, ++pos)
+                    if (ReadData(pixels, width, height, _file))
                     {
-                        ushort val = *ptr++;
+                        texture = new ArtTexture(width, height);
 
-                        if (val != 0)
+                        FinalizeData
+                        (
+                            pixels,
+                            ref entry,
+                            graphic,
+                            width,
+                            height,
+                            out texture.ImageRectangle
+                        );
+
+
+                        fixed (uint* ptr = pixels)
                         {
-                            pixels[pos] = HuesHelper.Color16To32(val) | 0xFF_00_00_00;
-                        }
-                    }
-
-                    x += run;
-                }
-                else
-                {
-                    x = 0;
-                    ++y;
-                    ptr = (ushort*) (datastart + lineoffsets[y] * 2);
-                }
-            }
-
-            if (graphic >= 0x2053 && graphic <= 0x2062 || graphic >= 0x206A && graphic <= 0x2079)
-            {
-                for (int i = 0; i < width; i++)
-                {
-                    pixels[i] = 0;
-                    pixels[(height - 1) * width + i] = 0;
-                }
-
-                for (int i = 0; i < height; i++)
-                {
-                    pixels[i * width] = 0;
-                    pixels[i * width + width - 1] = 0;
-                }
-            }
-            else if (StaticFilters.IsCave(graphic) && ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.EnableCaveBorder)
-            {
-                for (int yy = 0; yy < height; yy++)
-                {
-                    int startY = yy != 0 ? -1 : 0;
-                    int endY = yy + 1 < height ? 2 : 1;
-
-                    for (int xx = 0; xx < width; xx++)
-                    {
-                        ref uint pixel = ref pixels[yy * width + xx];
-
-                        if (pixel == 0)
-                        {
-                            continue;
-                        }
-
-                        int startX = xx != 0 ? -1 : 0;
-                        int endX = xx + 1 < width ? 2 : 1;
-
-                        for (int i = startY; i < endY; i++)
-                        {
-                            int currentY = yy + i;
-
-                            for (int j = startX; j < endX; j++)
-                            {
-                                int currentX = xx + j;
-
-                                ref uint currentPixel = ref pixels[currentY * width + currentX];
-
-                                if (currentPixel == 0u)
-                                {
-                                    pixel = 0xFF_00_00_00;
-                                }
-                            }
+                            texture.SetDataPointerEXT(0, null, (IntPtr)ptr, width * height * sizeof(uint));
                         }
                     }
                 }
-            }
-
-            int pos1 = 0;
-
-            for (y = 0; y < height; ++y)
-            {
-                for (x = 0; x < width; ++x)
+                finally
                 {
-                    if (pixels[pos1++] != 0)
+                    if (buffer != null)
                     {
-                        minX = Math.Min(minX, x);
-                        maxX = Math.Max(maxX, x);
-                        minY = Math.Min(minY, y);
-                        maxY = Math.Max(maxY, y);
+                        System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
                     }
                 }
-            }
-
-
-            entry.Width = (short) ((width >> 1) - 22);
-            entry.Height = (short) (height - 44);
-
-            bounds.X = minX;
-            bounds.Y = minY;
-            bounds.Width = maxX - minX;
-            bounds.Height = maxY - minY;
-
-            return pixels;
-        }
-
-        // MobileUO: SetDataPointerEXT is not implemented, continue to use PushData implementation
-        private unsafe void ReadStaticArt(ref ArtTexture texture, ushort graphic)
-        {
-            uint[] pixels = ReadStaticArt(graphic, out short width, out short height, out Rectangle rect);
-
-            if (pixels != null)
-            {
-                texture = new ArtTexture(width, height);
-                texture.ImageRectangle = rect;
-                texture.PushData(pixels);
             }
         }
 
-        // MobileUO: SetDataPointerEXT is not implemented, continue to use SetData implementation
-        private void ReadLandArt(ref UOTexture texture, ushort graphic)
+        private unsafe void ReadLandArt(ref UOTexture texture, ushort graphic)
         {
             const int SIZE = 44 * 44;
 
@@ -561,14 +440,15 @@ namespace ClassicUO.IO.Resources
 
             if (entry.Length == 0)
             {
-                texture = new UOTexture(44,44);
+                texture = null;
+
                 return;
             }
 
             _file.SetData(entry.Address, entry.FileSize);
             _file.Seek(entry.Offset);
 
-            uint[] data = new uint[SIZE];
+            uint* data = stackalloc uint[SIZE];
 
             for (int i = 0; i < 22; ++i)
             {
@@ -599,7 +479,7 @@ namespace ClassicUO.IO.Resources
             texture = new UOTexture(44, 44);
             // we don't need to store the data[] pointer because
             // land is always hoverable
-            texture.SetData(data);
+            texture.SetDataPointerEXT(0, null, (IntPtr) data, SIZE * sizeof(uint));
         }
 
         private void AddBlackBorder(Span<uint> pixels, int width, int height)

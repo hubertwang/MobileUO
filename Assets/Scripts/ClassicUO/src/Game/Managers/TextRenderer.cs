@@ -81,9 +81,7 @@ namespace ClassicUO.Game.Managers
                     }
                 }
 
-                // MobileUO keep old method
-                if (item.RenderedText.Texture.Contains(mouseX - startX - item.RealScreenPosition.X, mouseY - startY - item.RealScreenPosition.Y))
-                //if (item.RenderedText.PixelCheck(mouseX - startX - item.RealScreenPosition.X, mouseY - startY - item.RealScreenPosition.Y))
+                if (item.RenderedText.PixelCheck(mouseX - startX - item.RealScreenPosition.X, mouseY - startY - item.RealScreenPosition.Y))
                 {
                     SelectedObject.LastObject = item;
                 }
@@ -136,9 +134,7 @@ namespace ClassicUO.Game.Managers
                 int x = o.RealScreenPosition.X;
                 int y = o.RealScreenPosition.Y;
 
-                // MobileUO: use old method
-                if (o.RenderedText.Texture.Contains(mouseX - x - startX, mouseY - y - startY))
-                //if (o.RenderedText.PixelCheck(mouseX - x - startX, mouseY - y - startY))
+                if (o.RenderedText.PixelCheck(mouseX - x - startX, mouseY - y - startY))
                 {
                     if (isGump)
                     {

@@ -37,6 +37,7 @@ using ClassicUO.IO.Resources;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Collections;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StbTextEditSharp;
 
 namespace ClassicUO.Renderer

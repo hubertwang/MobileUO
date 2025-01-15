@@ -802,9 +802,7 @@ namespace ClassicUO.Game.GameObjects
                         }
                     }
 
-                    // MobileUO: use old method
-                    if (frame.Contains(mirror ? x + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - x, SelectedObject.TranslatedMousePositionByViewport.Y - y))
-                    //if (AnimationsLoader.Instance.PixelCheck(id, animGroup, dir, direction.IsUOP, frameIndex, mirror ? x + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - x, SelectedObject.TranslatedMousePositionByViewport.Y - y))
+                    if (AnimationsLoader.Instance.PixelCheck(id, animGroup, dir, direction.IsUOP, frameIndex, mirror ? x + frame.Width - SelectedObject.TranslatedMousePositionByViewport.X : SelectedObject.TranslatedMousePositionByViewport.X - x, SelectedObject.TranslatedMousePositionByViewport.Y - y))
                     {
                         SelectedObject.Object = owner;
                     }

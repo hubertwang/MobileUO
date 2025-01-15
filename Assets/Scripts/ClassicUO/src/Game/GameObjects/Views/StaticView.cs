@@ -131,20 +131,17 @@ namespace ClassicUO.Game.GameObjects
                 posX -= index.Width;
                 posY -= index.Height;
 
-                // MobileUO: use old method
-                if (SelectedObject.IsPointInStatic(ArtLoader.Instance.GetTexture(graphic), posX, posY))
+                ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
+
+                if (ArtLoader.Instance.PixelCheck
+                (
+                    graphic,
+                    SelectedObject.TranslatedMousePositionByViewport.X - posX,
+                    SelectedObject.TranslatedMousePositionByViewport.Y - posY
+                ))
                 {
                     SelectedObject.Object = this;
                 }
-                //if (ArtLoader.Instance.PixelCheck
-                //(
-                //graphic,
-                //    SelectedObject.TranslatedMousePositionByViewport.X - posX, 
-                //    SelectedObject.TranslatedMousePositionByViewport.Y - posY
-                //))
-                //{
-                //    SelectedObject.Object = this;
-                //}
             }
 
             return true;
