@@ -88,15 +88,11 @@ namespace ClassicUO.Game
                 {
                     ushort id = _cursorData[i, j];
 
-                    // MobileUO: SDL_CreateRGBSurfaceWithFormatFrom isn't implemented in our XNA version, so we must use previous logic instead of ArtLoader.Instance.CreateCursorSurfacePtr
-
-                    //IntPtr surface = ArtLoader.Instance.CreateCursorSurfacePtr(id, (ushort) (i == 2 ? 0x0033 : 0), out short w, out short h);
-                    uint[] pixels = ArtLoader.Instance.ReadStaticArt(id, out short w, out short h, out _);
+                    IntPtr surface = ArtLoader.Instance.CreateCursorSurfacePtr(id, (ushort) (i == 2 ? 0x0033 : 0), out short w, out short h);
                  
                     if (i == 0)
                     {
-                        //if (surface != IntPtr.Zero)
-                        if (pixels != null && pixels.Length > 0)
+                        if (surface != IntPtr.Zero)
                         {
                             float offX = 0;
                             float offY = 0;
@@ -223,49 +219,14 @@ namespace ClassicUO.Game
                             _cursorOffset[1, j] = 0;
                         }
                     }
-                    // MobileUO: commented out
-                    // if (pixels != null && pixels.Length != 0)
-                    // {
-                    //     unsafe
-                    //     {
-                    //         fixed (uint* ptr = pixels)
-                    //         {
-                    //             SDL.SDL_Surface* surface = (SDL.SDL_Surface*) SDL.SDL_CreateRGBSurfaceWithFormatFrom((IntPtr) ptr, w, h, 32, 4 * w, SDL.SDL_PIXELFORMAT_ABGR8888);
-                    //             
-                    //             if (i == 2)
-                    //             {
-                    //                 int stride = surface->pitch >> 2;
-                    //                 uint* pixels_ptr = (uint*) surface->pixels;
-                    //                 uint* p_line_end = pixels_ptr + w;
-                    //                 uint* p_img_end = pixels_ptr + (stride * h);
-                    //                 int delta = stride - w;
-                    //                 Color c = default;
-                    //
-                    //                 while (pixels_ptr < p_img_end)
-                    //                 {
-                    //                     while (pixels_ptr < p_line_end)
-                    //                     {
-                    //                         if (*pixels_ptr != 0 && *pixels_ptr != 0xFF_00_00_00)
-                    //                         {
-                    //                             c.PackedValue = *pixels_ptr;
-                    //                             * pixels_ptr = HuesHelper.Color16To32(HuesLoader.Instance.GetColor16(HuesHelper.ColorToHue(c), 0x0033)) | 0xFF_00_00_00;
-                    //                         }
-                    //
-                    //                         ++pixels_ptr;
-                    //                     }
-                    //
-                    //                     pixels_ptr += delta;
-                    //                     p_line_end += stride;
-                    //                 }
-                    //             }
-                    //
-                    //             int hotX = -_cursorOffset[0, j];
-                    //             int hotY = -_cursorOffset[1, j];
-                    //
-                    //             _cursors_ptr[i, j] = SDL.SDL_CreateColorCursor((IntPtr) surface, hotX, hotY);
-                    //         }
-                    //     }
-                    // }
+
+                    if (surface != IntPtr.Zero)
+                    {
+                        int hotX = -_cursorOffset[0, j];
+                        int hotY = -_cursorOffset[1, j];
+
+                        _cursors_ptr[i, j] = SDL.SDL_CreateColorCursor(surface, hotX, hotY);
+                    }
                 }
             }
         }

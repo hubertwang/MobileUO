@@ -1066,14 +1066,13 @@ namespace ClassicUO.IO.Resources
             _usedTextures.Clear();
         }
 
-        // MobileUO: pass in texture
-        public bool PixelCheck(ushort animID, Texture2D texture, byte group, byte direction, bool uop, int frame, int x, int y)
+        public bool PixelCheck(ushort animID, byte group, byte direction, bool uop, int frame, int x, int y)
         {
             uint packed32 = (uint)((group | (direction << 8) | ((uop ? 0x01 : 0x00) << 16)));
             uint packed32_2 = (uint)((animID | (frame << 16)));
             ulong packed = (packed32_2 | ((ulong)packed32 << 32));
 
-            return _picker.Get(packed, texture, x, y);
+            return _picker.Get(packed, x, y);
         }
 
         public void UpdateAnimationTable(uint flags)

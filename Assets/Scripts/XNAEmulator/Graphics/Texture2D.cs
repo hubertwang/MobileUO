@@ -198,7 +198,6 @@ namespace Microsoft.Xna.Framework.Graphics
             UnityMainThreadDispatcher.Dispatch(() => SetDataPointerEXTInt(level, rect, data, dataLength));
         }
 
-        // MobileUO: TODO: this work but has graphical issues with some items and the game cursor
         private void SetDataPointerEXTInt(int level, Rectangle? rect, IntPtr data, int dataLength)
         {
             if (data == IntPtr.Zero)

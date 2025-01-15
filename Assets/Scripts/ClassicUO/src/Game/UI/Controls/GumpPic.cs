@@ -85,8 +85,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            // MobileUO: pass in texture
-            if (GumpsLoader.Instance.PixelCheck(Graphic, texture, x - Offset.X, y - Offset.Y))
+            if (GumpsLoader.Instance.PixelCheck(Graphic, x - Offset.X, y - Offset.Y))
             {
                 return true;
             }

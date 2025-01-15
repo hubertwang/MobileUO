@@ -172,13 +172,11 @@ namespace ClassicUO.Game.GameObjects
                 posX -= index.Width;
                 posY -= index.Height;
 
-                // MobileUO: pass in texture
                 ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
 
                 if (ArtLoader.Instance.PixelCheck
                 (
                     graphic,
-                    texture,
                     SelectedObject.TranslatedMousePositionByViewport.X - posX,
                     SelectedObject.TranslatedMousePositionByViewport.Y - posY
                 ))

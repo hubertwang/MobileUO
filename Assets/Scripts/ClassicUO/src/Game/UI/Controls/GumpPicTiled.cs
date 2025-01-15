@@ -175,8 +175,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            // MobileUO: pass in texture
-            return GumpsLoader.Instance.PixelCheck(Graphic, texture, x, y);
+            return GumpsLoader.Instance.PixelCheck(Graphic, x, y);
         }
     }
 }

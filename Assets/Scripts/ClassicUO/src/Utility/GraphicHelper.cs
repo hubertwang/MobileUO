@@ -80,87 +80,54 @@ namespace ClassicUO.Utility
             UOTexture[] r = new UOTexture[partXYplusWidthHeight.GetLength(0)];
             int pwidth = original.Width;   //((original.Width + 1) >> 1) << 1;
             int pheight = original.Height; //((original.Height + 1) >> 1) << 1;
-            // MobileUO: our version of XNA doesn't have GetData() for textures, reverting to previous logic
-            //uint[] originalData = System.Buffers.ArrayPool<uint>.Shared.Rent(pwidth * pheight);
+            uint[] originalData = System.Buffers.ArrayPool<uint>.Shared.Rent(pwidth * pheight);
 
-            //original.GetData(originalData, 0, pwidth * pheight);
+            original.GetData(originalData, 0, pwidth * pheight);
 
-            //try
-            //{
-            //    int index = 0;
-
-            //    for (int p = 0; p < partXYplusWidthHeight.GetLength(0); p++)
-            //    {
-            //        int x = partXYplusWidthHeight[p, 0], y = partXYplusWidthHeight[p, 1], width = partXYplusWidthHeight[p, 2], height = partXYplusWidthHeight[p, 3];
-
-            //        uint[] partData = System.Buffers.ArrayPool<uint>.Shared.Rent(width * height);
-
-            //        try
-            //        {
-            //            UOTexture part = new UOTexture(width, height);
-
-            //            for (int py = 0; py < height; py++)
-            //            {
-            //                for (int px = 0; px < width; px++)
-            //                {
-            //                    int partIndex = px + py * width;
-
-            //                    //If a part goes outside of the source texture, then fill the overlapping part with transparent
-            //                    if (y + py >= pheight || x + px >= pwidth)
-            //                    {
-            //                        partData[partIndex] = 0;
-            //                    }
-            //                    else
-            //                    {
-            //                        partData[partIndex] = originalData[x + px + (y + py) * pwidth];
-            //                    }
-            //                }
-            //            }
-
-            //            part.SetData(partData, 0, width * height);
-            //            r[index++] = part;
-            //        }
-            //        finally
-            //        {
-            //            System.Buffers.ArrayPool<uint>.Shared.Return(partData, true);
-            //        }
-            //    }
-            //}
-            //finally
-            //{
-            //    System.Buffers.ArrayPool<uint>.Shared.Return(originalData, true);
-            //}
-            uint[] originalData = original.Data;
-
-            int index = 0;
-
-            for (int p = 0; p < partXYplusWidthHeight.GetLength(0); p++)
+            try
             {
-                int x = partXYplusWidthHeight[p, 0], y = partXYplusWidthHeight[p, 1], width = partXYplusWidthHeight[p, 2], height = partXYplusWidthHeight[p, 3];
+                int index = 0;
 
-                UOTexture part = new UOTexture(width, height);
-                uint[] partData = new uint[width * height];
-
-                for (int py = 0; py < height; py++)
+                for (int p = 0; p < partXYplusWidthHeight.GetLength(0); p++)
                 {
-                    for (int px = 0; px < width; px++)
-                    {
-                        int partIndex = px + py * width;
+                    int x = partXYplusWidthHeight[p, 0], y = partXYplusWidthHeight[p, 1], width = partXYplusWidthHeight[p, 2], height = partXYplusWidthHeight[p, 3];
 
-                        //If a part goes outside of the source texture, then fill the overlapping part with transparent
-                        if (y + py >= pheight || x + px >= pwidth)
+                    uint[] partData = System.Buffers.ArrayPool<uint>.Shared.Rent(width * height);
+
+                    try
+                    {
+                        UOTexture part = new UOTexture(width, height);
+
+                        for (int py = 0; py < height; py++)
                         {
-                            partData[partIndex] = 0;
+                            for (int px = 0; px < width; px++)
+                            {
+                                int partIndex = px + py * width;
+
+                                //If a part goes outside of the source texture, then fill the overlapping part with transparent
+                                if (y + py >= pheight || x + px >= pwidth)
+                                {
+                                    partData[partIndex] = 0;
+                                }
+                                else
+                                {
+                                    partData[partIndex] = originalData[x + px + (y + py) * pwidth];
+                                }
+                            }
                         }
-                        else
-                        {
-                            partData[partIndex] = originalData[x + px + (y + py) * pwidth];
-                        }
+
+                        part.SetData(partData, 0, width * height);
+                        r[index++] = part;
+                    }
+                    finally
+                    {
+                        System.Buffers.ArrayPool<uint>.Shared.Return(partData, true);
                     }
                 }
-
-                part.PushData(partData);
-                r[index++] = part;
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<uint>.Shared.Return(originalData, true);
             }
 
             return r;

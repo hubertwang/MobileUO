@@ -373,8 +373,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-            // MobileUO: pass in texture
-            return ContainsByBounds ? base.Contains(x, y) : GumpsLoader.Instance.PixelCheck(_gumpGraphics[NORMAL], _textures[NORMAL], x - Offset.X, y - Offset.Y);
+            return ContainsByBounds ? base.Contains(x, y) : GumpsLoader.Instance.PixelCheck(_gumpGraphics[NORMAL], x - Offset.X, y - Offset.Y);
         }
 
         public sealed override void Dispose()

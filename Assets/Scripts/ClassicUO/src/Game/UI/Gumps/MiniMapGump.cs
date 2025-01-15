@@ -89,29 +89,22 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_blankGumpsPixels[index] == null)
             {
-                // MobileUO: our version of XNA doesn't have GetData() for textures, reverting to previous logic
-                //int size = _gumpTexture.Width * _gumpTexture.Height;
-                //uint[] data = System.Buffers.ArrayPool<uint>.Shared.Rent(size);
+                int size = _gumpTexture.Width * _gumpTexture.Height;
+                uint[] data = System.Buffers.ArrayPool<uint>.Shared.Rent(size);
 
-                //try
-                //{
-                //    _gumpTexture.GetData(data, 0, size);
+                try
+                {
+                    _gumpTexture.GetData(data, 0, size);
 
-                //    _blankGumpsPixels[index] = new uint[size];
-                //    _blankGumpsPixels[index + 2] = new uint[size];
+                    _blankGumpsPixels[index] = new uint[size];
+                    _blankGumpsPixels[index + 2] = new uint[size];
 
-                //    Array.Copy(data, 0, _blankGumpsPixels[index], 0, size);
-                //}
-                //finally
-                //{
-                //    System.Buffers.ArrayPool<uint>.Shared.Return(data, true);
-                //}
-
-                uint[] data = _gumpTexture.Data;
-                _blankGumpsPixels[index] = new uint[data.Length];
-                _blankGumpsPixels[index + 2] = new uint[data.Length];
-
-                data.CopyTo(_blankGumpsPixels[index], 0);
+                    Array.Copy(data, 0, _blankGumpsPixels[index], 0, size);
+                }
+                finally
+                {
+                    System.Buffers.ArrayPool<uint>.Shared.Return(data, true);
+                }
             }
 
             Width = _gumpTexture.Width;
@@ -468,8 +461,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         public override bool Contains(int x, int y)
         {
-            // MobileUO: pass in texture
-            return _picker.Get((ulong) (_useLargeMap ? 0x01 : 0x00), _mapTexture, x - Offset.X, y - Offset.Y);
+            return _picker.Get((ulong) (_useLargeMap ? 0x01 : 0x00), x - Offset.X, y - Offset.Y);
         }
 
         public override void Dispose()

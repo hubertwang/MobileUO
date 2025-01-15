@@ -67,10 +67,11 @@ namespace ClassicUO.IO
         }
 
         // MobileUO: this logic existed in the old UOTexture class
-        // MobileUO: TODO: ideally, it would be better if we could somehow grab the texture by the textureID instead of passing it down to the function
-        // MobileUO: TODO: or figure out how to get the other Get() function to work correctly
+        // MobileUO: it's probably no longer needed
         public bool Get(ulong textureID, Microsoft.Xna.Framework.Graphics.Texture2D texture, int x, int y, int extraRange = 0, bool pixelCheck = true)
         {
+            //return Get(textureID, x, y, extraRange);
+
             if (x >= 0 && y >= 0 && x < texture.Width && y < texture.Height)
             {
                 if (!pixelCheck)

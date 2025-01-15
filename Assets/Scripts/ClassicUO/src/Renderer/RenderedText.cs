@@ -270,8 +270,7 @@ namespace ClassicUO.Renderer
             return _info;
         }
 
-        // MobileUO: added texture
-        public bool PixelCheck(Texture2D texture, int x, int y)
+        public bool PixelCheck(int x, int y)
         {
             if (string.IsNullOrWhiteSpace(Text))
             {
@@ -287,7 +286,7 @@ namespace ClassicUO.Renderer
 
             ulong b = (ulong)(Text.GetHashCode() ^ hue ^ ((int)Align) ^ ((int)FontStyle) ^ Font ^ (IsUnicode ? 0x01 : 0x00));
 
-            return _picker.Get(b, texture, x, y);
+            return _picker.Get(b, x, y);
         }
 
         public TextEditRow GetLayoutRow(int startIndex)

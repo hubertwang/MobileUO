@@ -170,8 +170,7 @@ namespace ClassicUO.Game.UI.Controls
 
             y -= _sliderPosition;
 
-            // MobileUO: pass in texture
-            return GumpsLoader.Instance.PixelCheck(0x0828, texture_flag, x, y);
+            return GumpsLoader.Instance.PixelCheck(0x0828, x, y);
         }
     }
 }
