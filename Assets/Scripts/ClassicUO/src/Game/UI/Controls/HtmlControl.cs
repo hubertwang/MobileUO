@@ -309,15 +309,7 @@ namespace ClassicUO.Game.UI.Controls
                         {
                             Log.Info("LINK CLICKED: " + result.Link);
 
-                            // MobileUO: handle OpenURL
-                            if (UnityEngine.Application.isMobilePlatform)
-                            {
-                                UnityEngine.Application.OpenURL(result.Link);
-                            }
-                            else
-                            {
-                                PlatformHelper.LaunchBrowser(result.Link);
-                            }
+                            PlatformHelper.LaunchBrowser(result.Link);
 
                             _gameText.CreateTexture();
 

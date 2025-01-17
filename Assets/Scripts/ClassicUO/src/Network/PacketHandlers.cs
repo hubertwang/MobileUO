@@ -3464,15 +3464,7 @@ namespace ClassicUO.Network
 
             if (!string.IsNullOrEmpty(url))
             {
-                // MobileUO: open URLs
-                if (UnityEngine.Application.isMobilePlatform)
-                {
-                    UnityEngine.Application.OpenURL(url);
-                }
-                else
-                {
-                    PlatformHelper.LaunchBrowser(url);
-                }
+                PlatformHelper.LaunchBrowser(url);
             }
         }
 
