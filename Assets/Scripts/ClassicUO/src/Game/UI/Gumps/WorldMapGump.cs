@@ -98,10 +98,6 @@ namespace ClassicUO.Game.UI.Gumps
 
         // MobileUO: added variables
         private bool readyToCreateTexture;
-        private int realWidth;
-        private int realHeight;
-        private Color[] buffer;
-
         public WorldMapGump() : base
         (
             400,
@@ -470,9 +466,6 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
                 readyToCreateTexture = false;
-                _mapTexture = new UOTexture(realWidth, realHeight);
-                _mapTexture.SetData(buffer);
-                buffer = null;
             }
 
             if (IsDisposed)
@@ -1033,258 +1026,183 @@ namespace ClassicUO.Game.UI.Gumps
 
         #region Loading
 
-        // MobileUO: large refactor of method
         private unsafe Task Load()
         {
             _mapIndex = World.MapIndex;
             _mapTexture?.Dispose();
             _mapTexture = null;
 
-            return Task.Run(() =>
+            if (_mapIndex < 0 || _mapIndex > Constants.MAPS_COUNT)
             {
-                if (World.InGame)
+                return Task.CompletedTask;
+            }
+            
+            return Task.Run
+            (
+                () =>
                 {
                     DateTime start = DateTime.UtcNow;
 
-                    uint[] cachedColorsForTileId = new uint[ushort.MaxValue];
-
-                    HuesLoader huesLoaderInstance = HuesLoader.Instance;
-                    int huesCount = huesLoaderInstance.HuesCount;
-                    HuesGroup[] huesRange = huesLoaderInstance.HuesRange;
-                    StaticTiles[] tileDataLoaderStaticData = TileDataLoader.Instance.StaticData;
-                    bool playerNotNullAndIsGargoyle = World.Player != null && World.Player.Race == RaceType.GARGOYLE;
-                    byte A = (byte) 255;
-                    
-                    const float MAG_0 = 80f / 100f;
-                    const float MAG_1 = 100f / 80f;
-
-                    ushort GetColor16(ushort c, ushort color)
+                    if (World.InGame)
                     {
-                        if (color != 0 && color < huesCount)
+                        try
                         {
-                            color -= 1;
-                            int g = color >> 3;
-                            int e = color % 8;
+                            int realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
+                            int realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
 
-                            return huesRange[g].Entries[e].ColorTable[(c >> 10) & 0x1F];
-                        }
+                            const int OFFSET_PIX = 2;
+                            const int OFFSET_PIX_HALF = OFFSET_PIX / 2;
 
-                        return c;
-                    }
-                    
-                    bool IsNoDrawable(ushort g)
-                    {
-                        switch (g)
-                        {
-                            case 0x0001:
-                            case 0x21BC:
-                                //case 0x5690:
-                                return true;
+                            int fixedWidth = MapLoader.Instance.MapBlocksSize[World.MapIndex, 0];
+                            int fixedHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
 
-                            case 0x9E4C:
-                            case 0x9E64:
-                            case 0x9E65:
-                            case 0x9E7D:
-                                ref StaticTiles data = ref tileDataLoaderStaticData[g];
+                            int size = (realWidth + OFFSET_PIX) * (realHeight + OFFSET_PIX);
+                           
+                            sbyte[] allZ = System.Buffers.ArrayPool<sbyte>.Shared.Rent(size);
+                            uint[] buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(size);
 
-                                return data.IsBackground || data.IsSurface;
-                        }
-
-                        if (g != 0x63D3)
-                        {
-                            if (g >= 0x2198 && g <= 0x21A4) 
-                                return true;
-
-                            if (g >= tileDataLoaderStaticData.Length)
+                            try
                             {
-                                return false;
-                            }
-                            
-                            ref StaticTiles data = ref tileDataLoaderStaticData[g];
-                            if (!data.IsNoDiagonal || (data.IsAnimated && playerNotNullAndIsGargoyle))
-                                return false;
-                        }
+                                int bx, by, mapX, mapY, x, y;
 
-                        return true;
-                    }
-                    
-                    try
-                    {
-                        const int OFFSET_PIX = 2;
-                        const int OFFSET_PIX_HALF = OFFSET_PIX / 2;
-
-                        // MobileUO: remove int or else world map gump breaks
-                        realWidth = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 0];
-                        realHeight = MapLoader.Instance.MapsDefaultSize[World.MapIndex, 1];
-
-                        int fixedWidth = MapLoader.Instance.MapBlocksSize[World.MapIndex, 0];
-                        int fixedHeight = MapLoader.Instance.MapBlocksSize[World.MapIndex, 1];
-
-                        int size = (realWidth + OFFSET_PIX) * (realHeight + OFFSET_PIX);
-                        // MobileUO: remove Color[] or else world map gump breaks
-                        buffer = new Color[size];
-                        sbyte[] allZ = new sbyte[size];
-
-                        int bx, by, mapX, mapY, x, y;
-
-
-                        for (bx = 0; bx < fixedWidth; bx++)
-                        {
-                            mapX = bx << 3;
-
-                            for (by = 0; by < fixedHeight; by++)
-                            {
-                                ref IndexMap indexMap = ref World.Map.GetIndex(bx, by);
-
-                                if (indexMap.MapAddress == 0)
-                                    continue;
-
-                                MapBlock* mapBlock = (MapBlock*) indexMap.MapAddress;
-                                MapCells* cells = (MapCells*) &mapBlock->Cells;
-
-                                int pos = 0;
-                                mapY = by << 3;
-
-                                for (y = 0; y < 8; y++)
+                                for (bx = 0; bx < fixedWidth; ++bx)
                                 {
-                                    int block = (mapY + y + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + mapX + OFFSET_PIX_HALF;
+                                    mapX = bx << 3;
 
-                                    for (x = 0; x < 8; x++)
+                                    for (by = 0; by < fixedHeight; ++by)
                                     {
-                                        ref MapCells cell = ref cells[pos];
-                                        
-                                        uint cachedColor = cachedColorsForTileId[cell.TileID];
-                                        ref Color cc = ref buffer[block];
-                                        if (cachedColor != 0)
+                                        ref IndexMap indexMap = ref World.Map.GetIndex(bx, by);
+
+                                        if (indexMap.MapAddress == 0)
                                         {
-                                            cc.PackedValue = cachedColor;
-                                        }
-                                        else
-                                        {
-                                            ushort color = (ushort) (0x8000 | huesLoaderInstance.GetRadarColorData(cell.TileID));
-                                            uint packedColor = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
-                                            cc.PackedValue = packedColor;
-                                            cachedColorsForTileId[cell.TileID] = packedColor;
+                                            continue;
                                         }
 
-                                        allZ[block] = cell.Z;
+                                        MapBlock* mapBlock = (MapBlock*)indexMap.MapAddress;
+                                        MapCells* cells = (MapCells*)&mapBlock->Cells;
 
-                                        block++;
-                                        pos++;
-                                    }
-                                }
+                                        mapY = by << 3;
 
-                                StaticsBlock* sb = (StaticsBlock*) indexMap.StaticAddress;
-                                if (sb != null)
-                                {
-                                    int count = (int) indexMap.StaticCount;
-
-                                    for (int c = 0; c < count; c++)
-                                    {
-                                        ref readonly StaticsBlock staticBlock = ref sb[c];
-
-                                        if (staticBlock.Color != 0 && staticBlock.Color != 0xFFFF && !IsNoDrawable(staticBlock.Color))
+                                        for (y = 0; y < 8; ++y)
                                         {
-                                            pos = (staticBlock.Y << 3) + staticBlock.X;
-                                            ref MapCells cell = ref cells[pos];
+                                            int block = (mapY + y + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + mapX + OFFSET_PIX_HALF;
 
-                                            if (cell.Z <= staticBlock.Z)
+                                            int pos = y << 3;
+
+                                            for (x = 0; x < 8; ++x, ++pos, ++block)
                                             {
-                                                // ushort color = (ushort) (0x8000 | (staticBlock.Hue > 0 ? HuesLoader.Instance.GetColor16(16384, staticBlock.Hue) : HuesLoader.Instance.GetRadarColorData(staticBlock.Color + 0x4000)));
-                                                ushort color = (ushort) (0x8000 | (staticBlock.Hue > 0 ? GetColor16(16384, staticBlock.Hue) : huesLoaderInstance.GetRadarColorData(staticBlock.Color + (ushort)0x4000)));
+                                                ushort color = (ushort)(0x8000 | HuesLoader.Instance.GetRadarColorData(cells[pos].TileID & 0x3FFF));
 
-                                                int block = (mapY + staticBlock.Y + OFFSET_PIX_HALF) *
-                                                            (realWidth + OFFSET_PIX) + (mapX + staticBlock.X) +
-                                                            OFFSET_PIX_HALF;
+                                                buffer[block] = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
+                                                allZ[block] = cells[pos].Z;
+                                            }
+                                        }
 
-                                                ref Color cc = ref buffer[block];
-                                                cc.PackedValue = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
 
-                                                allZ[block] = staticBlock.Z;
+                                        StaticsBlock* sb = (StaticsBlock*)indexMap.StaticAddress;
+
+                                        if (sb != null)
+                                        {
+                                            int count = (int)indexMap.StaticCount;
+
+                                            for (int c = 0; c < count; ++c, ++sb)
+                                            {
+                                                if (sb->Color != 0 && sb->Color != 0xFFFF && GameObject.CanBeDrawn(sb->Color))
+                                                {
+                                                    int block = (mapY + sb->Y + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + mapX + sb->X + OFFSET_PIX_HALF;
+
+                                                    if (sb->Z >= allZ[block])
+                                                    {
+                                                        ushort color = (ushort)(0x8000 | (sb->Hue != 0 ? HuesLoader.Instance.GetColor16(16384, sb->Hue) : HuesLoader.Instance.GetRadarColorData(sb->Color + 0x4000)));
+
+                                                        buffer[block] = HuesHelper.Color16To32(color) | 0xFF_00_00_00;
+                                                        allZ[block] = sb->Z;
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        }
 
-                        int real_width_less_one = realWidth - 1;
-                        int real_height_less_one = realHeight - 1;
+                                int real_width_less_one = realWidth - 1;
+                                int real_height_less_one = realHeight - 1;
+                                const float MAG_0 = 80f / 100f;
+                                const float MAG_1 = 100f / 80f;
 
-                        int mapY_plus_one;
-                        int r, g, b;
-
-                        for (mapY = 1; mapY < real_height_less_one; mapY++)
-                        {
-                            mapY_plus_one = mapY + 1;
-
-                            for (mapX = 1; mapX < real_width_less_one; mapX++)
-                            {
-                                int blockCurrent = (mapY + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + mapX + OFFSET_PIX_HALF;
-                                int blockNext = (mapY_plus_one + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + (mapX - 1) + OFFSET_PIX_HALF;
-
-                                ref sbyte z0 = ref allZ[blockCurrent];
-                                ref sbyte z1 = ref allZ[blockNext];
-
-                                if (z0 == z1)
-                                    continue;
-
-                                ref Color cc = ref buffer[blockCurrent];
-                                byte R = cc.R;
-                                byte G = cc.G;
-                                byte B = cc.B;
-
-                                if (R != 0 || G != 0 || B != 0)
+                                for (mapY = 1; mapY < real_height_less_one; ++mapY)
                                 {
-                                    if (z0 < z1)
+                                    int blockCurrent = (mapY + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + OFFSET_PIX_HALF;
+                                    int blockNext = (mapY + 1 + OFFSET_PIX_HALF) * (realWidth + OFFSET_PIX) + OFFSET_PIX_HALF;
+
+                                    for (mapX = 1; mapX < real_width_less_one; ++mapX)
                                     {
-                                        r = (int) (R * MAG_0);
-                                        g = (int) (G * MAG_0);
-                                        b = (int) (B * MAG_0);
+                                        sbyte z0 = allZ[++blockCurrent];
+                                        sbyte z1 = allZ[blockNext++];
+
+                                        if (z0 == z1)
+                                        {
+                                            continue;
+                                        }
+
+                                        ref uint cc = ref buffer[blockCurrent];
+
+                                        byte r = (byte) (cc & 0xFF);        
+                                        byte g = (byte)((cc >> 8) & 0xFF);  
+                                        byte b = (byte)((cc >> 16) & 0xFF); 
+                                        byte a = (byte)((cc >> 24) & 0xFF); 
+
+                                        if (r != 0 || g != 0 || b != 0)
+                                        {
+                                            if (z0 < z1)
+                                            {
+                                                r = (byte)Math.Min(0xFF, r * MAG_0);
+                                                g = (byte)Math.Min(0xFF, g * MAG_0);
+                                                b = (byte)Math.Min(0xFF, b * MAG_0);
+                                            }
+                                            else
+                                            {
+                                                r = (byte)Math.Min(0xFF, r * MAG_1);
+                                                g = (byte)Math.Min(0xFF, g * MAG_1);
+                                                b = (byte)Math.Min(0xFF, b * MAG_1);
+                                            }
+
+                                            cc = (uint) (r | (g << 8) | (b << 16) | (a << 24));
+                                        }
                                     }
-                                    else
-                                    {
-                                        r = (int) (R * MAG_1);
-                                        g = (int) (G * MAG_1);
-                                        b = (int) (B * MAG_1);
-                                    }
-
-                                    if (r > 255)
-                                        r = 255;
-
-                                    if (g > 255)
-                                        g = 255;
-
-                                    if (b > 255)
-                                        b = 255;
-
-                                    cc.PackedValue = (uint)(A << 24) + (uint)((byte)r << 16) + (uint)((byte)g << 8) + (byte)b;
                                 }
+
+                                if (OFFSET_PIX > 0)
+                                {
+                                    realWidth += OFFSET_PIX;
+                                    realHeight += OFFSET_PIX;
+                                }
+
+                                if (_mapTexture == null || _mapTexture.IsDisposed)
+                                {
+                                    _mapTexture = new UOTexture(realWidth, realHeight);
+                                }
+                                
+                                _mapTexture.SetData(buffer, 0, realWidth * realHeight);
+                            }
+                            finally
+                            {
+                                System.Buffers.ArrayPool<sbyte>.Shared.Return(allZ);
+                                System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
                             }
                         }
-
-                        if (OFFSET_PIX > 0)
+                        catch (Exception ex)
                         {
-                            realWidth += OFFSET_PIX;
-                            realHeight += OFFSET_PIX;
+                            Log.Error($"error loading worldmap: {ex}");
                         }
 
-                        // _mapTexture = new UOTexture32(realWidth, realHeight);
-                        // _mapTexture.SetData(buffer);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex);
-                    }
-                   
-
+                    // MobileUO: loading map - show map loaded message on next Update()
                     //GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
 
                     readyToCreateTexture = true;
                     
                     Console.WriteLine("World map load took " + (DateTime.UtcNow - start).TotalSeconds + " seconds");
+                    }
                 }
-            }
             );
         }
 
