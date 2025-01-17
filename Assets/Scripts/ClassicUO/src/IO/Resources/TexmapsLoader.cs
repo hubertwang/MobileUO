@@ -148,8 +148,7 @@ namespace ClassicUO.IO.Resources
             );
         }
 
-        // MobileUO: added keepData parameter
-        public override UOTexture GetTexture(uint g, bool keepData = false)
+        public override UOTexture GetTexture(uint g)
         {
             if (g >= Resources.Length)
             {

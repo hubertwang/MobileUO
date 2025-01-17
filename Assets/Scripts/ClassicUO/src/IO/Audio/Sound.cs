@@ -178,6 +178,7 @@ namespace ClassicUO.IO.Audio
 
                 SoundInstance.BufferNeeded += OnBufferNeeded;
                 // MobileUO: keep this version of SubmitBuffer
+                // MobileUO: TODO: can we get new way to work?
                 SoundInstance.SubmitBuffer(buffer, this is UOMusic, buffer.Length);
                 VolumeFactor = volumeFactor;
                 Volume = volume;
@@ -185,6 +186,7 @@ namespace ClassicUO.IO.Audio
                 DurationTime = Time.Ticks + SoundInstance.GetSampleDuration(buffer.Length).TotalMilliseconds;
 
                 // MobileUO: keep this version of Play
+                // MobileUO: TODO: can we get new way to work?
                 SoundInstance.Play(Name);
 
                 return true;

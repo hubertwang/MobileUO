@@ -336,8 +336,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void GenerateVirtualTextures()
         {
             _shopGumpParts = new UOTexture[12];
-            // MobileUO: added keepData = true parameter
-            UOTexture t = GumpsLoader.Instance.GetTexture(0x0870, true);
+            UOTexture t = GumpsLoader.Instance.GetTexture(0x0870);
             UOTexture[][] splits = new UOTexture[4][];
 
             splits[0] = GraphicHelper.SplitTexture16
@@ -351,8 +350,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            // MobileUO: added keepData = true parameter
-            t = GumpsLoader.Instance.GetTexture(0x0871, true);
+            t = GumpsLoader.Instance.GetTexture(0x0871);
 
             splits[1] = GraphicHelper.SplitTexture16
             (
@@ -365,8 +363,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            // MobileUO: added keepData = true parameter
-            t = GumpsLoader.Instance.GetTexture(0x0872, true);
+            t = GumpsLoader.Instance.GetTexture(0x0872);
 
             splits[2] = GraphicHelper.SplitTexture16
             (
@@ -379,8 +376,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             );
 
-            // MobileUO: added keepData = true parameter
-            t = GumpsLoader.Instance.GetTexture(0x0873, true);
+            t = GumpsLoader.Instance.GetTexture(0x0873);
 
             splits[3] = GraphicHelper.SplitTexture16
             (

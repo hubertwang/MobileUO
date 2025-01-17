@@ -131,12 +131,10 @@ namespace ClassicUO.Game.GameObjects
                 posX -= index.Width;
                 posY -= index.Height;
 
-                ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
-
                 if (ArtLoader.Instance.PixelCheck
                 (
-                    graphic,
-                    SelectedObject.TranslatedMousePositionByViewport.X - posX,
+                graphic,
+                    SelectedObject.TranslatedMousePositionByViewport.X - posX, 
                     SelectedObject.TranslatedMousePositionByViewport.Y - posY
                 ))
                 {

@@ -85,15 +85,8 @@ namespace ClassicUO.Game.GameObjects
                 }
 
                 if ((State & CUSTOM_HOUSE_MULTI_OBJECT_FLAGS.CHMOF_TRANSPARENT) != 0)
-                {
-                    if (AlphaHue >= 192)
-                    {
-                        AlphaHue = 0xFF;
-                    }
-                    else
-                    {
-                        ProcessAlpha(192);
-                    }
+                { 
+                    AlphaHue = 192;
                 }
             }
 
@@ -171,8 +164,6 @@ namespace ClassicUO.Game.GameObjects
 
                 posX -= index.Width;
                 posY -= index.Height;
-
-                ArtTexture texture = ArtLoader.Instance.GetTexture(graphic);
 
                 if (ArtLoader.Instance.PixelCheck
                 (

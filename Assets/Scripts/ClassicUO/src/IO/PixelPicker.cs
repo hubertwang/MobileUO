@@ -13,7 +13,6 @@ namespace ClassicUO.IO
         Dictionary<ulong, int> m_IDs = new Dictionary<ulong, int>();
         readonly List<byte> m_Data = new List<byte>(InitialDataCount); // list<t> access is 10% slower than t[].
 
-        // MobileUO: TODO: CUO 0.1.9.0 figure out how to integrate UOTexture's Contains/GetDataAtPos here
         public bool Get(ulong textureID, int x, int y, int extraRange = 0)
         {
             int index;

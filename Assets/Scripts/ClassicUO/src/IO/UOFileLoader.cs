@@ -91,8 +91,7 @@ namespace ClassicUO.IO
 
         protected readonly T[] Resources;
 
-        // MobileUO: added keepData parameter
-        public abstract T GetTexture(uint id, bool keepData = false);
+        public abstract T GetTexture(uint id);
 
         protected void SaveId(uint id)
         {

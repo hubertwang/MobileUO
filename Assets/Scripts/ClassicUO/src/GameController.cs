@@ -70,6 +70,7 @@ namespace ClassicUO
         private double _totalElapsed, _currentFpsTime;
         private uint _totalFrames;
         private UltimaBatcher2D _uoSpriteBatch;
+        private bool _suppressedDraw;
 
         // MobileUO: Batcher and TouchScreenKeyboard
         public UltimaBatcher2D Batcher => _uoSpriteBatch;
@@ -121,8 +122,6 @@ namespace ClassicUO
         protected override void LoadContent()
         {
             base.LoadContent();
-
-            Client.Load();
 
             const int TEXTURE_WIDTH = 32;
             const int TEXTURE_HEIGHT = 2048;
@@ -477,6 +476,7 @@ namespace ClassicUO
             }
 
             double x = _intervalFixedUpdate[!IsActive && ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.ReduceFPSWhenInactive ? 1 : 0];
+            _suppressedDraw = false;
 
             if (_totalElapsed > x)
             {
@@ -493,6 +493,7 @@ namespace ClassicUO
             }
             else
             {
+                _suppressedDraw = true;
                 SuppressDraw();
 
                 if (!gameTime.IsRunningSlowly)
@@ -567,6 +568,13 @@ namespace ClassicUO
                 UpdateSocketStats(NetClient.Socket, totalTime);
             }
         }
+
+        // MobileUO: commented out
+        // MobileUO: TODO: do we need to implement it?
+        //protected override bool BeginDraw()
+        //{
+        //    return !_suppressedDraw && base.BeginDraw();
+        //}
 
         private void UpdateSocketStats(NetClient socket, double totalTime)
         {

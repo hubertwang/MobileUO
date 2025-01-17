@@ -69,10 +69,11 @@ namespace ClassicUO
         {
             Debug.Assert(Game == null);
 
+            Load();
+
             Log.Trace("Running game...");
 
             using (Game = new GameController())
-                //Game = new GameController();
             {
                 // https://github.com/FNA-XNA/FNA/wiki/7:-FNA-Environment-Variables#fna_graphics_enable_highdpi
                 CUOEnviroment.IsHighDPI = Environment.GetEnvironmentVariable("FNA_GRAPHICS_ENABLE_HIGHDPI") == "1";
@@ -81,6 +82,18 @@ namespace ClassicUO
                 {
                     Log.Trace("HIGH DPI - ENABLED");
                 }
+
+                Log.Trace("Loading plugins...");
+
+                foreach (string p in Settings.GlobalSettings.Plugins)
+                {
+                    Plugin.Create(p);
+                }
+
+                Log.Trace("Done!");
+
+                // MobileUO: commented out
+                //UoAssist.Start();
 
                 Game.Run();
             }
@@ -94,10 +107,8 @@ namespace ClassicUO
         }
 
 
-        public static void Load()
+        private static void Load()
         {
-            Log.Trace(">>>>>>>>>>>>> Loading >>>>>>>>>>>>>");
-
             string clientPath = Settings.GlobalSettings.UltimaOnlineDirectory;
             Log.Trace($"Ultima Online installation folder: {clientPath}");
 
@@ -208,22 +219,6 @@ namespace ClassicUO
                     Settings.GlobalSettings.Encryption = (byte) EncryptionHelper.Type;
                 }
             }
-
-            Log.Trace("Done!");
-
-            Log.Trace("Loading plugins...");
-
-            foreach (string p in Settings.GlobalSettings.Plugins)
-            {
-                Plugin.Create(p);
-            }
-
-            Log.Trace("Done!");
-
-            // MobileUO: commented out
-            //UoAssist.Start();
-
-            Log.Trace(">>>>>>>>>>>>> DONE >>>>>>>>>>>>>");
         }
     }
 }
