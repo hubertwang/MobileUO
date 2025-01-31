@@ -328,5 +328,38 @@ namespace Microsoft.Xna.Framework.Graphics
 
             handle.Free();
         }
+
+        // https://github.com/FNA-XNA/FNA/blob/6a3ab36e521edfc6879b388037aadf9b832ec69e/src/Graphics/Texture2D.cs#L388C3-L389C4
+        public void SaveAsPng(Stream stream, int width, int height)
+        {
+            if (UnityTexture == null)
+            {
+                throw new InvalidOperationException("Texture is not initialized.");
+            }
+
+            var texture2D = UnityTexture as UnityEngine.Texture2D;
+
+            if (texture2D == null)
+            {
+                throw new InvalidOperationException("UnityTexture is not a Texture2D.");
+            }
+
+            // Ensure the texture dimensions match the requested width and height
+            if (texture2D.width != width || texture2D.height != height)
+            {
+                throw new ArgumentException("Texture dimensions do not match the requested width and height.");
+            }
+
+            // Encode the texture to PNG format
+            byte[] pngData = texture2D.EncodeToPNG();
+
+            if (pngData == null)
+            {
+                throw new InvalidOperationException("Failed to encode texture to PNG.");
+            }
+
+            // Write the PNG data to the provided stream
+            stream.Write(pngData, 0, pngData.Length);
+        }
     }
 }
