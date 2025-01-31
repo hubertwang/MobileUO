@@ -231,6 +231,13 @@ namespace Microsoft.Xna.Framework.Graphics
                 h = Math.Max(Height >> level, 1);
             }
 
+            // Check if dimensions are valid
+            if (x < 0 || y < 0 || x + w > destTex.width || y + h > destTex.height)
+            {
+                Debug.Log($"Texture width: {destTex.width}, height: {destTex.height}, rect: {x},{y},{w},{h}");
+                throw new ArgumentException("The specified block is outside the texture bounds.");
+            }
+
             var colors = new Color32[w * h];
 
             // Copy data from the buffer to the colors array, flipping vertically
