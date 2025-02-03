@@ -103,6 +103,8 @@ namespace ClassicUO.Renderer
 
         public GraphicsDevice GraphicsDevice { get; }
 
+        public int TextureSwitches, FlushesDone;
+
         public void SetBrightlight(float f)
         {
             // MobileUO: pass Brightlight value to shader
@@ -1287,6 +1289,9 @@ namespace ClassicUO.Renderer
             //EnsureNotStarted();
             //_started = true;
 
+            TextureSwitches = 0;
+            FlushesDone = 0;
+
             CustomEffect = customEffect;
             _transformMatrix = transform_matrix;
         }
@@ -1366,6 +1371,8 @@ namespace ClassicUO.Renderer
         private void Flush()
         {
             ApplyStates();
+
+            ++FlushesDone;
         }
 
         private void SetMatrixForEffect(MatrixEffect effect)

@@ -208,6 +208,8 @@ namespace ClassicUO.IO.Resources
             //Log.Info("Entries Length: " + Entries.Length);
             //Log.Info("Entries Length modified: " + (ushort)(Entries.Length - 0x4000));
 
+            //ushort g = 0;
+
             for (ushort g = 0, count = (ushort)(Entries.Length - 0x4000); g < count; g++)
             {
                 CreateNewAtlas(_staticAtlas, g, false);
