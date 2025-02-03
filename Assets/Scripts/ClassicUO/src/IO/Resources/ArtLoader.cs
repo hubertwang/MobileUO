@@ -39,7 +39,6 @@ using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
-using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using SDL2;
 
@@ -130,9 +129,9 @@ namespace ClassicUO.IO.Resources
             }
         }
 
-        private void CreateNewAtlas(TextureAtlas atlas, ushort g, bool isTerrain)
+        private void CreateNewAtlas(TextureAtlas atlas, int g, bool isTerrain)
         {
-            ref UOFileIndex entry = ref GetValidRefEntry(g + (isTerrain ? 0 : 0x4000));
+            ref UOFileIndex entry = ref GetValidRefEntry(g);
 
             if (isTerrain)
             {
@@ -169,7 +168,7 @@ namespace ClassicUO.IO.Resources
                     }
                 }
 
-                atlas.AddSprite(g, data, 44, 44);
+                atlas.AddSprite((uint) g, data, 44, 44);
             }
             else
             {
@@ -181,9 +180,9 @@ namespace ClassicUO.IO.Resources
 
                     try
                     {
-                        FillArtPixels(g, ref entry, ref artPixels, out var artBounds);
+                        FillArtPixels((ushort) g, ref entry, ref artPixels, out var artBounds);
 
-                        atlas.AddSprite(g, artPixels, width, height);
+                        atlas.AddSprite((uint) g, artPixels, width, height);
                     }
                     finally
                     {
@@ -203,24 +202,19 @@ namespace ClassicUO.IO.Resources
 
         public unsafe void CreateTerrainAtlasTextures(Microsoft.Xna.Framework.Graphics.GraphicsDevice device)
         {
-            _staticAtlas = new TextureAtlas(device, ATLAS_SIZE, ATLAS_SIZE, Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color);
+            _staticAtlas = new TextureAtlas(device, ATLAS_SIZE, ATLAS_SIZE, Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color, Entries.Length);
 
-            //Log.Info("Entries Length: " + Entries.Length);
-            //Log.Info("Entries Length modified: " + (ushort)(Entries.Length - 0x4000));
+            //for (ushort g = 0, count = (ushort)(Entries.Length - 0x4000); g < count; g++)
+            //{
+            //    CreateNewAtlas(_staticAtlas, g, false);
+            //}
 
-            //ushort g = 0;
-
-            for (ushort g = 0, count = (ushort)(Entries.Length - 0x4000); g < count; g++)
-            {
-                CreateNewAtlas(_staticAtlas, g, false);
-            }
-
-            _terrainAtlas = new TextureAtlas(device, ATLAS_SIZE, ATLAS_SIZE, Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color);
-
-            for (ushort g = 0; g < 0x4000; g++)
-            {
-                CreateNewAtlas(_terrainAtlas, g, true);
-            }
+            //_terrainAtlas = new TextureAtlas(device, ATLAS_SIZE, ATLAS_SIZE, Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color);
+         
+            //for (ushort g = 0; g < 0x4000; g++)
+            //{
+            //    CreateNewAtlas(_terrainAtlas, g, true);
+            //}
         }
 
 
@@ -252,11 +246,22 @@ namespace ClassicUO.IO.Resources
 
         public Microsoft.Xna.Framework.Graphics.Texture2D GetLandTexture(uint g, out Rectangle bounds)
         {
-            return _terrainAtlas.GetTexture(g, out bounds);
+            if (!_staticAtlas.IsHashExists(g))
+            {
+                CreateNewAtlas(_staticAtlas, (int) g, true);
+            }
+
+            return _staticAtlas.GetTexture(g, out bounds);
         }
 
         public Microsoft.Xna.Framework.Graphics.Texture2D GetStaticTexture(uint g, out Rectangle bounds)
         {
+            g += 0x4000;
+            if (!_staticAtlas.IsHashExists(g))
+            {
+                CreateNewAtlas(_staticAtlas, (int) g, false);
+            }
+
             return _staticAtlas.GetTexture(g, out bounds);
         }
 
@@ -486,6 +491,11 @@ namespace ClassicUO.IO.Resources
 
         private void FinalizeData(Span<uint> pixels, ref UOFileIndex entry, ushort graphic, int width, int height, out Rectangle bounds)
         {
+            if ((graphic & 0x4000) != 0)
+            {
+                graphic = (ushort)(graphic & ~0x4000);
+            }
+
             int pos1 = 0;
             int minX = width, minY = height, maxX = 0, maxY = 0;
 

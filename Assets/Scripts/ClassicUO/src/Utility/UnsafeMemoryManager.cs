@@ -49,118 +49,128 @@ namespace ClassicUO.Utility
     public static unsafe class UnsafeMemoryManager
     {
         // MobileUO: commented out
-        //public static readonly int SizeOfPointer = sizeof(void*);
+        public static readonly int SizeOfPointer = sizeof(void*);
 
-        //public static readonly int MinimumPoolBlockSize = SizeOfPointer;
+        public static readonly int MinimumPoolBlockSize = SizeOfPointer;
 
 
-        //public static void Memset(void* ptr, byte value, int count)
-        //{
-        //    long* c = (long*) ptr;
+        public static void Memset(void* ptr, byte value, int count)
+        {
+            long* c = (long*) ptr;
 
-        //    count /= 8;
+            count /= 8;
 
-        //    for (int i = 0; i < count; ++i)
-        //    {
-        //        *c++ = (long) value;
-        //    }
-        //}
+            for (int i = 0; i < count; ++i)
+            {
+                *c++ = (long) value;
+            }
+        }
 
-        //public static IntPtr Alloc(int size)
-        //{
-        //    size = ((size + 7) & (-8));
+        public static IntPtr Alloc(int size)
+        {
+            size = ((size + 7) & (-8));
 
-        //    IntPtr ptr = Marshal.AllocHGlobal(size);
+            IntPtr ptr = Marshal.AllocHGlobal(size);
 
-        //    return ptr;
-        //}
+            return ptr;
+        }
 
-        //public static IntPtr Calloc(int size)
-        //{
-        //    IntPtr ptr = Alloc(size);
+        public static IntPtr Calloc(int size)
+        {
+            IntPtr ptr = Alloc(size);
 
-        //    Memset((void*) ptr, 0, size);
+            Memset((void*) ptr, 0, size);
 
-        //    return ptr;
-        //}
+            return ptr;
+        }
 
-        //public static void* Alloc(ref UnmanagedMemoryPool pool)
-        //{
-        //    void* pRet = pool.Free;
+        public static void* Alloc(ref UnmanagedMemoryPool pool)
+        {
+            void* pRet = pool.Free;
 
-        //    pool.Free = *((byte**) pool.Free);
+            pool.Free = *((byte**) pool.Free);
 
-        //    return pRet;
-        //}
+            return pRet;
+        }
 
-        //public static void* Calloc(ref UnmanagedMemoryPool pool)
-        //{
-        //    void* ptr = Alloc(ref pool);
+        public static void* Calloc(ref UnmanagedMemoryPool pool)
+        {
+            void* ptr = Alloc(ref pool);
 
-        //    Memset(ptr, 0, pool.BlockSize);
+            Memset(ptr, 0, pool.BlockSize);
 
-        //    return ptr;
-        //}
+            return ptr;
+        }
 
-        //public static UnmanagedMemoryPool AllocPool(int blockSize, int numBlocks)
-        //{
-        //    Debug.Assert(blockSize >= MinimumPoolBlockSize);
-        //    Debug.Assert(numBlocks > 0);
+        public static UnmanagedMemoryPool AllocPool(int blockSize, int numBlocks)
+        {
+            Debug.Assert(blockSize >= MinimumPoolBlockSize);
+            Debug.Assert(numBlocks > 0);
 
-        //    blockSize = ((blockSize + 7) & (-8));
+            blockSize = ((blockSize + 7) & (-8));
 
-        //    UnmanagedMemoryPool pool = new UnmanagedMemoryPool();
-        //    pool.Free = null;
-        //    pool.NumBlocks = numBlocks;
-        //    pool.BlockSize = blockSize;
+            UnmanagedMemoryPool pool = new UnmanagedMemoryPool();
+            pool.Free = null;
+            pool.NumBlocks = numBlocks;
+            pool.BlockSize = blockSize;
 
-        //    pool.Alloc = (byte*) Alloc(blockSize * numBlocks);
+            pool.Alloc = (byte*) Alloc(blockSize * numBlocks);
 
-        //    FreeAll(&pool);
+            FreeAll(&pool);
 
-        //    return pool;
-        //}
+            return pool;
+        }
 
-        //public static void Free(IntPtr ptr)
-        //{
-        //    if (ptr != IntPtr.Zero)
-        //    {
-        //        Marshal.FreeHGlobal(ptr);
-        //    }
-        //}
+        public static void Free(IntPtr ptr)
+        {
+            if (ptr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
+        }
 
-        //public static void Free(UnmanagedMemoryPool* pool, void* ptr)
-        //{
-        //    if (ptr != null)
-        //    {
-        //        void** pHead = (void**) ptr;
-        //        *pHead = pool->Free;
-        //        pool->Free = pHead;
-        //    }
-        //}
+        public static void Free(UnmanagedMemoryPool* pool, void* ptr)
+        {
+            if (ptr != null)
+            {
+                void** pHead = (void**) ptr;
+                *pHead = pool->Free;
+                pool->Free = pHead;
+            }
+        }
 
-        //public static void FreeAll(UnmanagedMemoryPool* pool)
-        //{
-        //    void** pCur = (void**) pool->Alloc;
-        //    byte* pNext = pool->Alloc + pool->BlockSize;
+        public static void Free(ref UnmanagedMemoryPool pool, void* ptr)
+        {
+            if (ptr != null)
+            {
+                void** pHead = (void**)ptr;
+                *pHead = pool.Free;
+                pool.Free = pHead;
+            }
+        }
 
-        //    for (int i = 0, count = pool->NumBlocks - 1; i < count; ++i)
-        //    {
-        //        *pCur = pNext;
-        //        pCur = (void**) pNext;
-        //        pNext += pool->BlockSize;
-        //    }
+        public static void FreeAll(UnmanagedMemoryPool* pool)
+        {
+            void** pCur = (void**) pool->Alloc;
+            byte* pNext = pool->Alloc + pool->BlockSize;
 
-        //    *pCur = default(void*);
+            for (int i = 0, count = pool->NumBlocks - 1; i < count; ++i)
+            {
+                *pCur = pNext;
+                pCur = (void**) pNext;
+                pNext += pool->BlockSize;
+            }
 
-        //    pool->Free = pool->Alloc;
-        //}
+            *pCur = default(void*);
 
-        //public static void FreePool(UnmanagedMemoryPool* pool)
-        //{
-        //    Free((IntPtr) pool->Alloc);
-        //    pool->Alloc = null;
-        //    pool->Free = null;
-        //}
+            pool->Free = pool->Alloc;
+        }
+
+        public static void FreePool(UnmanagedMemoryPool* pool)
+        {
+            Free((IntPtr) pool->Alloc);
+            pool->Alloc = null;
+            pool->Free = null;
+        }
     }
 }
