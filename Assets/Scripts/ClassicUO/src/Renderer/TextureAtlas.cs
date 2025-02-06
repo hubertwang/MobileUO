@@ -56,14 +56,15 @@ namespace ClassicUO.Renderer
             if (index < 0)
             {
                 index = 0;
-                CreateNewTexture2D();
+                CreateNewTexture2D(width, height);
             }
 
-
-            PackerRectangle pr;
-            while (!_packer.PackRect(width, height, hash, out pr))
+            //ref Rectangle pr = ref _spriteBounds[hash];
+            var pr = new Rectangle(0, 0, width, height);
+            // MobileUO: TODO: figure out how to get packer working correctly
+            //while (!_packer.PackRect(width, height, null, out pr))
             {
-                CreateNewTexture2D();
+                CreateNewTexture2D(width, height);
                 index = _textureList.Count - 1;
             }
 
@@ -74,7 +75,7 @@ namespace ClassicUO.Renderer
                 texture.SetDataPointerEXT
                 (
                     0,
-                    pr.Rectangle,
+                    pr,
                     (IntPtr)src,
                     sizeof(T) * pixels.Length
                 );
@@ -82,13 +83,14 @@ namespace ClassicUO.Renderer
 
             //_spritesBounds[hash] = (index, pr.Rectangle);
 
-            _spriteBounds[hash] = pr.Rectangle;
+            _spriteBounds[hash] = pr;
             _spriteTextureIndices[hash] = index;
         }
 
-        private void CreateNewTexture2D()
+        // MobileUO: TODO: figure out how to get packer working correctly
+        private void CreateNewTexture2D(int width, int height)
         {
-            Texture2D texture = new Texture2D(_device, _width, _height, false, _format);
+            Texture2D texture = new Texture2D(_device, width, height, false, _format);
             _textureList.Add(texture);
 
             _packer?.Dispose();
