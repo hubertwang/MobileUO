@@ -19,6 +19,7 @@ namespace ClassicUO.Renderer
         private readonly List<Texture2D> _textureList;
         private Packer _packer;
         private readonly Rectangle[] _spriteBounds;
+        // MobileUO: don't switch this to byte[] or graphics will break!
         private readonly int[] _spriteTextureIndices;
 
         public TextureAtlas(GraphicsDevice device, int width, int height, SurfaceFormat format, int maxSpriteCount)
