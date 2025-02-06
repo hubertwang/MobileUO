@@ -320,22 +320,17 @@ namespace ClassicUO.Game.Scenes
 
                     if (check)
                     {
-                        ArtTexture texture = ArtLoader.Instance.GetTexture(obj.Graphic);
+                        var rect = ArtLoader.Instance.RealGraphicsBounds[obj.Graphic];
 
-                        if (texture != null)
+                        rect.X = obj.RealScreenPosition.X - (rect.Width >> 1) + rect.X;
+                        rect.Y = obj.RealScreenPosition.Y - rect.Height + rect.Y;
+
+                        check = Exstentions.InRect(ref rect, ref _rectanglePlayer);
+
+                        if (check)
                         {
-                            Rectangle rect = texture.ImageRectangle;
-
-                            rect.X = obj.RealScreenPosition.X - (rect.Width >> 1) + rect.X;
-                            rect.Y = obj.RealScreenPosition.Y - rect.Height + rect.Y;
-
-                            check = Exstentions.InRect(ref rect, ref _rectanglePlayer);
-
-                            if (check)
-                            {
-                                index = FoliageIndex;
-                                IsFoliageUnion(obj.Graphic, obj.X, obj.Y, obj.Z);
-                            }
+                            index = FoliageIndex;
+                            IsFoliageUnion(obj.Graphic, obj.X, obj.Y, obj.Z);
                         }
                     }
 
@@ -1150,7 +1145,7 @@ namespace ClassicUO.Game.Scenes
 
         // MobileUO: Using old method to correctly render the world
         // Using older version from here: https://raw.githubusercontent.com/ClassicUO/ClassicUO/beb925392f5cd1ffcd7f7460c76f9068926157d0/src/Game/Scenes/GameSceneDrawingSorting.cs
-         private void GetViewPort()
+        private void GetViewPort()
         {
             var zoom = Camera.Zoom;
 

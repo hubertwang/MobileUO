@@ -754,14 +754,17 @@ namespace ClassicUO.Game.UI.Gumps
 
                                 if (drawY >= starty && drawY <= endy)
                                 {
-                                    batcher.Draw2D
+                                    batcher.Draw
                                     (
                                         SolidColorTextureCache.GetTexture(SELECTION_COLOR),
-                                        x + drawX,
-                                        y + drawY - starty,
-                                        endX,
-                                        info.MaxHeight + 1,
-                                        ref HueVector
+                                        new Rectangle
+                                        (
+                                            x + drawX,
+                                            y + drawY - starty,
+                                            endX,
+                                            info.MaxHeight + 1
+                                        ),
+                                        HueVector
                                     );
                                 }
 
@@ -772,14 +775,17 @@ namespace ClassicUO.Game.UI.Gumps
                             // do the whole line
                             if (drawY >= starty && drawY <= endy)
                             {
-                                batcher.Draw2D
+                                batcher.Draw
                                 (
                                     SolidColorTextureCache.GetTexture(SELECTION_COLOR),
-                                    x + drawX,
-                                    y + drawY - starty,
-                                    info.Width - drawX,
-                                    info.MaxHeight + 1,
-                                    ref HueVector
+                                    new Rectangle
+                                    (
+                                        x + drawX,
+                                        y + drawY - starty,
+                                        info.Width - drawX,
+                                        info.MaxHeight + 1
+                                    ),
+                                    HueVector
                                 );
                             }
 

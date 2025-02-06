@@ -22,6 +22,24 @@ namespace ClassicUO.Renderer
         // MobileUO: don't switch this to byte[] or graphics will break!
         private readonly int[] _spriteTextureIndices;
 
+
+        public static TextureAtlas Shared { get; }
+
+        static TextureAtlas()
+        {
+            const int TEXTURE_SIZE = 1024 * 4;
+
+            Shared = new TextureAtlas 
+            (
+                Client.Game.GraphicsDevice,
+                TEXTURE_SIZE,
+                TEXTURE_SIZE,
+                SurfaceFormat.Color,
+                ushort.MaxValue * 2
+            );
+        }
+
+
         public TextureAtlas(GraphicsDevice device, int width, int height, SurfaceFormat format, int maxSpriteCount)
         {
             _device = device;
@@ -132,6 +150,7 @@ namespace ClassicUO.Renderer
 
             _packer.Dispose();
             _textureList.Clear();
+            //_spriteTextureIndices.AsSpan().Fill(0xFF);
         }
     }
 }

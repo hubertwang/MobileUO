@@ -55,7 +55,7 @@ namespace ClassicUO.Game.Scenes
 {
     internal partial class GameScene : Scene
     {
-         // MobileUO: NOTE: Added these to allow the game viewport to be smaller than what CUO was allowing
+        // MobileUO: NOTE: Added these to allow the game viewport to be smaller than what CUO was allowing
         public static int MinimumViewportWidth = 200;
         public static int MinimumViewportHeight = 300;
 
@@ -98,7 +98,6 @@ namespace ClassicUO.Game.Scenes
         private readonly LightData[] _lights = new LightData[Constants.MAX_LIGHTS_DATA_INDEX_COUNT];
         private Item _multi;
         private Rectangle _rectangleObj = Rectangle.Empty, _rectanglePlayer;
-        private Vector3 _selectionLines = Vector3.Zero;
         private long _timePing;
 
         private uint _timeToPlaceMultiInHouseCustomization;
@@ -977,14 +976,11 @@ namespace ClassicUO.Game.Scenes
                 batcher.Begin(null, Camera.ViewTransformMatrix);
 
                 // MobileUO: fix game window being deattached from view port
-                batcher.Draw2D
+                batcher.Draw
                 (
                     _world_render_target,
-                    posX,
-                    posY,
-                    width,
-                    height,
-                    ref hue
+                    new Rectangle(posX, posY, width, height),
+                    hue
                 );
 
                 batcher.End();
@@ -1008,14 +1004,11 @@ namespace ClassicUO.Game.Scenes
                 }
 
                 // MobileUO: fix game window being deattached from view port
-                batcher.Draw2D
+                batcher.Draw
                 (
                     _lightRenderTarget,
-                    posX,
-                    posY,
-                    width,
-                    height,
-                    ref hue
+                    new Rectangle(posX, posY, width, height),
+                    hue
                 );
 
                 batcher.SetBlendState(null);
@@ -1162,8 +1155,11 @@ namespace ClassicUO.Game.Scenes
                 _multi.Draw(batcher, _multi.RealScreenPosition.X, _multi.RealScreenPosition.Y, ref hueVec);
             }
 
+            
+
             int flushes = batcher.FlushesDone;
             int switches = batcher.TextureSwitches;
+
 
             // draw weather
             Weather.Draw(batcher, 0, 0);
@@ -1175,11 +1171,12 @@ namespace ClassicUO.Game.Scenes
                 batcher.GraphicsDevice.SetRenderTarget(null);
             }
 
+
             batcher.Begin();
             hueVec.X = 0;
             hueVec.Y = 1;
             hueVec.Z = 0;
-            string s = $"Flushes: {flushes}\nSwitches: {switches}";
+            string s = $"Flushes: {flushes}\nSwitches: {switches}\nArt texture count: {TextureAtlas.Shared.TexturesCount}";
             batcher.DrawString(Fonts.Bold, s, 200, 200, ref hueVec);
             hueVec = Vector3.Zero;
             batcher.DrawString(Fonts.Bold, s, 200 + 1, 200 - 1, ref hueVec);
@@ -1275,20 +1272,24 @@ namespace ClassicUO.Game.Scenes
         {
             if (_isSelectionActive)
             {
-                _selectionLines.Z = 0.3F;
+                Vector3 selectionHue = new Vector3();
+                selectionHue.Z = 0.3f;
 
-                batcher.Draw2D
+                batcher.Draw
                 (
                     // MobileUO: remove camera bounds to fix mouse selection
                     SolidColorTextureCache.GetTexture(Color.Black),
-                    _selectionStart.X,
-                    _selectionStart.Y,
-                    Mouse.Position.X - _selectionStart.X,
-                    Mouse.Position.Y - _selectionStart.Y,
-                    ref _selectionLines
+                    new Rectangle
+                    (
+                        _selectionStart.X,
+                        _selectionStart.Y,
+                        Mouse.Position.X - _selectionStart.X,
+                        Mouse.Position.Y - _selectionStart.Y
+                    ),
+                    selectionHue
                 );
 
-                _selectionLines.Z = 0.7f;
+                selectionHue.Z = 0.7f;
 
                 batcher.DrawRectangle
                 (
@@ -1298,7 +1299,7 @@ namespace ClassicUO.Game.Scenes
                     _selectionStart.Y,
                     Mouse.Position.X - _selectionStart.X,
                     Mouse.Position.Y - _selectionStart.Y,
-                    ref _selectionLines
+                    ref selectionHue
                 );
             }
         }

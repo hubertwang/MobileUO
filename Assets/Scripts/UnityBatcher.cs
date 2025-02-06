@@ -191,17 +191,16 @@ namespace ClassicUO.Renderer
                                     curOffset.Y + cCrop.Y
                                 ) * axisDirY;
 
-
-                Draw2D
+                Draw
                 (
                     textureValue,
-                    x + (int) Math.Round(offsetX),
-                    y + (int) Math.Round(offsetY),
-                    cGlyph.X,
-                    cGlyph.Y,
-                    cGlyph.Width,
-                    cGlyph.Height,
-                    ref color
+                    new XnaVector2
+                    (
+                        x + (int) Math.Round(offsetX),
+                        y + (int) Math.Round(offsetY)
+                    ),
+                    cGlyph,
+                    color
                 );
 
                 curOffset.X += cKern.Y + cKern.Z;
@@ -229,7 +228,7 @@ namespace ClassicUO.Renderer
             }
             else
             {
-                var vertex = new PositionTextureColor4();
+                var vertex = new PositionNormalTextureColor4();
 
                 if (mirror)
                 {
@@ -331,7 +330,7 @@ namespace ClassicUO.Renderer
                 return;
             }
 
-            var vertex = new PositionTextureColor4();
+            var vertex = new PositionNormalTextureColor4();
 
             float sin = (float)Math.Sin(angle);
             float cos = (float)Math.Cos(angle);
@@ -426,7 +425,7 @@ namespace ClassicUO.Renderer
             //float sourcwW = ((swidth) / (float)texture.Width);
             //float sourceH = ((sheight) / (float)texture.Height);
             
-            var vertex = new PositionTextureColor4();
+            var vertex = new PositionNormalTextureColor4();
 
             vertex.TextureCoordinate0.x = (_cornerOffsetX[0] * sourcwW) + sourceX;
             vertex.TextureCoordinate0.y = (_cornerOffsetY[0] * sourceH) + sourceY;
@@ -483,7 +482,7 @@ namespace ClassicUO.Renderer
                 return;
             }
             
-            var vertex = new PositionTextureColor4();
+            var vertex = new PositionNormalTextureColor4();
 
             float width = texture.Width;
             float height = texture.Height * 0.5f;
@@ -578,7 +577,7 @@ namespace ClassicUO.Renderer
             RenderVertex(vertex, texture, vertex.Hue0);
         }
 
-        private void RenderVertex(PositionTextureColor4 vertex, Texture2D texture, Vector3 hue)
+        private void RenderVertex(PositionNormalTextureColor4 vertex, Texture2D texture, Vector3 hue)
         {
             vertex.Position0 *= scale;
             vertex.Position1 *= scale;
@@ -614,7 +613,7 @@ namespace ClassicUO.Renderer
             {
                 if (h3mod != 0.0f)
                 {
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x + width;
                     vertex.Position0.y = y;
@@ -652,7 +651,7 @@ namespace ClassicUO.Renderer
                 if (h6mod != 0.0f)
                 {
 
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x + width;
                     vertex.Position0.y = y + h03;
@@ -689,7 +688,7 @@ namespace ClassicUO.Renderer
 
                 if (h9mod != 0.0f)
                 {
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x + widthOffset;
                     vertex.Position0.y = y + h06;
@@ -728,7 +727,7 @@ namespace ClassicUO.Renderer
             {
                 if (h3mod != 0.0f)
                 {
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x + SITTING_OFFSET;
                     vertex.Position0.y = y;
@@ -769,7 +768,7 @@ namespace ClassicUO.Renderer
                     {
 
                     }
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x + SITTING_OFFSET;
                     vertex.Position0.y = y + h03;
@@ -811,7 +810,7 @@ namespace ClassicUO.Renderer
 
                     }
 
-                    var vertex = new PositionTextureColor4();
+                    var vertex = new PositionNormalTextureColor4();
 
                     vertex.Position0.x = x;
                     vertex.Position0.y = y + h06;
@@ -868,7 +867,7 @@ namespace ClassicUO.Renderer
             }
             else
             {
-                var vertex = new PositionTextureColor4();
+                var vertex = new PositionNormalTextureColor4();
 
                 vertex.Position0.x = x;
                 vertex.Position0.y = y;
@@ -934,7 +933,7 @@ namespace ClassicUO.Renderer
             }
             else
             {
-                var vertex = new PositionTextureColor4();
+                var vertex = new PositionNormalTextureColor4();
 
                 vertex.Position0.x = x;
                 vertex.Position0.y = y;
@@ -990,7 +989,7 @@ namespace ClassicUO.Renderer
             float minX = sx / texture.Width, maxX = (sx + swidth) / texture.Width;
             float minY = sy / texture.Height, maxY = (sy + sheight) / texture.Height;
 
-            var vertex = new PositionTextureColor4();
+            var vertex = new PositionNormalTextureColor4();
 
             float x = dx;
             float y = dy;
@@ -1134,7 +1133,7 @@ namespace ClassicUO.Renderer
             }
             else
             {
-                var vertex = new PositionTextureColor4();
+                var vertex = new PositionNormalTextureColor4();
 
                 vertex.Position0.x = x;
                 vertex.Position0.y = y;
@@ -1184,75 +1183,50 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        public bool Draw2DTiled
+        public void DrawTiled
         (
             Texture2D texture,
-            int dx,
-            int dy,
-            float dwidth,
-            float dheight,
-            int sx,
-            int sy,
-            int sw,
-            int sh,
-            ref XnaVector3 hue
+            Rectangle destinationRectangle,
+            Rectangle sourceRectangle,
+            XnaVector3 hue
         )
         {
             if (texture.UnityTexture == null)
             {
-                return false;
+                return;
             }
             
-            int y = dy;
-            int h = (int)dheight;
+            int h = destinationRectangle.Height;
+
+            Rectangle rect = sourceRectangle;
+            XnaVector2 pos = new XnaVector2(destinationRectangle.X, destinationRectangle.Y);
 
             while (h > 0)
             {
-                int x = dx;
-                int w = (int)dwidth;
+                pos.X = destinationRectangle.X;
+                int w = destinationRectangle.Width;
 
-                int rw = sw;
-                int rh = h < sh ? h : sh;
+                rect.Height = Math.Min(h, sourceRectangle.Height);
 
                 while (w > 0)
                 {
-                    if (w < sw)
-                        rw = w;
+                    rect.Width = Math.Min(w, sourceRectangle.Width);
 
-                    Draw2D
+                    Draw
                     (
                         texture,
-                        x,
-                        y,
-                        sx,
-                        sy,
-                        rw,
-                        rh,
-                        ref hue
+                        pos,
+                        rect,
+                        hue
                     );
 
-                    w -= sw;
-                    x += sw;
+                    w -= sourceRectangle.Width;
+                    pos.X += sourceRectangle.Width;
                 }
 
-                h -= sh;
-                y += sh;
+                h -= sourceRectangle.Height;
+                pos.Y += sourceRectangle.Height;
             }
-
-            return true;
-        }
-
-        public bool Draw2DTiled
-        (
-            Texture2D texture,
-            int dx,
-            int dy,
-            float dwidth,
-            float dheight,
-            ref XnaVector3 hue
-        )
-        {
-            return Draw2DTiled(texture, dx, dy, dwidth, dheight, 0, 0, texture.Width, texture.Height, ref hue);
         }
 
         public bool DrawRectangle(Texture2D texture, int x, int y, int width, int height, ref XnaVector3 hue)
@@ -1277,7 +1251,7 @@ namespace ClassicUO.Renderer
                 return;
             }
             
-            var vertex = new PositionTextureColor4();
+            var vertex = new PositionNormalTextureColor4();
 
             const int WIDTH = 1;
             XnaVector2 begin = new XnaVector2(startX, startY);
@@ -1335,9 +1309,324 @@ namespace ClassicUO.Renderer
             vertex.TextureCoordinate3.y = 1;
             vertex.TextureCoordinate3.z = 0;
 
-            vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = Vector3.zero;
+            vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = XnaVector3.Zero;
 
-            RenderVertex(vertex, texture, Vector3.zero);
+            RenderVertex(vertex, texture, XnaVector3.Zero);
+        }
+
+        public void Draw
+        (
+            Texture2D texture, 
+            XnaVector2 position,
+            Rectangle? sourceRectangle,
+            XnaVector3 color
+        )
+        {
+            float sourceX, sourceY, sourceW, sourceH;
+            float destW, destH;
+
+            if (sourceRectangle.HasValue)
+            {
+                sourceX = sourceRectangle.Value.X / (float)texture.Width;
+                sourceY = sourceRectangle.Value.Y / (float)texture.Height;
+                sourceW = sourceRectangle.Value.Width / (float)texture.Width;
+                sourceH = sourceRectangle.Value.Height / (float)texture.Height;
+                destW = sourceRectangle.Value.Width;
+                destH = sourceRectangle.Value.Height;
+            }
+            else
+            {
+                sourceX = 0.0f;
+                sourceY = 0.0f;
+                sourceW = 1.0f;
+                sourceH = 1.0f;
+                destW = texture.Width;
+                destH = texture.Height;
+            }
+
+            AddSprite(texture, sourceX, sourceY, sourceW, sourceH, position.X, position.Y, destW, destH, color, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0);
+        }
+
+        public void Draw
+        (
+            Texture2D texture,
+            XnaVector2 position,
+            Rectangle? sourceRectangle,
+            XnaVector3 color,
+            float rotation,
+            XnaVector2 origin, 
+            float scale, 
+            SpriteEffects effects,
+            float layerDepth
+        )
+        {
+            float sourceX, sourceY, sourceW, sourceH;
+            float destW = scale;
+            float destH = scale;
+
+            if (sourceRectangle.HasValue)
+            {
+                sourceX = sourceRectangle.Value.X / (float)texture.Width;
+                sourceY = sourceRectangle.Value.Y / (float)texture.Height;
+                sourceW = Math.Sign(sourceRectangle.Value.Width) * Math.Max(Math.Abs(sourceRectangle.Value.Width), Utility.MathHelper.MachineEpsilonFloat) / (float)texture.Width;
+                sourceH = Math.Sign(sourceRectangle.Value.Height) * Math.Max(Math.Abs(sourceRectangle.Value.Height), Utility.MathHelper.MachineEpsilonFloat) / (float)texture.Height;
+                destW *= sourceRectangle.Value.Width;
+                destH *= sourceRectangle.Value.Height;
+            }
+            else
+            {
+                sourceX = 0.0f;
+                sourceY = 0.0f;
+                sourceW = 1.0f;
+                sourceH = 1.0f;
+                destW *= texture.Width;
+                destH *= texture.Height;
+            }
+
+            AddSprite
+            (
+                texture,
+                sourceX,
+                sourceY,
+                sourceW,
+                sourceH,
+                position.X,
+                position.Y,
+                destW,
+                destH,
+                color,
+                origin.X / sourceW / (float)texture.Width,
+                origin.Y / sourceH / (float)texture.Height,
+                (float)Math.Sin(rotation),
+                (float)Math.Cos(rotation),
+                layerDepth,
+                (byte)(effects & (SpriteEffects)0x03)
+            );
+        }
+
+        public void Draw
+        (
+            Texture2D texture,
+            XnaVector2 position,
+            Rectangle? sourceRectangle,
+            XnaVector3 color,
+            float rotation,
+            XnaVector2 origin,
+            XnaVector2 scale,
+            SpriteEffects effects,
+            float layerDepth
+        )
+        {
+            float sourceX, sourceY, sourceW, sourceH;
+            if (sourceRectangle.HasValue)
+            {
+                sourceX = sourceRectangle.Value.X / (float)texture.Width;
+                sourceY = sourceRectangle.Value.Y / (float)texture.Height;
+                sourceW = Math.Sign(sourceRectangle.Value.Width) * Math.Max(Math.Abs(sourceRectangle.Value.Width), Utility.MathHelper.MachineEpsilonFloat) / (float)texture.Width;
+                sourceH = Math.Sign(sourceRectangle.Value.Height) * Math.Max(Math.Abs(sourceRectangle.Value.Height), Utility.MathHelper.MachineEpsilonFloat) / (float)texture.Height;
+                scale.X *= sourceRectangle.Value.Width;
+                scale.Y *= sourceRectangle.Value.Height;
+            }
+            else
+            {
+                sourceX = 0.0f;
+                sourceY = 0.0f;
+                sourceW = 1.0f;
+                sourceH = 1.0f;
+                scale.X *= texture.Width;
+                scale.Y *= texture.Height;
+            }
+
+            AddSprite
+            (
+                texture,
+                sourceX,
+                sourceY,
+                sourceW,
+                sourceH,
+                position.X,
+                position.Y,
+                scale.X,
+                scale.Y,
+                color,
+                origin.X / sourceW / (float)texture.Width,
+                origin.Y / sourceH / (float)texture.Height,
+                (float)Math.Sin(rotation),
+                (float)Math.Cos(rotation),
+                layerDepth,
+                (byte)(effects & (SpriteEffects)0x03)
+            );
+        }
+
+        public void Draw
+        (
+            Texture2D texture,
+            Rectangle destinationRectangle,
+            XnaVector3 color
+        )
+        {
+            AddSprite(
+                texture,
+                0.0f,
+                0.0f,
+                1.0f,
+                1.0f,
+                destinationRectangle.X,
+                destinationRectangle.Y,
+                destinationRectangle.Width,
+                destinationRectangle.Height,
+                color,
+                0.0f,
+                0.0f,
+                0.0f,
+                1.0f,
+                0.0f,
+                0
+            );
+        }
+
+        public void Draw
+        (
+            Texture2D texture,
+            Rectangle destinationRectangle,
+            Rectangle? sourceRectangle,
+            XnaVector3 color
+        )
+        {
+            float sourceX, sourceY, sourceW, sourceH;
+            if (sourceRectangle.HasValue)
+            {
+                sourceX = sourceRectangle.Value.X / (float)texture.Width;
+                sourceY = sourceRectangle.Value.Y / (float)texture.Height;
+                sourceW = sourceRectangle.Value.Width / (float)texture.Width;
+                sourceH = sourceRectangle.Value.Height / (float)texture.Height;
+            }
+            else
+            {
+                sourceX = 0.0f;
+                sourceY = 0.0f;
+                sourceW = 1.0f;
+                sourceH = 1.0f;
+            }
+
+            AddSprite
+            (
+                texture,
+                sourceX,
+                sourceY,
+                sourceW,
+                sourceH,
+                destinationRectangle.X,
+                destinationRectangle.Y,
+                destinationRectangle.Width,
+                destinationRectangle.Height,
+                color,
+                0.0f,
+                0.0f,
+                0.0f,
+                1.0f,
+                0.0f,
+                0
+            );
+        }
+
+        public void Draw
+        (
+            Texture2D texture,
+            Rectangle destinationRectangle,
+            Rectangle? sourceRectangle,
+            XnaVector3 color,
+            float rotation,
+            XnaVector2 origin,
+            SpriteEffects effects,
+            float layerDepth
+        )
+        {
+            float sourceX, sourceY, sourceW, sourceH;
+            if (sourceRectangle.HasValue)
+            {
+                sourceX = sourceRectangle.Value.X / (float)texture.Width;
+                sourceY = sourceRectangle.Value.Y / (float)texture.Height;
+                sourceW = Math.Sign(sourceRectangle.Value.Width) * Math.Max(
+                    Math.Abs(sourceRectangle.Value.Width),
+                    Utility.MathHelper.MachineEpsilonFloat
+                ) / (float)texture.Width;
+                sourceH = Math.Sign(sourceRectangle.Value.Height) * Math.Max(
+                    Math.Abs(sourceRectangle.Value.Height),
+                    Utility.MathHelper.MachineEpsilonFloat
+                ) / (float)texture.Height;
+            }
+            else
+            {
+                sourceX = 0.0f;
+                sourceY = 0.0f;
+                sourceW = 1.0f;
+                sourceH = 1.0f;
+            }
+
+            AddSprite
+            (
+                texture,
+                sourceX,
+                sourceY,
+                sourceW,
+                sourceH,
+                destinationRectangle.X,
+                destinationRectangle.Y,
+                destinationRectangle.Width,
+                destinationRectangle.Height,
+                color,
+                origin.X / sourceW / (float)texture.Width,
+                origin.Y / sourceH / (float)texture.Height,
+                (float)Math.Sin(rotation),
+                (float)Math.Cos(rotation),
+                layerDepth,
+                (byte)(effects & (SpriteEffects)0x03)
+            );
+        }
+
+        private void AddSprite
+        (
+            Texture2D texture,
+            float sourceX,
+            float sourceY,
+            float sourceW,
+            float sourceH,
+            float destinationX,
+            float destinationY,
+            float destinationW,
+            float destinationH,
+            XnaVector3 color,
+            float originX,
+            float originY,
+            float rotationSin,
+            float rotationCos,
+            float depth,
+            byte effects
+        )
+        {
+            //EnsureSize();
+
+            //ref var vertex = ref _vertexInfo[_numSprites];
+
+            var sprite = new PositionNormalTextureColor4();
+
+            SetVertex
+            (   
+                //ref vertex,
+                ref sprite,
+                sourceX, sourceY, sourceW, sourceH,
+                destinationX, destinationY, destinationW, destinationH,
+                color,
+                originX, originY,
+                rotationSin, rotationCos,
+                depth, effects
+            );
+
+            RenderVertex(sprite, texture, color);
+
+            //_textureInfo[_numSprites] = texture;
+            //++_numSprites;
         }
 
         public void Begin()
@@ -1369,6 +1658,74 @@ namespace ClassicUO.Renderer
         public void End()
         {
             CustomEffect = null;
+        }
+
+        private void SetVertex
+        (
+            ref PositionNormalTextureColor4 sprite,
+            float sourceX,
+            float sourceY,
+            float sourceW,
+            float sourceH,
+            float destinationX,
+            float destinationY,
+            float destinationW,
+            float destinationH,
+            XnaVector3 color,
+            float originX,
+            float originY,
+            float rotationSin,
+            float rotationCos,
+            float depth,
+            byte effects
+        )
+        {
+            float cornerX = -originX * destinationW;
+            float cornerY = -originY * destinationH;
+            sprite.Position0.x = ((-rotationSin * cornerY) + (rotationCos * cornerX) + destinationX);
+            sprite.Position0.y = ((rotationCos * cornerY) + (rotationSin * cornerX) + destinationY);
+
+            cornerX = (1.0f - originX) * destinationW;
+            cornerY = -originY * destinationH;
+            sprite.Position1.x = ((-rotationSin * cornerY) + (rotationCos * cornerX) + destinationX);
+            sprite.Position1.y = ((rotationCos * cornerY) + (rotationSin * cornerX) + destinationY);
+
+            cornerX = -originX * destinationW;
+            cornerY = (1.0f - originY) * destinationH;
+            sprite.Position2.x = ((-rotationSin * cornerY) + (rotationCos * cornerX) + destinationX);
+            sprite.Position2.y = ((rotationCos * cornerY) + (rotationSin * cornerX) + destinationY);
+
+            cornerX = (1.0f - originX) * destinationW;
+            cornerY = (1.0f - originY) * destinationH;
+            sprite.Position3.x = ((-rotationSin * cornerY) + (rotationCos * cornerX) + destinationX);
+            sprite.Position3.y = ((rotationCos * cornerY) + (rotationSin * cornerX) + destinationY);
+
+
+            sprite.TextureCoordinate0.x = (_cornerOffsetX[0 ^ effects] * sourceW) + sourceX;
+            sprite.TextureCoordinate0.y = (_cornerOffsetY[0 ^ effects] * sourceH) + sourceY;
+            sprite.TextureCoordinate1.x = (_cornerOffsetX[1 ^ effects] * sourceW) + sourceX;
+            sprite.TextureCoordinate1.y = (_cornerOffsetY[1 ^ effects] * sourceH) + sourceY;
+            sprite.TextureCoordinate2.x = (_cornerOffsetX[2 ^ effects] * sourceW) + sourceX;
+            sprite.TextureCoordinate2.y = (_cornerOffsetY[2 ^ effects] * sourceH) + sourceY;
+            sprite.TextureCoordinate3.x = (_cornerOffsetX[3 ^ effects] * sourceW) + sourceX;
+            sprite.TextureCoordinate3.y = (_cornerOffsetY[3 ^ effects] * sourceH) + sourceY;
+
+            sprite.TextureCoordinate0.z = 0;
+            sprite.TextureCoordinate1.z = 0;
+            sprite.TextureCoordinate2.z = 0;
+            sprite.TextureCoordinate3.z = 0;
+
+
+            sprite.Position0.z = depth;
+            sprite.Position1.z = depth;
+            sprite.Position2.z = depth;
+            sprite.Position3.z = depth;
+
+
+            sprite.Hue0 = color;
+            sprite.Hue1 = color;
+            sprite.Hue2 = color;
+            sprite.Hue3 = color;
         }
 
         //Because XNA's Blend enum starts with 1, we duplicate BlendMode.Zero for 0th index
@@ -1572,28 +1929,41 @@ namespace ClassicUO.Renderer
             }
         }
 
+        // MobileUO: make public
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct PositionTextureColor4
+        public struct PositionNormalTextureColor4 : IVertexType
         {
             public Vector3 Position0;
+            public Vector3 Normal0;
             public Vector3 TextureCoordinate0;
             public Vector3 Hue0;
-            public Vector3 Normal0;
 
             public Vector3 Position1;
+            public Vector3 Normal1;
             public Vector3 TextureCoordinate1;
             public Vector3 Hue1;
-            public Vector3 Normal1;
 
             public Vector3 Position2;
+            public Vector3 Normal2;
             public Vector3 TextureCoordinate2;
             public Vector3 Hue2;
-            public Vector3 Normal2;
 
             public Vector3 Position3;
+            public Vector3 Normal3;
             public Vector3 TextureCoordinate3;
             public Vector3 Hue3;
-            public Vector3 Normal3;
+
+            VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
+
+            private static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration
+            (
+                new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),                          // position
+                new VertexElement(sizeof(float) * 3, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),            // normal
+                new VertexElement(sizeof(float) * 6, VertexElementFormat.Vector3, VertexElementUsage.TextureCoordinate, 0), // tex coord
+                new VertexElement(sizeof(float) * 9, VertexElementFormat.Vector3, VertexElementUsage.TextureCoordinate, 1)  // hue
+            );
+
+            public const int SIZE_IN_BYTES = sizeof(float) * 12 * 4;            
         }
     }
 }

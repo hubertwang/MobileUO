@@ -36,6 +36,7 @@ using System.Linq;
 using ClassicUO.Input;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
+using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.UI.Controls
 {
@@ -176,16 +177,12 @@ namespace ClassicUO.Game.UI.Controls
                 ResetHueVector();
                 ShaderHueTranslator.GetHueVector(ref HueVector, 0, false, Alpha);
 
-                batcher.Draw2D
+                batcher.Draw
                 (
                     _texture,
-                    x,
-                    y,
-                    0,
-                    0,
-                    Width,
-                    Height,
-                    ref HueVector
+                    new Vector2(x, y),
+                    new Rectangle(0, 0, Width, Height),
+                    HueVector
                 );
             }
 
