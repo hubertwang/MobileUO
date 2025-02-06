@@ -92,10 +92,19 @@ namespace ClassicUO.Renderer
 
         public Texture2D GetTexture(uint hash, out Rectangle bounds)
         {
-            bounds = _spriteBounds[(int)hash];
-            return _textureList[_spriteTextureIndices[(int) hash]];
+            if (IsHashExists(hash))
+            {
+                bounds = _spriteBounds[(int)hash];
+              
+                return _textureList[_spriteTextureIndices[(int)hash]];
+            }
+
+            bounds = Rectangle.Empty;
+            return null;
         }
 
+        // MobileUO: keep as int > 0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHashExists(uint hash) => _spriteTextureIndices[(int)hash] > 0;
 
         public void SaveImages(string name)
