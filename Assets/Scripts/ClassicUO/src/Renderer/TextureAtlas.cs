@@ -18,8 +18,6 @@ namespace ClassicUO.Renderer
         private readonly GraphicsDevice _device;
         private readonly List<Texture2D> _textureList;
         private Packer _packer;
-        //private readonly Dictionary<uint, (int, Rectangle)> _spritesBounds = new Dictionary<uint, (int, Rectangle)>();
-
         private readonly Rectangle[] _spriteBounds;
         private readonly int[] _spriteTextureIndices;
 
@@ -41,11 +39,6 @@ namespace ClassicUO.Renderer
 
         public unsafe void AddSprite<T>(uint hash, Span<T> pixels, int width, int height) where T : unmanaged
         {
-            //if (_spritesBounds.ContainsKey(hash))
-            //{
-            //    return;
-            //}
-
             if (IsHashExists(hash))
             {
                 return;
@@ -59,7 +52,7 @@ namespace ClassicUO.Renderer
                 CreateNewTexture2D(width, height);
             }
 
-            //ref Rectangle pr = ref _spriteBounds[hash];
+            // ref Rectangle pr = ref _spriteBounds[hash];
             var pr = new Rectangle(0, 0, width, height);
             // MobileUO: TODO: figure out how to get packer working correctly
             //while (!_packer.PackRect(width, height, null, out pr))
@@ -81,8 +74,7 @@ namespace ClassicUO.Renderer
                 );
             }
 
-            //_spritesBounds[hash] = (index, pr.Rectangle);
-
+            // MobileUO: keep setting the spriteBounds
             _spriteBounds[hash] = pr;
             _spriteTextureIndices[hash] = index;
         }
@@ -99,15 +91,6 @@ namespace ClassicUO.Renderer
 
         public Texture2D GetTexture(uint hash, out Rectangle bounds)
         {
-            //if (_spritesBounds.TryGetValue(hash, out var v))
-            //{
-            //    bounds = v.Item2;
-            //    return _textureList[v.Item1];
-            //}
-
-            //bounds = Rectangle.Empty;
-            //return null;
-
             bounds = _spriteBounds[(int)hash];
             return _textureList[_spriteTextureIndices[(int) hash]];
         }
@@ -136,9 +119,9 @@ namespace ClassicUO.Renderer
                     texture.Dispose();
                 }
             }
+
             _packer.Dispose();
             _textureList.Clear();
-            //_spritesBounds.Clear();
         }
     }
 }
