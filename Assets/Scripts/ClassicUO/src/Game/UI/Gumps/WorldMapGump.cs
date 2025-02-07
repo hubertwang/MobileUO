@@ -96,8 +96,6 @@ namespace ClassicUO.Game.UI.Gumps
 
         private readonly float[] _zooms = new float[10] { 0.125f, 0.25f, 0.5f, 0.75f, 1f, 1.5f, 2f, 4f, 6f, 8f };
 
-        // MobileUO: added variables
-        private bool readyToCreateTexture;
         public WorldMapGump() : base
         (
             400,
@@ -460,13 +458,6 @@ namespace ClassicUO.Game.UI.Gumps
         public override void Update(double totalTime, double frameTime)
         {
             base.Update(totalTime, frameTime);
-
-            // MobileUO: added logic
-            if (readyToCreateTexture)
-            {
-                GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
-                readyToCreateTexture = false;
-            }
 
             if (IsDisposed)
             {
@@ -1041,8 +1032,6 @@ namespace ClassicUO.Game.UI.Gumps
             (
                 () =>
                 {
-                    DateTime start = DateTime.UtcNow;
-
                     if (World.InGame)
                     {
                         try
@@ -1195,12 +1184,8 @@ namespace ClassicUO.Game.UI.Gumps
                             Log.Error($"error loading worldmap: {ex}");
                         }
 
-                    // MobileUO: loading map - show map loaded message on next Update()
-                    //GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
 
-                    readyToCreateTexture = true;
-                    
-                    Console.WriteLine("World map load took " + (DateTime.UtcNow - start).TotalSeconds + " seconds");
+                        GameActions.Print(ResGumps.WorldMapLoaded, 0x48);
                     }
                 }
             );
@@ -1477,8 +1462,8 @@ namespace ClassicUO.Game.UI.Gumps
             int gWidth = Width - 8;
             int gHeight = Height - 8;
 
-            int sx = _center.X + 1;
-            int sy = _center.Y + 1;
+            int centerX = _center.X + 1;
+            int centerY = _center.Y + 1;
 
             int size = (int) Math.Max(gWidth * 1.75f, gHeight * 1.75f);
 
@@ -1508,21 +1493,38 @@ namespace ClassicUO.Game.UI.Gumps
             {
                 if (batcher.ClipBegin(gX, gY, gWidth, gHeight))
                 {
-                    int offset = size >> 1;
+                    var destRect = new Rectangle
+                    (
+                        gX + halfWidth,
+                        gY + halfHeight,
+                        size,
+                        size
+                    );
 
-                    batcher.Draw2D
+                    var srcRect = new Rectangle
+                    (
+                        centerX - size_zoom_half,
+                        centerY - size_zoom_half,
+                        size_zoom,
+                        size_zoom
+                    );
+
+                    var origin = new Vector2
+                    (
+                        srcRect.Width / 2f,
+                        srcRect.Height / 2f
+                    );
+            
+                    batcher.Draw
                     (
                         _mapTexture,
-                        gX - offset + halfWidth,
-                        gY - offset + halfHeight,
-                        size,
-                        size,
-                        sx - size_zoom_half,
-                        sy - size_zoom_half,
-                        size_zoom,
-                        size_zoom,
-                        ref HueVector,
-                        _flipMap ? 45 : 0
+                        destRect,
+                        srcRect,
+                        HueVector,
+                        _flipMap ? Microsoft.Xna.Framework.MathHelper.ToRadians(45) : 0,
+                        origin,
+                        SpriteEffects.None,
+                        0
                     );
 
                     DrawAll
