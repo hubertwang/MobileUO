@@ -849,6 +849,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public bool Draw2D(Texture2D texture, int x, int y, ref XnaVector3 hue)
         {
             if (texture.UnityTexture == null)
@@ -905,6 +906,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public bool Draw2D(Texture2D texture, int x, int y, int sx, int sy, float swidth, float sheight, ref XnaVector3 hue)
         { 
             if (texture.UnityTexture == null)
@@ -979,6 +981,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public bool Draw2D(Texture2D texture, float dx, float dy, float dwidth, float dheight, float sx, float sy, float swidth, float sheight, ref XnaVector3 hue, float angle = 0.0f)
         {
             if (texture.UnityTexture == null)
@@ -1110,6 +1113,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public bool Draw2D(Texture2D texture, float x, float y, float width, float height, ref XnaVector3 hue)
         {
             if (texture.UnityTexture == null)
@@ -1229,17 +1233,37 @@ namespace ClassicUO.Renderer
             }
         }
 
-        public bool DrawRectangle(Texture2D texture, int x, int y, int width, int height, ref XnaVector3 hue)
+        public bool DrawRectangle
+        (
+            Texture2D texture,
+            int x,
+            int y,
+            int width,
+            int height,
+            ref XnaVector3 hue
+        )
         {
-            if (texture.UnityTexture == null)
-            {
-                return false;
-            }
-            
-            Draw2D(texture, x, y, width, 1, ref hue);
-            Draw2D(texture, x + width, y, 1, height + 1, ref hue);
-            Draw2D(texture, x, y + height, width, 1, ref hue);
-            Draw2D(texture, x, y, 1, height, ref hue);
+            Rectangle rect = new Rectangle(x, y, width, 1);
+            Draw(texture, rect, hue);
+
+            rect.X += width;
+            rect.Width = 1;
+            rect.Height += height;
+            Draw(texture, rect, hue);
+
+
+            rect.X = x;
+            rect.Y = y + height;
+            rect.Width = width;
+            rect.Height = 1;
+            Draw(texture, rect, hue);
+
+
+            rect.X = x;
+            rect.Y = y;
+            rect.Width = 1;
+            rect.Height = height;
+            Draw(texture, rect, hue);
 
             return true;
         }
@@ -1312,6 +1336,16 @@ namespace ClassicUO.Renderer
             vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = XnaVector3.Zero;
 
             RenderVertex(vertex, texture, XnaVector3.Zero);
+        }
+
+        public void Draw
+        (
+            Texture2D texture, 
+            XnaVector2 position,
+            XnaVector3 color
+        )
+        {
+            AddSprite(texture, 0f, 0f, 1f, 1f, position.X, position.Y, texture.Width, texture.Height, color, 0f, 0f, 0f, 1f, 0f, 0);
         }
 
         public void Draw
