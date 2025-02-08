@@ -102,9 +102,7 @@ namespace ClassicUO.Game.GameObjects
         public ushort X, Y;
         public sbyte Z;
 
-#if RENDER_LIST_LINKED_LIST
         public GameObject RenderListNext;
-#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2 GetScreenPosition()
@@ -371,9 +369,7 @@ namespace ClassicUO.Game.GameObjects
             Next = null;
             Previous = null;
 
-#if RENDER_LIST_LINKED_LIST
             RenderListNext = null;
-#endif
 
             Clear();
             RemoveFromTile();
