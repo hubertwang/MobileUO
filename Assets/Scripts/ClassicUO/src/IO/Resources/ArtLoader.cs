@@ -52,8 +52,6 @@ namespace ClassicUO.IO.Resources
         private readonly ushort _graphicMask;
         private readonly PixelPicker _picker = new PixelPicker();
 
-        public Rectangle[] RealGraphicsBounds;
-
         private ArtLoader(int staticCount, int landCount)
         {
             _graphicMask = Client.IsUOPInstallation ? (ushort) 0xFFFF : (ushort) 0x3FFF;
@@ -87,8 +85,6 @@ namespace ClassicUO.IO.Resources
                     }
 
                     _file.FillEntries(ref Entries);
-                    RealGraphicsBounds = new Rectangle[Entries.Length];
-
                     _spriteInfos = new SpriteInfo[Entries.Length];
                 }
             );
@@ -103,6 +99,8 @@ namespace ClassicUO.IO.Resources
 
         private SpriteInfo[] _spriteInfos;
 
+
+        public Rectangle GetRealArtBounds(int index) => _spriteInfos[index].ArtBounds;
 
         private void AddSpriteToAtlas(TextureAtlas atlas, int g, bool isTerrain)
         {
@@ -178,8 +176,6 @@ namespace ClassicUO.IO.Resources
                                 }
                             }
 
-                            ref var realBounds = ref RealGraphicsBounds[fixedGraphic];
-
                             ref var spriteInfo = ref _spriteInfos[g];
 
                             FinalizeData
@@ -189,7 +185,7 @@ namespace ClassicUO.IO.Resources
                                 fixedGraphic,
                                 width,
                                 height,
-                                out realBounds
+                                out spriteInfo.ArtBounds
                             );
 
                             _picker.Set(fixedGraphic, width, height, artPixels);
@@ -207,7 +203,7 @@ namespace ClassicUO.IO.Resources
             }
         }
       
-        public Microsoft.Xna.Framework.Graphics.Texture2D GetLandTexture(uint g, out Rectangle bounds)
+        public Texture2D GetLandTexture(uint g, out Rectangle bounds)
         {
             g &= _graphicMask;
 
@@ -222,10 +218,10 @@ namespace ClassicUO.IO.Resources
 
             bounds = spriteInfo.UV;
 
-            return spriteInfo.Texture; //atlas.GetTexture(g, out bounds);
+            return spriteInfo.Texture;
         }
 
-        public Microsoft.Xna.Framework.Graphics.Texture2D GetStaticTexture(uint g, out Rectangle bounds)
+        public Texture2D GetStaticTexture(uint g, out Rectangle bounds)
         {
             g += 0x4000;
 
@@ -240,7 +236,7 @@ namespace ClassicUO.IO.Resources
 
             bounds = spriteInfo.UV;
 
-            return spriteInfo.Texture;  //atlas.GetTexture(g, out bounds);
+            return spriteInfo.Texture;
         }
 
 

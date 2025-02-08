@@ -30,24 +30,40 @@
 
 #endregion
 
+using System;
 using System.Threading.Tasks;
 using ClassicUO.Game;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.IO.Resources
 {
-    internal class LightsLoader : UOFileLoader<UOTexture>
+    internal class LightsLoader : UOFileLoader
     {
         private static LightsLoader _instance;
         private UOFileMul _file;
+        private TextureAtlas _atlas;
+        private SpriteInfo[] _spriteInfos;
 
-        private LightsLoader(int count) : base(count)
+        struct SpriteInfo
+        {
+            public Texture2D Texture;
+            public Rectangle UV;
+        }
+
+        private LightsLoader(int count) 
         {
         }
 
         public static LightsLoader Instance =>
             _instance ?? (_instance = new LightsLoader(Constants.MAX_LIGHTS_DATA_INDEX_COUNT));
+
+        public void CreateAtlas(GraphicsDevice device)
+        {
+            _atlas = new TextureAtlas(device, 2048, 2048, SurfaceFormat.Color);
+        }
 
         public override Task Load()
         {
@@ -63,46 +79,27 @@ namespace ClassicUO.IO.Resources
 
                     _file = new UOFileMul(path, pathidx, Constants.MAX_LIGHTS_DATA_INDEX_COUNT);
                     _file.FillEntries(ref Entries);
+                    _spriteInfos = new SpriteInfo[Entries.Length];
                 }
             );
         }
 
-        // MobileUO: added ClearResources method
-        public override void ClearResources()
+        public Texture2D GetLightTexture(uint id, out Rectangle bounds)
         {
-            base.ClearResources();
-            
-            _file?.Dispose();
-            _file = null;
-            _instance = null;
-        }
+            ref var spriteInfo = ref _spriteInfos[id];
 
-        public override UOTexture GetTexture(uint id)
-        {
-            if (id >= Resources.Length)
+            if (spriteInfo.Texture == null)
             {
-                return null;
+                AddSpriteLightToAtlas(_atlas, id);
             }
 
-            ref UOTexture texture = ref Resources[id];
+            bounds = spriteInfo.UV;
 
-            if (texture == null || texture.IsDisposed)
-            {
-                if (GetLight(ref texture, id))
-                {
-                    SaveId(id);
-                }
-            }
-            else
-            {
-                texture.Ticks = Time.Ticks;
-            }
-
-            return texture;
+            return spriteInfo.Texture;
         }
 
 
-        private bool GetLight(ref UOTexture texture, uint idx)
+        private unsafe bool AddSpriteLightToAtlas(TextureAtlas atlas, uint idx)
         {
             ref UOFileIndex entry = ref GetValidRefEntry((int) idx);
 
@@ -111,7 +108,9 @@ namespace ClassicUO.IO.Resources
                 return false;
             }
 
-            uint[] pixels = System.Buffers.ArrayPool<uint>.Shared.Rent(entry.Width * entry.Height);
+            uint[] buffer = null;
+          
+            Span<uint> pixels = entry.Width * entry.Height <= 1024 ? stackalloc uint[1024] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(entry.Width * entry.Height));
 
             try
             {
@@ -134,15 +133,29 @@ namespace ClassicUO.IO.Resources
                     }
                 }
 
-                texture = new UOTexture(entry.Width, entry.Height);
-                texture.SetData(pixels, 0, entry.Width * entry.Height);
+                ref var spriteInfo = ref _spriteInfos[idx];
+
+                spriteInfo.Texture = atlas.AddSprite(pixels, entry.Width, entry.Height, out spriteInfo.UV);
             }
             finally
             {
-                System.Buffers.ArrayPool<uint>.Shared.Return(pixels, true);
+                if (buffer != null)
+                {
+                    System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
+                }             
             }
 
             return true;
+        }
+
+        // MobileUO: added ClearResources method
+        public override void ClearResources()
+        {
+            base.ClearResources();
+            
+            _file?.Dispose();
+            _file = null;
+            _instance = null;
         }
     }
 }

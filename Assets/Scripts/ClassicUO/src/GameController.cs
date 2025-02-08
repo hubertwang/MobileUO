@@ -170,6 +170,7 @@ namespace ClassicUO
             GraphicsDevice.Textures[3] = _hueSamplers[2];
 
             GumpsLoader.Instance.CreateAtlas(GraphicsDevice);
+            LightsLoader.Instance.CreateAtlas(GraphicsDevice);
 
             // MobileUO: filter mode
             GraphicsDevice.Textures[1].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
