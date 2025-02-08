@@ -43,6 +43,7 @@ using ClassicUO.Utility;
 using ClassicUO.Utility.Collections;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.IO.Resources
 {
@@ -429,7 +430,7 @@ namespace ClassicUO.IO.Resources
 
         public void GenerateASCII
         (
-            ref FontTexture texture,
+            RenderedText renderedText,
             byte font,
             string str,
             ushort color,
@@ -503,7 +504,7 @@ namespace ClassicUO.IO.Resources
 
                     GeneratePixelsASCII
                     (
-                        ref texture,
+                        renderedText,
                         font,
                         newstr,
                         color,
@@ -520,7 +521,7 @@ namespace ClassicUO.IO.Resources
 
             GeneratePixelsASCII
             (
-                ref texture,
+                renderedText,
                 font,
                 str,
                 color,
@@ -617,7 +618,7 @@ namespace ClassicUO.IO.Resources
 
         private unsafe void GeneratePixelsASCII
         (
-            ref FontTexture texture,
+            RenderedText renderedText,
             byte font,
             string str,
             ushort color,
@@ -800,17 +801,14 @@ namespace ClassicUO.IO.Resources
                     info = null;
                 }
 
-                if (texture == null || texture.IsDisposed)
+                if (renderedText.Texture == null || renderedText.Texture.IsDisposed)
                 {
-                    texture = new FontTexture(width, height, linesCount, new RawList<WebLinkRect>());
-                }
-                else
-                {
-                    texture.Links.Clear();
-                    texture.LineCount = linesCount;
+                    renderedText.Texture = new Texture2D(Client.Game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
                 }
 
-                texture.SetData(pData, 0, width * height);
+                renderedText.Links.Clear();
+                renderedText.LinesCount = linesCount;
+                renderedText.Texture.SetData(pData, 0, width * height);
 
                 if (saveHitmap)
                 {
@@ -1103,7 +1101,7 @@ namespace ClassicUO.IO.Resources
 
         public void GenerateUnicode
         (
-            ref FontTexture texture,
+            RenderedText renderedText,
             byte font,
             string str,
             ushort color,
@@ -1178,7 +1176,7 @@ namespace ClassicUO.IO.Resources
 
                     GeneratePixelsUnicode
                     (
-                        ref texture,
+                        renderedText,
                         font,
                         newstr,
                         color,
@@ -1196,7 +1194,7 @@ namespace ClassicUO.IO.Resources
 
             GeneratePixelsUnicode
             (
-                ref texture,
+                renderedText,
                 font,
                 str,
                 color,
@@ -1709,7 +1707,7 @@ namespace ClassicUO.IO.Resources
 
         private unsafe void GeneratePixelsUnicode
         (
-            ref FontTexture texture,
+            RenderedText renderedText,
             byte font,
             string str,
             ushort color,
@@ -2338,18 +2336,15 @@ namespace ClassicUO.IO.Resources
                     }
                 }
 
-                if (texture == null || texture.IsDisposed)
+                if (renderedText.Texture == null || renderedText.Texture.IsDisposed)
                 {
-                    texture = new FontTexture(width, height, linesCount, links);
-                }
-                else
-                {
-                    texture.Links.Clear();
-                    texture.Links.AddRange(links);
-                    texture.LineCount = linesCount;
+                    renderedText.Texture = new Texture2D(Client.Game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
                 }
 
-                texture.SetData(pData, 0, width * height);
+                renderedText.Links.Clear();
+                renderedText.Links.AddRange(links);
+                renderedText.LinesCount = linesCount;
+                renderedText.Texture.SetData(pData, 0, width * height);
 
                 if (saveHitmap)
                 {
