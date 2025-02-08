@@ -36,6 +36,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using ClassicUO.Renderer.Effects;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -84,6 +85,7 @@ namespace ClassicUO.Renderer
         private Matrix _transformMatrix;
         private readonly DynamicVertexBuffer _vertexBuffer;
         private PositionNormalTextureColor4[] _vertexInfo;
+        private readonly BasicUOEffect _basicUOEffect;
 
         // MobileUO: unused (replaced by UnityBatcher.cs)
         public UltimaBatcher2D_Unused(GraphicsDevice device)
@@ -112,13 +114,12 @@ namespace ClassicUO.Renderer
 
             _stencil = Stencil;
 
-            DefaultEffect = new IsometricEffect(device);
+            _basicUOEffect = new BasicUOEffect(device);
         }
 
 
         public Matrix TransformMatrix => _transformMatrix;
 
-        public MatrixEffect DefaultEffect { get; }
 
         public DepthStencilState Stencil { get; } = new DepthStencilState
         {
@@ -136,10 +137,12 @@ namespace ClassicUO.Renderer
 
         public int TextureSwitches, FlushesDone;
 
+
+
         public void Dispose()
         {
             _vertexInfo = null;
-            DefaultEffect?.Dispose();
+            _basicUOEffect?.Dispose();
             _vertexBuffer.Dispose();
             _indexBuffer.Dispose();
         }
@@ -147,7 +150,7 @@ namespace ClassicUO.Renderer
 
         public void SetBrightlight(float f)
         {
-            ((IsometricEffect) DefaultEffect).Brighlight.SetValue(f);
+            _basicUOEffect.Brighlight.SetValue(f);
         }
 
         public void DrawString(SpriteFont spriteFont, string text, int x, int y, ref Vector3 color)
@@ -1483,24 +1486,6 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        [Conditional("DEBUG")]
-        private void EnsureStarted()
-        {
-            if (!_started)
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
-        [Conditional("DEBUG")]
-        private void EnsureNotStarted()
-        {
-            if (_started)
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
         private void ApplyStates()
         {
             GraphicsDevice.BlendState = _blendState;
@@ -1514,7 +1499,20 @@ namespace ClassicUO.Renderer
             GraphicsDevice.Indices = _indexBuffer;
             GraphicsDevice.SetVertexBuffer(_vertexBuffer);
 
-            SetMatrixForEffect(DefaultEffect);
+
+
+            _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
+            _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
+
+            Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out Matrix matrix);
+
+            //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
+            //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
+
+            _basicUOEffect.WorldMatrix.SetValue(Matrix.Identity);
+            _basicUOEffect.Viewport.SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            _basicUOEffect.MatrixTransform.SetValue(matrix);
+            _basicUOEffect.Pass.Apply();
         }
 
         private void Flush()
@@ -1525,19 +1523,6 @@ namespace ClassicUO.Renderer
             }
 
             ApplyStates();
-
-
-            if (_customEffect != null)
-            {
-                if (_customEffect is MatrixEffect eff)
-                {
-                    SetMatrixForEffect(eff);
-                }
-                else
-                {
-                    _customEffect.CurrentTechnique.Passes[0].Apply();
-                }
-            }
 
             int arrayOffset = 0;
         nextbatch:
@@ -1574,33 +1559,39 @@ namespace ClassicUO.Renderer
             _numSprites = 0;
         }
 
-        private void SetMatrixForEffect(MatrixEffect effect)
-        {
-            _projectionMatrix.M11 = (float) (2.0 / GraphicsDevice.Viewport.Width);
-            _projectionMatrix.M22 = (float) (-2.0 / GraphicsDevice.Viewport.Height);
-
-            Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out Matrix matrix);
-
-            //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
-            //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
-
-            effect.ApplyStates(matrix);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InternalDraw(Texture2D texture, int baseSprite, int batchSize)
         {
             GraphicsDevice.Textures[0] = texture;
 
-            GraphicsDevice.DrawIndexedPrimitives
-            (
-                PrimitiveType.TriangleList,
-                baseSprite << 2,
-                0,
-                batchSize << 2,
-                0,
-                batchSize << 1
-            );
+            if (_customEffect != null)
+            {
+                foreach (EffectPass pass in _customEffect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    GraphicsDevice.DrawIndexedPrimitives
+                    (
+                        PrimitiveType.TriangleList,
+                        baseSprite << 2,
+                        0,
+                        batchSize << 2,
+                        0,
+                        batchSize << 1
+                    );
+                }
+            }
+            else
+            {
+                GraphicsDevice.DrawIndexedPrimitives
+                (
+                    PrimitiveType.TriangleList,
+                    baseSprite << 2,
+                    0,
+                    batchSize << 2,
+                    0,
+                    batchSize << 1
+                );
+            }
         }
 
         public bool ClipBegin(int x, int y, int width, int height)
@@ -1728,39 +1719,23 @@ namespace ClassicUO.Renderer
             return result;
         }
 
-
-        private class IsometricEffect : MatrixEffect
+#if DEBUG
+        private void EnsureStarted()
         {
-            private readonly Matrix _matrix = Matrix.Identity;
-            private Vector2 _viewPort;
-
-            public IsometricEffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.IsometricEffect)
+            if (!_started)
             {
-                WorldMatrix = Parameters["WorldMatrix"];
-                Viewport = Parameters["Viewport"];
-                Brighlight = Parameters["Brightlight"];
-
-                CurrentTechnique = Techniques["HueTechnique"];
-            }
-
-
-            public EffectParameter WorldMatrix { get; }
-            public EffectParameter Viewport { get; }
-            public EffectParameter Brighlight { get; }
-
-
-            public override void ApplyStates(Matrix matrix)
-            {
-                WorldMatrix.SetValue(_matrix);
-
-                _viewPort.X = GraphicsDevice.Viewport.Width;
-                _viewPort.Y = GraphicsDevice.Viewport.Height;
-                Viewport.SetValue(_viewPort);
-
-                base.ApplyStates(matrix);
+                throw new InvalidOperationException();
             }
         }
 
+        private void EnsureNotStarted()
+        {
+            if (_started)
+            {
+                throw new InvalidOperationException();
+            }
+        }
+#endif
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct PositionNormalTextureColor4 : IVertexType

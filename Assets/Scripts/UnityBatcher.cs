@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using ClassicUO.Renderer.Effects;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using UnityEngine;
@@ -36,6 +37,7 @@ namespace ClassicUO.Renderer
         private Matrix _projectionMatrix = new Matrix(0f,                         //(float)( 2.0 / (double)viewport.Width ) is the actual value we will use
                                                       0.0f, 0.0f, 0.0f, 0.0f, 0f, //(float)( -2.0 / (double)viewport.Height ) is the actual value we will use
                                                       0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+        private readonly BasicUOEffect _basicUOEffect;
 
         private Material hueMaterial;
         private Material xbrMaterial;
@@ -77,15 +79,13 @@ namespace ClassicUO.Renderer
             };
 
             _stencil = Stencil;
-            DefaultEffect = new IsometricEffect(device);
+            _basicUOEffect = new BasicUOEffect(device);
 
             hueMaterial = new Material(UnityEngine.Resources.Load<Shader>("HueShader"));
             xbrMaterial = new Material(UnityEngine.Resources.Load<Shader>("XbrShader"));
         }
 
         public Matrix TransformMatrix => _transformMatrix;
-
-        private MatrixEffect DefaultEffect { get; }
 
         private Effect CustomEffect;
 
@@ -109,7 +109,7 @@ namespace ClassicUO.Renderer
         {
             // MobileUO: pass Brightlight value to shader
             hueMaterial.SetFloat(Brightlight, f);
-            ((IsometricEffect)DefaultEffect).Brighlight.SetValue(f);
+            _basicUOEffect.Brighlight.SetValue(f);
         }
 
         public void DrawString(SpriteFont spriteFont, string text, int x, int y, ref XnaVector3 color)
@@ -1309,7 +1309,8 @@ namespace ClassicUO.Renderer
             {
                 if (CustomEffect is XBREffect xbrEffect)
                 {
-                    xbrMaterial.SetVector(TextureSize, new Vector4(xbrEffect._vectorSize.X, xbrEffect._vectorSize.Y));
+                    // MobileUO: _vectorSize no longer exists
+                    //xbrMaterial.SetVector(TextureSize, new Vector4(xbrEffect._vectorSize.X, xbrEffect._vectorSize.Y));
                     Graphics.DrawTexture(new Rect(x * scale, y * scale, width * scale, height * scale), texture.UnityTexture, xbrMaterial);
                 }
                 else
@@ -2058,7 +2059,19 @@ namespace ClassicUO.Renderer
             GraphicsDevice.SamplerStates[2] = SamplerState.PointClamp;
             GraphicsDevice.SamplerStates[3] = SamplerState.PointClamp;
 
-            SetMatrixForEffect(DefaultEffect);
+            _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
+            _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
+
+            Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out Matrix matrix);
+
+            //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
+            //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
+
+            _basicUOEffect.WorldMatrix.SetValue(Matrix.Identity);
+            _basicUOEffect.Viewport.SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+            _basicUOEffect.MatrixTransform.SetValue(matrix);
+            // MobileUO: commented out
+            //_basicUOEffect.Pass.Apply();
         }
 
         private void Flush()
@@ -2066,21 +2079,6 @@ namespace ClassicUO.Renderer
             ApplyStates();
 
             ++FlushesDone;
-        }
-
-        private void SetMatrixForEffect(MatrixEffect effect)
-        {
-            _projectionMatrix.M11 = (float) (2.0 / GraphicsDevice.Viewport.Width);
-            _projectionMatrix.M22 = (float) (-2.0 / GraphicsDevice.Viewport.Height);
-
-            Matrix.Multiply(ref _transformMatrix,
-                            ref _projectionMatrix,
-                            out Matrix matrix);
-
-            //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
-            //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
-
-            effect.ApplyStates(matrix);
         }
 
         public bool ClipBegin(int x, int y, int width, int height)
@@ -2154,46 +2152,9 @@ namespace ClassicUO.Renderer
 
         public void Dispose()
         {
-            DefaultEffect?.Dispose();
+            _basicUOEffect?.Dispose();
         }
 
-        private class IsometricEffect : MatrixEffect
-        {
-            private Vector2 _viewPort;
-            private Matrix _matrix = Matrix.Identity;
-
-            public IsometricEffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.IsometricEffect)
-            {
-                WorldMatrix = Parameters["WorldMatrix"];
-                Viewport = Parameters["Viewport"];
-                //NOTE: Since we don't parse the mojoshader to read the properties, Brightlight doesn't exist as a key in the Parameters dictionary
-                Parameters.Add("Brightlight", new EffectParameter());
-                Brighlight = Parameters["Brightlight"];
-
-                CurrentTechnique = Techniques["HueTechnique"];
-            }
-
-            //protected IsometricEffect(Effect cloneSource) : base(cloneSource)
-            //{
-            //}
-
-
-            public EffectParameter WorldMatrix { get; }
-            public EffectParameter Viewport { get; }
-            public EffectParameter Brighlight { get; }
-
-
-            public override void ApplyStates(Matrix matrix)
-            {
-                 WorldMatrix.SetValue(_matrix);
-
-                _viewPort.x = GraphicsDevice.Viewport.Width;
-                _viewPort.y = GraphicsDevice.Viewport.Height;
-                Viewport.SetValue(_viewPort);
-
-                base.ApplyStates(matrix);
-            }
-        }
 
         // MobileUO: make public
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
