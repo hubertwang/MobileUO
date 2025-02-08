@@ -18,10 +18,6 @@ namespace ClassicUO.Renderer
         private readonly GraphicsDevice _device;
         private readonly List<Texture2D> _textureList;
         private Packer _packer;
-        private readonly Rectangle[] _spriteBounds;
-        // MobileUO: don't switch this to byte[] or graphics will break!
-        private readonly int[] _spriteTextureIndices;
-
 
         public static TextureAtlas Shared { get; }
 
@@ -34,13 +30,12 @@ namespace ClassicUO.Renderer
                 Client.Game.GraphicsDevice,
                 TEXTURE_SIZE,
                 TEXTURE_SIZE,
-                SurfaceFormat.Color,
-                ushort.MaxValue * 2
+                SurfaceFormat.Color
             );
         }
 
 
-        public TextureAtlas(GraphicsDevice device, int width, int height, SurfaceFormat format, int maxSpriteCount)
+        public TextureAtlas(GraphicsDevice device, int width, int height, SurfaceFormat format)
         {
             _device = device;
             _width = width;
@@ -48,21 +43,14 @@ namespace ClassicUO.Renderer
             _format = format;
 
             _textureList = new List<Texture2D>();
-            _spriteBounds = new Rectangle[maxSpriteCount];
-            _spriteTextureIndices = new int[maxSpriteCount];
         }
 
 
         public int TexturesCount => _textureList.Count;
 
 
-        public unsafe void AddSprite<T>(uint hash, Span<T> pixels, int width, int height) where T : unmanaged
+        public unsafe Texture2D AddSprite<T>(Span<T> pixels, int width, int height, out Rectangle pr) where T : unmanaged
         {
-            if (IsHashExists(hash))
-            {
-                return;
-            }
-
             var index = _textureList.Count - 1;
 
             if (index < 0)
@@ -72,7 +60,7 @@ namespace ClassicUO.Renderer
             }
 
             // ref Rectangle pr = ref _spriteBounds[hash];
-            var pr = new Rectangle(0, 0, width, height);
+            pr = new Rectangle(0, 0, width, height);
             // MobileUO: TODO: figure out how to get packer working correctly
             //while (!_packer.PackRect(width, height, null, out pr))
             {
@@ -93,9 +81,7 @@ namespace ClassicUO.Renderer
                 );
             }
 
-            // MobileUO: keep setting the spriteBounds
-            _spriteBounds[hash] = pr;
-            _spriteTextureIndices[hash] = index;
+            return texture;
         }
 
         // MobileUO: TODO: figure out how to get packer working correctly
@@ -108,23 +94,7 @@ namespace ClassicUO.Renderer
             _packer = new Packer(_width, _height);
         }
 
-        public Texture2D GetTexture(uint hash, out Rectangle bounds)
-        {
-            if (IsHashExists(hash))
-            {
-                bounds = _spriteBounds[(int)hash];
-              
-                return _textureList[_spriteTextureIndices[(int)hash]];
-            }
-
-            bounds = Rectangle.Empty;
-            return null;
-        }
-
-        // MobileUO: keep as int > 0
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsHashExists(uint hash) => _spriteTextureIndices[(int)hash] > 0;
-
+      
         public void SaveImages(string name)
         {
             for (int i = 0, count = TexturesCount; i < count; ++i)
@@ -150,7 +120,6 @@ namespace ClassicUO.Renderer
 
             _packer.Dispose();
             _textureList.Clear();
-            //_spriteTextureIndices.AsSpan().Fill(0xFF);
         }
     }
 }

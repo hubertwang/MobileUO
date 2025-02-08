@@ -44,6 +44,7 @@ using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.IO.Resources
 {
@@ -68,8 +69,6 @@ namespace ClassicUO.IO.Resources
         private readonly UOFileMul[] _files = new UOFileMul[5];
         private readonly UOFileUop[] _filesUop = new UOFileUop[4];
         private readonly PixelPicker _picker = new PixelPicker();
-
-        private readonly LinkedList<AnimationDirection> _usedTextures = new LinkedList<AnimationDirection>();
 
         private AnimationsLoader()
         {
@@ -745,7 +744,7 @@ namespace ClassicUO.IO.Resources
             UOFileIndex[] animseqEntries = new UOFileIndex[Math.Max(animSeq.TotalEntriesCount, Constants.MAX_ANIMATIONS_DATA_INDEX_COUNT)];
             animSeq.FillEntries(ref animseqEntries);
 
-            //Span<byte> spanAlloc = stackalloc byte[1024];
+            Span<byte> spanAlloc = stackalloc byte[1024];
 
             for (int i = 0; i < animseqEntries.Length; i++)
             {
@@ -988,82 +987,83 @@ namespace ClassicUO.IO.Resources
         // MobileUO: refactor of method's logic
         public override void ClearResources()
         {
-            _instance = null;
-            _animationSequenceReplacing.Clear();
-            _animDimensionCache.Clear();
-            _equipConv.Clear();
-            for (int i = 0; i < _files.Length; i++)
-            {
-                _files[i]?.Dispose();
-                _files[i] = null;
-            }
-            for (int i = 0; i < _filesUop.Length; i++)
-            {
-                _filesUop[i]?.Dispose();
-                _filesUop[i] = null;
-            }
-            for (int i = 0; i < DataIndex.Length; i++)
-            {
-                IndexAnimation dataIndex = DataIndex[i];
-                if (dataIndex?.BodyConvGroups != null)
-                {
-                    for (int j = 0; j < dataIndex.BodyConvGroups.Length; j++)
-                    {
-                        AnimationGroup bodyConvGroup = dataIndex.BodyConvGroups[j];
-                        if (bodyConvGroup?.Direction != null)
-                        {
-                            for (int k = 0; k < bodyConvGroup.Direction.Length; k++)
-                            {
-                                AnimationDirection direction = bodyConvGroup.Direction[k];
-                                if (direction?.Frames != null)
-                                {
-                                    for (int l = 0; l < direction.Frames.Length; l++)
-                                    {
-                                        direction.Frames[l]?.Dispose();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            // MobileUO: TODO: this has to be fixed for the loader changes
+            //_instance = null;
+            //_animationSequenceReplacing.Clear();
+            //_animDimensionCache.Clear();
+            //_equipConv.Clear();
+            //for (int i = 0; i < _files.Length; i++)
+            //{
+            //    _files[i]?.Dispose();
+            //    _files[i] = null;
+            //}
+            //for (int i = 0; i < _filesUop.Length; i++)
+            //{
+            //    _filesUop[i]?.Dispose();
+            //    _filesUop[i] = null;
+            //}
+            //for (int i = 0; i < DataIndex.Length; i++)
+            //{
+            //    IndexAnimation dataIndex = DataIndex[i];
+            //    if (dataIndex?.BodyConvGroups != null)
+            //    {
+            //        for (int j = 0; j < dataIndex.BodyConvGroups.Length; j++)
+            //        {
+            //            AnimationGroup bodyConvGroup = dataIndex.BodyConvGroups[j];
+            //            if (bodyConvGroup?.Direction != null)
+            //            {
+            //                for (int k = 0; k < bodyConvGroup.Direction.Length; k++)
+            //                {
+            //                    AnimationDirection direction = bodyConvGroup.Direction[k];
+            //                    if (direction?.Frames != null)
+            //                    {
+            //                        for (int l = 0; l < direction.Frames.Length; l++)
+            //                        {
+            //                            direction.Frames[l]?.Dispose();
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
 
-                if (dataIndex?.Groups != null)
-                {
-                    for (int j = 0; j < dataIndex.Groups.Length; j++)
-                    {
-                        AnimationGroup group = dataIndex.Groups[j];
-                        if (group?.Direction != null)
-                        {
-                            for (int k = 0; k < group.Direction.Length; k++)
-                            {
-                                AnimationDirection direction = group.Direction[k];
-                                if (direction?.Frames != null)
-                                {
-                                    for (int l = 0; l < direction.Frames.Length; l++)
-                                    {
-                                        direction.Frames[l]?.Dispose();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            //    if (dataIndex?.Groups != null)
+            //    {
+            //        for (int j = 0; j < dataIndex.Groups.Length; j++)
+            //        {
+            //            AnimationGroup group = dataIndex.Groups[j];
+            //            if (group?.Direction != null)
+            //            {
+            //                for (int k = 0; k < group.Direction.Length; k++)
+            //                {
+            //                    AnimationDirection direction = group.Direction[k];
+            //                    if (direction?.Frames != null)
+            //                    {
+            //                        for (int l = 0; l < direction.Frames.Length; l++)
+            //                        {
+            //                            direction.Frames[l]?.Dispose();
+            //                        }
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
                 
-                DataIndex[i] = null;
-            }
+            //    DataIndex[i] = null;
+            //}
 
-            foreach (var texture in _usedTextures)
-            {
-                if (texture.Frames == null)
-                {
-                    continue;
-                }
-                for (int i = 0; i < texture.Frames.Length; i++)
-                {
-                    texture.Frames[i]?.Dispose();
-                }
-            }
-            _usedTextures.Clear();
+            //foreach (var texture in _usedTextures)
+            //{
+            //    if (texture.Frames == null)
+            //    {
+            //        continue;
+            //    }
+            //    for (int i = 0; i < texture.Frames.Length; i++)
+            //    {
+            //        texture.Frames[i]?.Dispose();
+            //    }
+            //}
+            //_usedTextures.Clear();
         }
 
         public bool PixelCheck(ushort animID, byte group, byte direction, bool uop, int frame, int x, int y)
@@ -1392,6 +1392,10 @@ namespace ClassicUO.IO.Resources
         }
 
 
+       
+
+        //private SpriteInfo[] _spriteInfos = new SpriteInfo[Constants.MAX_ANIMATIONS_DATA_INDEX_COUNT * 100 * 5];
+
         public bool LoadAnimationFrames(ushort animID, byte animGroup, byte direction, ref AnimationDirection animDir)
         {
             if (animDir.FileIndex == -1 && animDir.Address == -1)
@@ -1480,7 +1484,7 @@ namespace ClassicUO.IO.Resources
                 ANIMATION_GROUPS_TYPE type = DataIndex[animID].Type;
 
                 animDirection.FrameCount = (byte)(type < ANIMATION_GROUPS_TYPE.EQUIPMENT ? Math.Round(fc / 5f) : 10);
-                animDirection.Frames = new AnimationFrameTexture[animDirection.FrameCount];
+                animDirection.SpriteInfos = new SpriteInfo[animDirection.FrameCount];
 
                 int headerSize = sizeof(UOPAnimationHeader);
                 int count = 0;
@@ -1533,7 +1537,7 @@ namespace ClassicUO.IO.Resources
                     {
                         int index = animHeaderInfo->FrameID % animDirection.FrameCount;
 
-                        if (animDirection.Frames[index] == null || animDirection.Frames[index].IsDisposed)
+                        if (animDirection.SpriteInfos[index].Texture == null)
                         {
                             unchecked
                             {
@@ -1601,22 +1605,18 @@ namespace ClassicUO.IO.Resources
 
                                             header = reader.ReadUInt32LE();
                                         }
-
-                                        AnimationFrameTexture f = new AnimationFrameTexture(imageWidth, imageHeight)
-                                        {
-                                            CenterX = imageCenterX,
-                                            CenterY = imageCenterY
-                                        };
-
-                                        f.SetData(data, 0, imageWidth * imageHeight);
-
-                                        animDirection.Frames[index] = f;
+                            
+                                        ref var spriteInfo = ref animDirection.SpriteInfos[index];
 
                                         uint packed32 = (uint)((animGroup | (direction << 8) | (0x01 << 16)));
                                         uint packed32_2 = (uint)((animID | (index << 16)));
                                         ulong packed = (packed32_2 | ((ulong)packed32 << 32));
 
                                         _picker.Set(packed, imageWidth, imageHeight, data);
+                                        spriteInfo.Center.X = imageCenterX;
+                                        spriteInfo.Center.Y = imageCenterY;
+
+                                        spriteInfo.Texture = TextureAtlas.Shared.AddSprite(data.AsSpan(), imageWidth, imageHeight, out spriteInfo.UV);
                                     }
                                     finally
                                     {
@@ -1635,8 +1635,6 @@ namespace ClassicUO.IO.Resources
                     animHeaderInfo = (UOPAnimationHeader*)reader.PositionAddress;
                 }
 
-
-                _usedTextures.AddLast(animDirection);
                 reader.Release();
 
                 return true;
@@ -1662,19 +1660,12 @@ namespace ClassicUO.IO.Resources
             animDir.FrameCount = (byte) frameCount;
             uint* frameOffset = (uint*) reader.PositionAddress;
 
-
-            if (animDir.Frames != null && animDir.Frames.Length != 0)
-            {
-                Log.Panic("MEMORY LEAK MUL ANIM");
-            }
-
-
-            animDir.Frames = new AnimationFrameTexture[frameCount];
+            animDir.SpriteInfos = new SpriteInfo[frameCount];
             long end = (long) reader.StartAddress + reader.Length;
 
             for (int i = 0; i < frameCount; i++)
             {
-                if (animDir.Frames[i] != null)
+                if (animDir.SpriteInfos[i].Texture != null)
                 {
                     continue;
                 }
@@ -1728,29 +1719,22 @@ namespace ClassicUO.IO.Resources
                         header = reader.ReadUInt();
                     }
 
-                    AnimationFrameTexture f = new AnimationFrameTexture(imageWidth, imageHeight)
-                    {
-                        CenterX = imageCenterX,
-                        CenterY = imageCenterY
-                    };
-                    
-                    f.SetData(data, 0, imageWidth * imageHeight);
-
-                    animDir.Frames[i] = f;
+                    ref var spriteInfo = ref animDir.SpriteInfos[i];
+                    spriteInfo.Center.X = imageCenterX;
+                    spriteInfo.Center.Y = imageCenterY;
 
                     uint packed32 = (uint)((animGroup | (direction << 8) | (0x00 << 16)));
                     uint packed32_2 = (uint)((animID | (i << 16)));
                     ulong packed = (packed32_2 | ((ulong)packed32 << 32));
 
                     _picker.Set(packed, imageWidth, imageHeight, data);
+                    spriteInfo.Texture = TextureAtlas.Shared.AddSprite(data.AsSpan(), imageWidth, imageHeight, out spriteInfo.UV);
                 }
                 finally
                 {
                     System.Buffers.ArrayPool<uint>.Shared.Return(data, true);
                 }
             }
-
-            _usedTextures.AddLast(animDir);
         }
 
         public void GetAnimationDimensions
@@ -1835,14 +1819,14 @@ namespace ClassicUO.IO.Resources
                                 frameIndex = 0;
                             }
 
-                            AnimationFrameTexture animationFrameTexture = direction.Frames?[frameIndex];
+                            ref var spriteInfo = ref direction.SpriteInfos[frameIndex];
 
-                            if (animationFrameTexture != null)
+                            if (spriteInfo.Texture != null)
                             {
-                                x = animationFrameTexture.CenterX;
-                                y = animationFrameTexture.CenterY;
-                                w = animationFrameTexture.Width;
-                                h = animationFrameTexture.Height;
+                                x = spriteInfo.Center.X;
+                                y = spriteInfo.Center.Y;
+                                w = spriteInfo.UV.Width;
+                                h = spriteInfo.UV.Height;
                                 _animDimensionCache[id] = new Rectangle(x, y, w, h);
 
                                 return;
@@ -1974,46 +1958,6 @@ namespace ClassicUO.IO.Resources
             else
             {
                 x = y = w = h = 0;
-            }
-        }
-
-        public void CleaUnusedResources(int maxCount)
-        {
-            int count = 0;
-            long ticks = Time.Ticks - Constants.CLEAR_TEXTURES_DELAY;
-
-            LinkedListNode<AnimationDirection> first = _usedTextures.First;
-
-            while (first != null)
-            {
-                LinkedListNode<AnimationDirection> next = first.Next;
-
-                if (first.Value.LastAccessTime != 0 && first.Value.LastAccessTime < ticks)
-                {
-                    for (int j = 0; j < first.Value.FrameCount; j++)
-                    {
-                        ref AnimationFrameTexture texture = ref first.Value.Frames[j];
-
-                        if (texture != null)
-                        {
-                            texture.Dispose();
-                            texture = null;
-                        }
-                    }
-
-                    first.Value.FrameCount = 0;
-                    first.Value.Frames = null;
-                    first.Value.LastAccessTime = 0;
-
-                    _usedTextures.Remove(first);
-
-                    if (++count >= maxCount)
-                    {
-                        break;
-                    }
-                }
-
-                first = next;
             }
         }
 
@@ -2367,11 +2311,19 @@ namespace ClassicUO.IO.Resources
         public long Address;
         public int FileIndex;
         public byte FrameCount;
-        public AnimationFrameTexture[] Frames;
+        public SpriteInfo[] SpriteInfos;
+        //public AnimationFrameTexture[] Frames;
         public bool IsUOP;
         public bool IsVerdata;
         public long LastAccessTime;
         public uint Size;
+    }
+
+    struct SpriteInfo
+    {
+        public Texture2D Texture;
+        public Rectangle UV;
+        public Point Center;
     }
 
     internal struct EquipConvData : IEquatable<EquipConvData>
