@@ -207,6 +207,7 @@ namespace ClassicUO.Renderer
             }
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public bool DrawSprite(Texture2D texture, int x, int y, bool mirror, ref XnaVector3 hue)
         {
             if (texture.UnityTexture == null)
@@ -323,6 +324,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public void DrawSpriteRotated(Texture2D texture, int x, int y, float width, float height, ref XnaVector3 hue, float angle)
         {
             if (texture.UnityTexture == null)
@@ -384,6 +386,9 @@ namespace ClassicUO.Renderer
             RenderVertex(vertex, texture, hue);
         }
 
+        // ==========================
+        // === UO drawing methods ===
+        // ==========================
         public struct YOffsets
         {
             public int Top;
@@ -392,6 +397,7 @@ namespace ClassicUO.Renderer
             public int Bottom;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         [MethodImpl(256)]
         public bool DrawSpriteLand
         (
@@ -475,6 +481,83 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        public bool DrawStrecthedLand
+        (
+            Texture2D texture,
+            XnaVector2 position,
+            Rectangle sourceRect,
+            ref YOffsets yOffsets,
+            ref XnaVector3 normalTop,
+            ref XnaVector3 normalRight,
+            ref XnaVector3 normalLeft,
+            ref XnaVector3 normalBottom,
+            XnaVector3 hue
+        )
+        {
+            // MobileUO: TODO: since we are currently not using ref _vertexInfo[_numSprites - 1] array, use the old rendering method
+            // If we switch to using _vertexInfo, then the below should work since the Draw method calls SetVertex() which does our vertex setup in the ref _vertexInfo array
+            return DrawSpriteLand(
+                texture,
+                (int)position.X,
+                (int)position.Y,
+                sourceRect.X,
+                sourceRect.Y,
+                sourceRect.Width,
+                sourceRect.Height,
+                ref yOffsets,
+                ref normalTop,
+                ref normalRight,
+                ref normalLeft,
+                ref normalBottom,
+                ref hue
+                );
+
+            if (texture.UnityTexture == null)
+            {
+                return false;
+            }
+
+            Draw
+            (
+                texture,
+                position,
+                sourceRect,
+                hue,
+                0f,
+                XnaVector2.Zero,
+                0f,
+                0,
+                0
+            );
+
+            //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites - 1];
+            var vertex = new PositionNormalTextureColor4();
+            vertex.Normal0 = normalTop;
+            vertex.Normal1 = normalRight;
+            vertex.Normal2 = normalLeft;
+            vertex.Normal3 = normalBottom;
+
+            // Top
+            vertex.Position0.x += 22;
+            vertex.Position0.y -= yOffsets.Top;
+
+            // Right
+            vertex.Position1.x += 44;
+            vertex.Position1.y += (22 - yOffsets.Right);
+
+            // Left
+            vertex.Position2.y += (22 - yOffsets.Left);
+
+            // Bottom
+            vertex.Position3.x += 22;
+            vertex.Position3.y += (44 - yOffsets.Bottom);
+
+            RenderVertex(vertex, texture, hue);
+
+            return true;
+        }
+
+        // MobileUO: TODO: deprecated, to be deleted
         public void DrawSpriteShadow(Texture2D texture, int x, int y, bool flip)
         { 
             if (texture.UnityTexture == null)
@@ -575,6 +658,107 @@ namespace ClassicUO.Renderer
             vertex.Hue0.y = vertex.Hue1.y = vertex.Hue2.y = vertex.Hue3.y = ShaderHueTranslator.SHADER_SHADOW;
 
             RenderVertex(vertex, texture, vertex.Hue0);
+        }
+
+        public bool DrawShadow(Texture2D texture, XnaVector2 position, Rectangle sourceRect, bool flip)
+        {
+            if (texture.UnityTexture == null)
+            {
+                return false;
+            }
+
+            float width = sourceRect.Width;
+            float height = sourceRect.Height * 0.5f;
+            float translatedY = position.Y + height - 10;
+            float ratio = height / width;
+
+            //EnsureSize();
+
+            //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites];
+            var vertex = new PositionNormalTextureColor4();
+
+            if (flip)
+            {
+                vertex.Position0.x = position.X + width;
+                vertex.Position0.y = translatedY + height;
+                vertex.Position0.z = 0;
+
+                vertex.Position1.x = position.X;
+                vertex.Position1.y = translatedY + height;
+                vertex.Position1.z = 0;
+
+                vertex.Position2.x = position.X + width * (ratio + 1f);
+                vertex.Position2.y = translatedY;
+                vertex.Position2.z = 0;
+
+                vertex.Position3.x = position.X + width * ratio;
+                vertex.Position3.y = translatedY;
+                vertex.Position3.z = 0;
+            }
+            else
+            {
+                vertex.Position0.x = position.X;
+                vertex.Position0.y = translatedY + height;
+                vertex.Position0.z = 0;
+
+                vertex.Position1.x = position.X + width;
+                vertex.Position1.y = translatedY + height;
+                vertex.Position1.z = 0;
+
+                vertex.Position2.x = position.X + width * ratio;
+                vertex.Position2.y = translatedY;
+                vertex.Position2.z = 0;
+
+                vertex.Position3.x = position.X + width * (ratio + 1f);
+                vertex.Position3.y = translatedY;
+                vertex.Position3.z = 0;
+            }
+
+
+            float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
+            float sourceY = ((sourceRect.Y + 0.5f) / (float)texture.Height);
+            float sourcwW = ((sourceRect.Width - 1f) / (float)texture.Width);
+            float sourceH = ((sourceRect.Height - 1f) / (float)texture.Height);
+
+            vertex.TextureCoordinate0.x = (_cornerOffsetX[2] * sourcwW) + sourceX;
+            vertex.TextureCoordinate0.y = (_cornerOffsetY[2] * sourceH) + sourceY;
+            vertex.TextureCoordinate0.z = 0;
+
+            vertex.TextureCoordinate1.x = (_cornerOffsetX[3] * sourcwW) + sourceX;
+            vertex.TextureCoordinate1.y = (_cornerOffsetY[3] * sourceH) + sourceY;
+            vertex.TextureCoordinate1.z = 0;
+
+            vertex.TextureCoordinate2.x = (_cornerOffsetX[0] * sourcwW) + sourceX;
+            vertex.TextureCoordinate2.y = (_cornerOffsetY[0] * sourceH) + sourceY;
+            vertex.TextureCoordinate2.z = 0;
+
+            vertex.TextureCoordinate3.x = (_cornerOffsetX[1] * sourcwW) + sourceX;
+            vertex.TextureCoordinate3.y = (_cornerOffsetY[1] * sourceH) + sourceY;
+            vertex.TextureCoordinate3.z = 0;
+
+            vertex.Normal0.x = 0;
+            vertex.Normal0.y = 0;
+            vertex.Normal0.z = 1;
+
+            vertex.Normal1.x = 0;
+            vertex.Normal1.y = 0;
+            vertex.Normal1.z = 1;
+
+            vertex.Normal2.x = 0;
+            vertex.Normal2.y = 0;
+            vertex.Normal2.z = 1;
+
+            vertex.Normal3.x = 0;
+            vertex.Normal3.y = 0;
+            vertex.Normal3.z = 1;
+
+            vertex.Hue0.z = vertex.Hue1.z = vertex.Hue2.z = vertex.Hue3.z = vertex.Hue0.x = vertex.Hue1.x = vertex.Hue2.x = vertex.Hue3.x = 0;
+            vertex.Hue0.y = vertex.Hue1.y = vertex.Hue2.y = vertex.Hue3.y = ShaderHueTranslator.SHADER_SHADOW;
+
+            //PushSprite(texture);
+            RenderVertex(vertex, texture, vertex.Hue0);
+
+            return true;
         }
 
         private void RenderVertex(PositionNormalTextureColor4 vertex, Texture2D texture, Vector3 hue)
@@ -1268,6 +1452,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
+        // MobileUO: TODO: deprecated, to be deleted
         public void DrawLine(Texture2D texture, int startX, int startY, int endX, int endY, int originX, int originY)
         {
             if (texture.UnityTexture == null)
@@ -1337,6 +1522,37 @@ namespace ClassicUO.Renderer
 
             RenderVertex(vertex, texture, XnaVector3.Zero);
         }
+
+        public void DrawLine
+        (
+            Texture2D texture,
+            XnaVector2 start,
+            XnaVector2 end,
+            XnaVector3 color
+        )
+        {
+            if (texture.UnityTexture == null)
+            {
+                return;
+            }
+
+            var radians = ClassicUO.Utility.MathHelper.AngleBetweenVectors(start, end);
+            XnaVector2.Distance(ref start, ref end, out var length);
+
+            Draw
+            (
+                texture, 
+                start,
+                texture.Bounds,
+                color,
+                radians, 
+                XnaVector2.Zero,
+                new XnaVector2(length, 1), 
+                SpriteEffects.None,
+                0
+            );
+        }
+
 
         public void Draw
         (
@@ -1760,6 +1976,22 @@ namespace ClassicUO.Renderer
             sprite.Hue1 = color;
             sprite.Hue2 = color;
             sprite.Hue3 = color;
+
+            sprite.Normal0.x = 0;
+            sprite.Normal0.y = 0;
+            sprite.Normal0.z = 1;
+
+            sprite.Normal1.x = 0;
+            sprite.Normal1.y = 0;
+            sprite.Normal1.z = 1;
+
+            sprite.Normal2.x = 0;
+            sprite.Normal2.y = 0;
+            sprite.Normal2.z = 1;
+
+            sprite.Normal3.x = 0;
+            sprite.Normal3.y = 0;
+            sprite.Normal3.z = 1;
         }
 
         //Because XNA's Blend enum starts with 1, we duplicate BlendMode.Zero for 0th index
