@@ -413,7 +413,8 @@ namespace ClassicUO.Renderer
             ref XnaVector3 normalRight, 
             ref XnaVector3 normalLeft, 
             ref XnaVector3 normalBottom, 
-            ref XnaVector3 hue
+            ref XnaVector3 hue,
+            float depth
         )
         {
             if (texture.UnityTexture == null)
@@ -454,25 +455,28 @@ namespace ClassicUO.Renderer
             vertex.Normal2 = normalLeft;
             vertex.Normal3 = normalBottom;
 
+            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
+            depth = 0;
+
             // Top
             vertex.Position0.x = x + 22;
             vertex.Position0.y = y - yOffsets.Top;
-            vertex.Position0.z = 0;
+            vertex.Position0.z = depth;
 
             // Right
             vertex.Position1.x = x + 44;
             vertex.Position1.y = y + (22 - yOffsets.Right);
-            vertex.Position1.z = 0;
+            vertex.Position1.z = depth;
 
             // Left
             vertex.Position2.x = x;
             vertex.Position2.y = y + (22 - yOffsets.Left);
-            vertex.Position2.z = 0;
+            vertex.Position2.z = depth;
 
             // Bottom
             vertex.Position3.x = x + 22;
             vertex.Position3.y = y + (44 - yOffsets.Bottom);
-            vertex.Position3.z = 0;
+            vertex.Position3.z = depth;
 
             vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
 
@@ -481,7 +485,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        public bool DrawStrecthedLand
+        public bool DrawStretchedLand
         (
             Texture2D texture,
             XnaVector2 position,
@@ -491,7 +495,8 @@ namespace ClassicUO.Renderer
             ref XnaVector3 normalRight,
             ref XnaVector3 normalLeft,
             ref XnaVector3 normalBottom,
-            XnaVector3 hue
+            XnaVector3 hue,
+            float depth
         )
         {
             // MobileUO: TODO: since we are currently not using ref _vertexInfo[_numSprites - 1] array, use the old rendering method
@@ -509,7 +514,8 @@ namespace ClassicUO.Renderer
                 ref normalRight,
                 ref normalLeft,
                 ref normalBottom,
-                ref hue
+                ref hue,
+                depth
                 );
 
             if (texture.UnityTexture == null)
@@ -527,7 +533,7 @@ namespace ClassicUO.Renderer
                 XnaVector2.Zero,
                 0f,
                 0,
-                0
+                depth
             );
 
             //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites - 1];
@@ -1931,6 +1937,9 @@ namespace ClassicUO.Renderer
             byte effects
         )
         {
+            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
+            depth = 0;
+
             float cornerX = -originX * destinationW;
             float cornerY = -originY * destinationH;
             sprite.Position0.x = ((-rotationSin * cornerY) + (rotationCos * cornerX) + destinationX);
@@ -2062,7 +2071,8 @@ namespace ClassicUO.Renderer
             _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
             _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
 
-            Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out Matrix matrix);
+            var matrix = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, short.MinValue, short.MaxValue);
+            Matrix.Multiply(ref _transformMatrix, ref matrix, out matrix);
 
             //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
             //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);

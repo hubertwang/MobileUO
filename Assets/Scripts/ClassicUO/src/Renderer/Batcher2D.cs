@@ -265,7 +265,7 @@ namespace ClassicUO.Renderer
             public int Bottom;
         }
 
-        public bool DrawStrecthedLand
+        public bool DrawStretchedLand
         (
             Texture2D texture,
             Vector2 position,
@@ -275,7 +275,8 @@ namespace ClassicUO.Renderer
             ref Vector3 normalRight,
             ref Vector3 normalLeft,
             ref Vector3 normalBottom,
-            Vector3 hue
+            Vector3 hue,
+            float depth
         )
         {
             Draw
@@ -288,7 +289,7 @@ namespace ClassicUO.Renderer
                 Vector2.Zero,
                 0f,
                 0,
-                0
+                depth
             );
 
             ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites - 1];
@@ -1469,7 +1470,8 @@ namespace ClassicUO.Renderer
             _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
             _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
 
-            Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out Matrix matrix);
+            var matrix = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, short.MinValue, short.MaxValue);
+            Matrix.Multiply(ref _transformMatrix, ref matrix, out matrix);
 
             //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
             //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
