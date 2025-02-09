@@ -422,6 +422,9 @@ namespace ClassicUO.Renderer
                 return false;
             }
 
+            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
+            depth = 0;
+
             float sourceX = ((sx + 0.5f) / (float)texture.Width);
             float sourceY = ((sy + 0.5f) / (float)texture.Height);
             float sourcwW = ((swidth - 1f) / (float)texture.Width);
@@ -454,9 +457,6 @@ namespace ClassicUO.Renderer
             vertex.Normal1 = normalRight;
             vertex.Normal2 = normalLeft;
             vertex.Normal3 = normalBottom;
-
-            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
-            depth = 0;
 
             // Top
             vertex.Position0.x = x + 22;
@@ -532,7 +532,7 @@ namespace ClassicUO.Renderer
                 0f,
                 XnaVector2.Zero,
                 0f,
-                0,
+                SpriteEffects.None,
                 depth
             );
 
@@ -666,12 +666,15 @@ namespace ClassicUO.Renderer
             RenderVertex(vertex, texture, vertex.Hue0);
         }
 
-        public bool DrawShadow(Texture2D texture, XnaVector2 position, Rectangle sourceRect, bool flip)
+        public bool DrawShadow(Texture2D texture, XnaVector2 position, Rectangle sourceRect, bool flip, float depth)
         {
             if (texture.UnityTexture == null)
             {
                 return false;
             }
+
+            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
+            depth = 0;
 
             float width = sourceRect.Width;
             float height = sourceRect.Height * 0.5f;
@@ -687,37 +690,37 @@ namespace ClassicUO.Renderer
             {
                 vertex.Position0.x = position.X + width;
                 vertex.Position0.y = translatedY + height;
-                vertex.Position0.z = 0;
+                vertex.Position0.z = depth;
 
                 vertex.Position1.x = position.X;
                 vertex.Position1.y = translatedY + height;
-                vertex.Position1.z = 0;
+                vertex.Position1.z = depth;
 
                 vertex.Position2.x = position.X + width * (ratio + 1f);
                 vertex.Position2.y = translatedY;
-                vertex.Position2.z = 0;
+                vertex.Position2.z = depth;
 
                 vertex.Position3.x = position.X + width * ratio;
                 vertex.Position3.y = translatedY;
-                vertex.Position3.z = 0;
+                vertex.Position3.z = depth;
             }
             else
             {
                 vertex.Position0.x = position.X;
                 vertex.Position0.y = translatedY + height;
-                vertex.Position0.z = 0;
+                vertex.Position0.z = depth;
 
                 vertex.Position1.x = position.X + width;
                 vertex.Position1.y = translatedY + height;
-                vertex.Position1.z = 0;
+                vertex.Position1.z = depth;
 
                 vertex.Position2.x = position.X + width * ratio;
                 vertex.Position2.y = translatedY;
-                vertex.Position2.z = 0;
+                vertex.Position2.z = depth;
 
                 vertex.Position3.x = position.X + width * (ratio + 1f);
                 vertex.Position3.y = translatedY;
-                vertex.Position3.z = 0;
+                vertex.Position3.z = depth;
             }
 
 

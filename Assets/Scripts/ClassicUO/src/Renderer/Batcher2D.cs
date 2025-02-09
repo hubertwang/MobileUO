@@ -288,7 +288,7 @@ namespace ClassicUO.Renderer
                 0f,
                 Vector2.Zero,
                 0f,
-                0,
+                SpriteEffects.None,
                 depth
             );
 
@@ -316,7 +316,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        public bool DrawShadow(Texture2D texture, Vector2 position, Rectangle sourceRect, bool flip)
+        public bool DrawShadow(Texture2D texture, Vector2 position, Rectangle sourceRect, bool flip, float depth)
         {
             float width = sourceRect.Width;
             float height = sourceRect.Height * 0.5f;
@@ -331,37 +331,37 @@ namespace ClassicUO.Renderer
             {
                 vertex.Position0.X = position.X + width;
                 vertex.Position0.Y = translatedY + height;
-                vertex.Position0.Z = 0;
+                vertex.Position0.Z = depth;
 
                 vertex.Position1.X = position.X;
                 vertex.Position1.Y = translatedY + height;
-                vertex.Position1.Z = 0;
+                vertex.Position1.Z = depth;
 
                 vertex.Position2.X = position.X + width * (ratio + 1f);
                 vertex.Position2.Y = translatedY;
-                vertex.Position2.Z = 0;
+                vertex.Position2.Z = depth;
 
                 vertex.Position3.X = position.X + width * ratio;
                 vertex.Position3.Y = translatedY;
-                vertex.Position3.Z = 0;
+                vertex.Position3.Z = depth;
             }
             else
             {
                 vertex.Position0.X = position.X;
                 vertex.Position0.Y = translatedY + height;
-                vertex.Position0.Z = 0;
+                vertex.Position0.Z = depth;
 
                 vertex.Position1.X = position.X + width;
                 vertex.Position1.Y = translatedY + height;
-                vertex.Position1.Z = 0;
+                vertex.Position1.Z = depth;
 
                 vertex.Position2.X = position.X + width * ratio;
                 vertex.Position2.Y = translatedY;
-                vertex.Position2.Z = 0;
+                vertex.Position2.Z = depth;
 
                 vertex.Position3.X = position.X + width * (ratio + 1f);
                 vertex.Position3.Y = translatedY;
-                vertex.Position3.Z = 0;
+                vertex.Position3.Z = depth;
             }
 
 
@@ -1470,8 +1470,10 @@ namespace ClassicUO.Renderer
             _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
             _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
 
+
             var matrix = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, short.MinValue, short.MaxValue);
             Matrix.Multiply(ref _transformMatrix, ref matrix, out matrix);
+
 
             //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
             //Matrix.Multiply(ref halfPixelOffset, ref matrix, out matrix);
@@ -1703,6 +1705,7 @@ namespace ClassicUO.Renderer
                 throw new InvalidOperationException();
             }
         }
+
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct PositionNormalTextureColor4 : IVertexType
