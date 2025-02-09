@@ -89,6 +89,11 @@ namespace ClassicUO.Game.GameObjects
         {
         }
 
+        public virtual bool CheckMouseSelection()
+        {
+            return false;
+        }
+
         public int CurrentRenderIndex;
         // FIXME: remove it
         public sbyte FoliageIndex = -1;

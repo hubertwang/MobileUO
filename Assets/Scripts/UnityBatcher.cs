@@ -65,17 +65,17 @@ namespace ClassicUO.Renderer
         {
             GraphicsDevice = device;
             _blendState = BlendState.AlphaBlend;
-            _rasterizerState = RasterizerState.CullNone;
+            //_rasterizerState = RasterizerState.CullNone;
             _sampler = SamplerState.PointClamp;
 
             _rasterizerState = new RasterizerState
             {
-                CullMode = _rasterizerState.CullMode,
-                DepthBias = _rasterizerState.DepthBias,
-                FillMode = _rasterizerState.FillMode,
-                MultiSampleAntiAlias = _rasterizerState.MultiSampleAntiAlias,
-                SlopeScaleDepthBias = _rasterizerState.SlopeScaleDepthBias,
-                ScissorTestEnable = true
+                CullMode = Microsoft.Xna.Framework.Graphics.CullMode.CullCounterClockwiseFace,
+                FillMode = FillMode.Solid,
+                DepthBias = 0,
+                MultiSampleAntiAlias = true,
+                ScissorTestEnable = true,
+                SlopeScaleDepthBias = 0,
             };
 
             _stencil = Stencil;
@@ -1434,30 +1434,31 @@ namespace ClassicUO.Renderer
             int y,
             int width,
             int height,
-            ref XnaVector3 hue
+            ref XnaVector3 hue,
+            float depth = 0f
         )
         {
             Rectangle rect = new Rectangle(x, y, width, 1);
-            Draw(texture, rect, hue);
+            Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
 
             rect.X += width;
             rect.Width = 1;
             rect.Height += height;
-            Draw(texture, rect, hue);
+            Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
 
 
             rect.X = x;
             rect.Y = y + height;
             rect.Width = width;
             rect.Height = 1;
-            Draw(texture, rect, hue);
+             Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
 
 
             rect.X = x;
             rect.Y = y;
             rect.Width = 1;
             rect.Height = height;
-            Draw(texture, rect, hue);
+            Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
 
             return true;
         }
@@ -2074,7 +2075,17 @@ namespace ClassicUO.Renderer
             _projectionMatrix.M11 = (float)(2.0 / GraphicsDevice.Viewport.Width);
             _projectionMatrix.M22 = (float)(-2.0 / GraphicsDevice.Viewport.Height);
 
-            var matrix = Matrix.CreateOrthographicOffCenter(0f, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 0, short.MinValue, short.MaxValue);
+            Matrix matrix = _projectionMatrix;
+            Matrix.CreateOrthographicOffCenter
+            (
+                0f,
+                GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height,
+                0,
+                short.MinValue,
+                short.MaxValue,
+                out matrix
+            );
             Matrix.Multiply(ref _transformMatrix, ref matrix, out matrix);
 
             //Matrix halfPixelOffset = Matrix.CreateTranslation(-0.5f, -0.5f, 0);
