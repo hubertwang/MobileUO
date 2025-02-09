@@ -172,6 +172,8 @@ namespace ClassicUO
 
             GumpsLoader.Instance.CreateAtlas(GraphicsDevice);
             LightsLoader.Instance.CreateAtlas(GraphicsDevice);
+            AnimationsLoader.Instance.CreateAtlas(GraphicsDevice);
+
              _fontRenderer = new UOFontRenderer(GraphicsDevice);
 
             // MobileUO: filter mode
