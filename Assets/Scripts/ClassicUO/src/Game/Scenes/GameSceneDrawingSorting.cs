@@ -393,7 +393,7 @@ namespace ClassicUO.Game.Scenes
             else if (!itemData.IsFoliage)
             {
                 if (useCoT && CheckCircleOfTransparencyRadius(obj, cotZ, ref playerPos, ref allowSelection))
-                { 
+                {
                 }
                 else if (_alphaChanged && obj.AlphaHue != 0xFF)
                 {
@@ -414,23 +414,19 @@ namespace ClassicUO.Game.Scenes
 
                 if (dist <= maxDist)
                 {
-                    switch (ProfileManager.CurrentProfile.CircleOfTransparencyType)
-                    {
-                        default:
-                        case 0:
-                            obj.AlphaHue = 127;
+                    float delta = (maxDist - 44) * 0.5f;
+                    float fraction = (dist - delta) / (maxDist - delta);
 
-                            break;
+                    obj.AlphaHue = (byte)Microsoft.Xna.Framework.MathHelper.Clamp(fraction * 255f, byte.MinValue, byte.MaxValue);
+                   
+                    //const byte ALPHA_ERROR = 15;
 
-                        case 1:
+                    //if (obj.AlphaHue > ALPHA_ERROR && obj.AlphaHue >= byte.MaxValue - ALPHA_ERROR)
+                    //{
+                    //    obj.AlphaHue = 255;
 
-                            float delta = (maxDist - 44) * 0.5f;
-                            float fraction = (dist - delta) / (maxDist - delta);
-
-                            obj.AlphaHue = (byte)Microsoft.Xna.Framework.MathHelper.Clamp(fraction * 255f, byte.MinValue, byte.MaxValue);
-
-                            break;
-                    }
+                    //    return false;
+                    //}
 
                     allowSelection = obj.AlphaHue >= 127;
 
@@ -566,20 +562,6 @@ namespace ClassicUO.Game.Scenes
 
         private void PushToRenderList(GameObject obj, ref GameObject renderList, ref GameObject first, ref int renderListCount, bool allowSelection)
         {
-            //if (_renderListStaticsHead == null)
-            //{
-            //    _renderListStaticsHead = _renderList = obj;
-            //}
-            //else
-            //{
-            //    _renderList.RenderListNext = obj;
-            //    _renderList = obj;
-            //}
-
-            //obj.RenderListNext = null;
-
-            //++_renderListStaticsCount;
-
             if (obj.AlphaHue == 0)
             {
                 return;
@@ -591,38 +573,54 @@ namespace ClassicUO.Game.Scenes
                 SelectedObject.Object = obj;
             }
 
-            if (obj.AlphaHue != byte.MaxValue)
+            if (_renderListStaticsHead == null)
             {
-                if (_renderListTransparentObjectsHead == null)
-                {
-                    _renderListTransparentObjectsHead = _renderListTransparentObjects = obj;
-                }
-                else
-                {
-                    _renderListTransparentObjects.RenderListNext = obj;
-                    _renderListTransparentObjects = obj;
-                }
-
-                obj.RenderListNext = null;
-
-                ++_renderListTransparentObjectsCount;
+                _renderListStaticsHead = _renderList = obj;
             }
             else
             {
-                if (first == null)
-                {
-                    first = renderList = obj;
-                }
-                else
-                {
-                    renderList.RenderListNext = obj;
-                    renderList = obj;
-                }
-
-                obj.RenderListNext = null;
-
-                ++renderListCount;
+                _renderList.RenderListNext = obj;
+                _renderList = obj;
             }
+
+            obj.RenderListNext = null;
+
+            ++_renderListStaticsCount;
+
+            
+
+            //if (obj.AlphaHue != byte.MaxValue)
+            //{
+            //    if (_renderListTransparentObjectsHead == null)
+            //    {
+            //        _renderListTransparentObjectsHead = _renderListTransparentObjects = obj;
+            //    }
+            //    else
+            //    {
+            //        _renderListTransparentObjects.RenderListNext = obj;
+            //        _renderListTransparentObjects = obj;
+            //    }
+
+            //    obj.RenderListNext = null;
+
+            //    ++_renderListTransparentObjectsCount;
+            //}
+            //else
+            //{
+            //    if (first == null)
+            //    {
+            //        first = renderList = obj;
+            //    }
+            //    else
+            //    {
+            //        renderList.RenderListNext = obj;
+            //        renderList = obj;
+            //    }
+
+            //    obj.RenderListNext = null;
+
+            //    ++renderListCount;
+            //}
 
 
             obj.UseInRender = (byte)_renderIndex;
@@ -924,14 +922,14 @@ namespace ClassicUO.Game.Scenes
         }
 
 
+        // MobileUO: Using old method to correctly render the world
+        // Using older version from here: https://raw.githubusercontent.com/ClassicUO/ClassicUO/beb925392f5cd1ffcd7f7460c76f9068926157d0/src/Game/Scenes/GameSceneDrawingSorting.cs
         private void GetViewPort()
         {
+            var zoom = Camera.Zoom;
+
             int oldDrawOffsetX = _offset.X;
             int oldDrawOffsetY = _offset.Y;
-            Point old_scaled_offset = _last_scaled_offset;
-
-            float zoom = Camera.Zoom;
-
             int winGamePosX = 0;
             int winGamePosY = 0;
             int winGameWidth = ProfileManager.CurrentProfile.GameWindowSize.X;
@@ -940,19 +938,15 @@ namespace ClassicUO.Game.Scenes
             int winGameCenterY = winGamePosY + (winGameHeight >> 1) + (World.Player.Z << 2);
             winGameCenterX -= (int) World.Player.Offset.X;
             winGameCenterY -= (int) (World.Player.Offset.Y - World.Player.Offset.Z);
-
-            int tileOffX = World.Player.X;
-            int tileOffY = World.Player.Y;
-
-            int winDrawOffsetX = (tileOffX - tileOffY) * 22 - winGameCenterX;
-            int winDrawOffsetY = (tileOffX + tileOffY) * 22 - winGameCenterY;
+            int winDrawOffsetX = (World.Player.X - World.Player.Y) * 22 - winGameCenterX;
+            int winDrawOffsetY = (World.Player.X + World.Player.Y) * 22 - winGameCenterY;
 
             int winGameScaledOffsetX;
             int winGameScaledOffsetY;
             int winGameScaledWidth;
             int winGameScaledHeight;
 
-            if (ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.EnableMousewheelScaleZoom)
+            if (ProfileManager.CurrentProfile != null /*&& ProfileManager.Current.EnableScaleZoom*/)
             {
                 float left = winGamePosX;
                 float right = winGameWidth + left;
@@ -961,10 +955,10 @@ namespace ClassicUO.Game.Scenes
                 float newRight = right * zoom;
                 float newBottom = bottom * zoom;
 
-                winGameScaledOffsetX = (int) (left * zoom - (newRight - right));
-                winGameScaledOffsetY = (int) (top * zoom - (newBottom - bottom));
-                winGameScaledWidth = (int) (newRight - winGameScaledOffsetX);
-                winGameScaledHeight = (int) (newBottom - winGameScaledOffsetY);
+                winGameScaledOffsetX = (int)(left * zoom - (newRight - right));
+                winGameScaledOffsetY = (int)(top * zoom - (newBottom - bottom));
+                winGameScaledWidth = (int)(newRight - winGameScaledOffsetX);
+                winGameScaledHeight = (int)(newBottom - winGameScaledOffsetY);
             }
             else
             {
@@ -975,130 +969,80 @@ namespace ClassicUO.Game.Scenes
             }
 
 
-            //if (_use_render_target)
-            //{
-            //    winDrawOffsetX += winGameScaledOffsetX >> 1;
-            //    winDrawOffsetY += winGameScaledOffsetY >> 1;
-            //}
-
             int width = (int) ((winGameWidth / 44 + 1) * zoom);
             int height = (int) ((winGameHeight / 44 + 1) * zoom);
 
+            winDrawOffsetX += winGameScaledOffsetX >> 1;
+            winDrawOffsetY += winGameScaledOffsetY >> 1;
 
-            if (width < height)
-            {
-                width = height;
-            }
-            else
-            {
-                height = width;
-            }
+            const int MAX = 70;
 
-            int realMinRangeX = tileOffX - width;
+            if (width > MAX)
+                width = MAX;
+
+            if (height > MAX)
+                height = MAX;
+
+            int size = Math.Max(width, height);
+
+            if (size < World.ClientViewRange)
+                size = World.ClientViewRange;
+
+            int realMinRangeX = World.Player.X - size;
 
             if (realMinRangeX < 0)
-            {
                 realMinRangeX = 0;
-            }
+            int realMaxRangeX = World.Player.X + size;
 
-            int realMaxRangeX = tileOffX + width;
             //if (realMaxRangeX >= FileManager.Map.MapsDefaultSize[World.Map.Index][0])
             //    realMaxRangeX = FileManager.Map.MapsDefaultSize[World.Map.Index][0];
-
-            int realMinRangeY = tileOffY - height;
+            int realMinRangeY = World.Player.Y - size;
 
             if (realMinRangeY < 0)
-            {
                 realMinRangeY = 0;
-            }
+            int realMaxRangeY = World.Player.Y + size;
 
-            int realMaxRangeY = tileOffY + height;
             //if (realMaxRangeY >= FileManager.Map.MapsDefaultSize[World.Map.Index][1])
             //    realMaxRangeY = FileManager.Map.MapsDefaultSize[World.Map.Index][1];
-
             int minBlockX = (realMinRangeX >> 3) - 1;
             int minBlockY = (realMinRangeY >> 3) - 1;
             int maxBlockX = (realMaxRangeX >> 3) + 1;
             int maxBlockY = (realMaxRangeY >> 3) + 1;
 
             if (minBlockX < 0)
-            {
                 minBlockX = 0;
-            }
 
             if (minBlockY < 0)
-            {
                 minBlockY = 0;
-            }
 
             if (maxBlockX >= MapLoader.Instance.MapsDefaultSize[World.Map.Index, 0])
-            {
                 maxBlockX = MapLoader.Instance.MapsDefaultSize[World.Map.Index, 0] - 1;
-            }
 
             if (maxBlockY >= MapLoader.Instance.MapsDefaultSize[World.Map.Index, 1])
-            {
                 maxBlockY = MapLoader.Instance.MapsDefaultSize[World.Map.Index, 1] - 1;
-            }
 
-            int drawOffset = (int) (44 / zoom);
+            int drawOffset = (int) (zoom * 40.0);
+            float maxX = winGamePosX + winGameWidth ;
+            float maxY = winGamePosY + winGameHeight;
+            float newMaxX = maxX * zoom + drawOffset;
+            float newMaxY = maxY * zoom + drawOffset;
+            
+            int minPixelsX = (int) ((winGamePosX) * zoom /*- (newMaxX - maxX)*/ ) - drawOffset * 2;
+            int maxPixelsX = (int) newMaxX;
+            int minPixelsY = (int) ((winGamePosY) * zoom /*- (newMaxY - maxY)*/) - drawOffset * 2;
+            int maxPixlesY = (int) newMaxY;
 
-            Point p = Point.Zero;
-            p.X -= drawOffset;
-            p.Y -= drawOffset;
-            p = Camera.ScreenToWorld(p);
-            int minPixelsX = p.X;
-            int minPixelsY = p.Y;
-
-            p.X = Camera.Bounds.Width + drawOffset;
-            p.Y = Camera.Bounds.Height + drawOffset;
-            p = Camera.ScreenToWorld(p);
-            int maxPixelsX = p.X;
-            int maxPixelsY = p.Y;
-
-
-            if (UpdateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY || old_scaled_offset.X != winGameScaledOffsetX || old_scaled_offset.Y != winGameScaledOffsetY)
+            if (UpdateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY)
             {
                 UpdateDrawPosition = true;
 
-
-                if (_use_render_target && (_world_render_target == null || _world_render_target.Width != (int) (winGameWidth * zoom) || _world_render_target.Height != (int) (winGameHeight * zoom)))
+                if (_world_render_target == null || _world_render_target.Width != (int)(winGameWidth * zoom) || _world_render_target.Height != (int)(winGameHeight * zoom))
                 {
                     _world_render_target?.Dispose();
-
-                    PresentationParameters pp = Client.Game.GraphicsDevice.PresentationParameters;
-
-                    _world_render_target = new RenderTarget2D
-                    (
-                        Client.Game.GraphicsDevice,
-                        winGameWidth * 1,
-                        winGameHeight * 1,
-                        false,
-                        pp.BackBufferFormat,
-                        pp.DepthStencilFormat,
-                        pp.MultiSampleCount,
-                        pp.RenderTargetUsage
-                    );
-                }
-
-                if (_lightRenderTarget == null || _lightRenderTarget.Width != winGameWidth || _lightRenderTarget.Height != winGameHeight)
-                {
                     _lightRenderTarget?.Dispose();
 
-                    PresentationParameters pp = Client.Game.GraphicsDevice.PresentationParameters;
-
-
-                    _lightRenderTarget = new RenderTarget2D
-                    (
-                        Client.Game.GraphicsDevice,
-                        winGameWidth,
-                        winGameHeight,
-                        false,
-                        pp.BackBufferFormat,
-                        pp.DepthStencilFormat,
-                        pp.MultiSampleCount,
-                        pp.RenderTargetUsage
-                    );
+                    _world_render_target = new RenderTarget2D(Client.Game.GraphicsDevice, (int)(winGameWidth * zoom), (int)(winGameHeight * zoom), false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0, RenderTargetUsage.DiscardContents);
+                    _lightRenderTarget = new RenderTarget2D(Client.Game.GraphicsDevice, (int)(winGameWidth * zoom), (int)(winGameHeight * zoom), false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0, RenderTargetUsage.DiscardContents);
                 }
             }
 
@@ -1110,13 +1054,10 @@ namespace ClassicUO.Game.Scenes
             _minPixel.X = minPixelsX;
             _minPixel.Y = minPixelsY;
             _maxPixel.X = maxPixelsX;
-            _maxPixel.Y = maxPixelsY;
+            _maxPixel.Y = maxPixlesY;
 
             _offset.X = winDrawOffsetX;
             _offset.Y = winDrawOffsetY;
-
-            _last_scaled_offset.X = winGameScaledOffsetX;
-            _last_scaled_offset.Y = winGameScaledOffsetY;
 
 
             UpdateMaxDrawZ();

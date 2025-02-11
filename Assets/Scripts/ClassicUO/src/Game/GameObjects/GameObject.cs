@@ -111,8 +111,8 @@ namespace ClassicUO.Game.GameObjects
         {
            return new Vector2
                 (
-                    RealScreenPosition.X + World.Player.Offset.X,
-                    RealScreenPosition.Y + World.Player.Offset.Y - World.Player.Offset.Z
+                    RealScreenPosition.X + Offset.X,
+                    RealScreenPosition.Y + (Offset.Y - Offset.Z)
                 );
         }
 
