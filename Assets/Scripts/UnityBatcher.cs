@@ -94,8 +94,8 @@ namespace ClassicUO.Renderer
             StencilEnable = false,
             DepthBufferEnable = false,
             StencilFunction = CompareFunction.NotEqual,
-            ReferenceStencil = 1,
-            StencilMask = 1,
+            ReferenceStencil = -1,
+            StencilMask = -1,
             StencilFail = StencilOperation.Keep,
             StencilDepthBufferFail = StencilOperation.Keep,
             StencilPass = StencilOperation.Keep

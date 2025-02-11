@@ -124,8 +124,8 @@ namespace ClassicUO.Renderer
             StencilEnable = false,
             DepthBufferEnable = false,
             StencilFunction = CompareFunction.NotEqual,
-            ReferenceStencil = 1,
-            StencilMask = 1,
+            ReferenceStencil = -1,
+            StencilMask = -1,
             StencilFail = StencilOperation.Keep,
             StencilDepthBufferFail = StencilOperation.Keep,
             StencilPass = StencilOperation.Keep
@@ -1433,19 +1433,19 @@ namespace ClassicUO.Renderer
         {
             EnsureStarted();
 
-            if (_numSprites >= MAX_SPRITES)
-            {
-                Flush();
-            }
-
-            //if (_numSprites >= _vertexInfo.Length)
+            //if (_numSprites >= MAX_SPRITES)
             //{
-            //    //Flush();
-
-            //    int newMax = _vertexInfo.Length + MAX_SPRITES;
-            //    Array.Resize(ref _vertexInfo, newMax);
-            //    Array.Resize(ref _textureInfo, newMax);
+            //    Flush();
             //}
+
+            if (_numSprites >= _vertexInfo.Length)
+            {
+                //Flush();
+
+                int newMax = _vertexInfo.Length + MAX_SPRITES;
+                Array.Resize(ref _vertexInfo, newMax);
+                Array.Resize(ref _textureInfo, newMax);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
