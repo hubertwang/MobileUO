@@ -1541,7 +1541,8 @@ namespace ClassicUO.Renderer
             Texture2D texture,
             XnaVector2 start,
             XnaVector2 end,
-            XnaVector3 color
+            XnaVector3 color,
+            float stroke
         )
         {
             if (texture.UnityTexture == null)
@@ -1560,7 +1561,7 @@ namespace ClassicUO.Renderer
                 color,
                 radians, 
                 XnaVector2.Zero,
-                new XnaVector2(length, 1), 
+                new XnaVector2(length, stroke), 
                 SpriteEffects.None,
                 0
             );
