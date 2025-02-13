@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ClassicUO.Renderer.Effects;
+using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using UnityEngine;
@@ -18,6 +19,7 @@ using Vector3 = UnityEngine.Vector3;
 using Vector4 = UnityEngine.Vector4;
 using XnaVector2 = Microsoft.Xna.Framework.Vector2;
 using XnaVector3 = Microsoft.Xna.Framework.Vector3;
+using UnityCamera = UnityEngine.Camera;
 
 namespace ClassicUO.Renderer
 {
@@ -61,8 +63,18 @@ namespace ClassicUO.Renderer
         private static readonly int ScissorRect = Shader.PropertyToID("_ScissorRect");
         private static readonly int TextureSize = Shader.PropertyToID("textureSize");
 
+        // MobileUO: TODO: flag to use depths while trying to figure out the depth issue
+        private bool USE_DEPTH = true;
+        private bool LOG_DEPTH = true;
+
         public UltimaBatcher2D(GraphicsDevice device)
         {
+            if (USE_DEPTH)
+            {
+                UnityCamera.main.nearClipPlane = 0f;
+                UnityCamera.main.farClipPlane = 10000f;
+            }
+
             GraphicsDevice = device;
             _blendState = BlendState.AlphaBlend;
             //_rasterizerState = RasterizerState.CullNone;
@@ -423,7 +435,11 @@ namespace ClassicUO.Renderer
             }
 
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
-            depth = 0;
+            if(!USE_DEPTH)
+                depth = 0;
+
+            if(LOG_DEPTH)
+                Log.Info($"Depth: {depth}");
 
             float sourceX = ((sx + 0.5f) / (float)texture.Width);
             float sourceY = ((sy + 0.5f) / (float)texture.Height);
@@ -702,7 +718,11 @@ namespace ClassicUO.Renderer
             }
 
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
-            depth = 0;
+            if(!USE_DEPTH)
+                depth = 0;
+
+            if(LOG_DEPTH)
+                Log.Info($"Depth: {depth}");
 
             float width = sourceRect.Width;
             float height = sourceRect.Height * 0.5f;
@@ -809,7 +829,11 @@ namespace ClassicUO.Renderer
             }
 
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
-            depth = 0;
+            if(!USE_DEPTH)
+                depth = 0;
+
+            if(LOG_DEPTH)
+                Log.Info($"Depth: {depth}");
 
             float h03 = sourceRect.Height * mod.X;
             float h06 = sourceRect.Height * mod.Y;
@@ -1910,7 +1934,11 @@ namespace ClassicUO.Renderer
         )
         {
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
-            depth = 0;
+            if(!USE_DEPTH)
+                depth = 0;
+
+            if(LOG_DEPTH)
+                Log.Info($"Depth: {depth}");
 
             float cornerX = -originX * destinationW;
             float cornerY = -originY * destinationH;
