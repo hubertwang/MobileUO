@@ -1094,7 +1094,7 @@ namespace ClassicUO.Game.Scenes
 
            
             batcher.SetStencil(DepthStencilState.DepthRead);
-            RenderedObjectsCount += DrawRenderList(batcher, _renderListTransparentObjectsHead, _renderListTransparentObjectsCount, false);
+            RenderedObjectsCount += DrawRenderList(batcher, _renderListTransparentObjectsHead, _renderListTransparentObjectsCount);
             batcher.SetStencil(null);
 
 
@@ -1148,7 +1148,7 @@ namespace ClassicUO.Game.Scenes
             batcher.End();
         }
 
-        private int DrawRenderList(UltimaBatcher2D batcher, GameObject obj, int count, bool useDepth = true)
+        private int DrawRenderList(UltimaBatcher2D batcher, GameObject obj, int count)
         {
             Vector3 hueVec = Vector3.Zero;
             int done = 0;
@@ -1158,11 +1158,6 @@ namespace ClassicUO.Game.Scenes
                 if (obj.Z <= _maxGroundZ)
                 {
                     float depth = obj.CalculateDepthZ();
-
-                    if (!useDepth)
-                    {
-
-                    }
 
                     if (obj.Draw(batcher, obj.RealScreenPosition.X, obj.RealScreenPosition.Y, ref hueVec, depth))
                     {
