@@ -808,6 +808,9 @@ namespace ClassicUO.Renderer
                 return;
             }
 
+            // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
+            depth = 0;
+
             float h03 = sourceRect.Height * mod.X;
             float h06 = sourceRect.Height * mod.Y;
             float h09 = sourceRect.Height * mod.Z;
