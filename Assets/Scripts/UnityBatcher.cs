@@ -485,7 +485,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        public bool DrawStretchedLand
+        public void DrawStretchedLand
         (
             Texture2D texture,
             XnaVector2 position,
@@ -501,7 +501,7 @@ namespace ClassicUO.Renderer
         {
             // MobileUO: TODO: since we are currently not using ref _vertexInfo[_numSprites - 1] array, use the old rendering method
             // If we switch to using _vertexInfo, then the below should work since the Draw method calls SetVertex() which does our vertex setup in the ref _vertexInfo array
-            return DrawSpriteLand(
+            DrawSpriteLand(
                 texture,
                 (int)position.X,
                 (int)position.Y,
@@ -518,9 +518,11 @@ namespace ClassicUO.Renderer
                 depth
                 );
 
+            return;
+
             if (texture.UnityTexture == null)
             {
-                return false;
+                return;
             }
 
             Draw
@@ -538,29 +540,55 @@ namespace ClassicUO.Renderer
 
             //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites - 1];
             var vertex = new PositionNormalTextureColor4();
+            // we need to apply an offset to the texture
+            float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
+            float sourceY = ((sourceRect.Y + 0.5f) / (float)texture.Height);
+            float sourceW = ((sourceRect.Width - 1f) / (float)texture.Width);
+            float sourceH = ((sourceRect.Height - 1f) / (float)texture.Height);
+
+            vertex.TextureCoordinate0.x = (_cornerOffsetX[0] * sourceW) + sourceX;
+            vertex.TextureCoordinate0.y = (_cornerOffsetY[0] * sourceH) + sourceY;
+            vertex.TextureCoordinate1.x = (_cornerOffsetX[1] * sourceW) + sourceX;
+            vertex.TextureCoordinate1.y = (_cornerOffsetY[1] * sourceH) + sourceY;
+            vertex.TextureCoordinate2.x = (_cornerOffsetX[2] * sourceW) + sourceX;
+            vertex.TextureCoordinate2.y = (_cornerOffsetY[2] * sourceH) + sourceY;
+            vertex.TextureCoordinate3.x = (_cornerOffsetX[3] * sourceW) + sourceX;
+            vertex.TextureCoordinate3.y = (_cornerOffsetY[3] * sourceH) + sourceY;
+            vertex.TextureCoordinate0.z = 0;
+            vertex.TextureCoordinate1.z = 0;
+            vertex.TextureCoordinate2.z = 0;
+            vertex.TextureCoordinate3.z = 0;
+
             vertex.Normal0 = normalTop;
             vertex.Normal1 = normalRight;
             vertex.Normal2 = normalLeft;
             vertex.Normal3 = normalBottom;
 
             // Top
-            vertex.Position0.x += 22;
-            vertex.Position0.y -= yOffsets.Top;
-
+            vertex.Position0.x = position.X + 22;
+            vertex.Position0.y = position.Y - yOffsets.Top;
+            
             // Right
-            vertex.Position1.x += 44;
-            vertex.Position1.y += (22 - yOffsets.Right);
+            vertex.Position1.x = position.X + 44;
+            vertex.Position1.y = position.Y + (22 - yOffsets.Right);
 
             // Left
-            vertex.Position2.y += (22 - yOffsets.Left);
+            vertex.Position2.x = position.X;
+            vertex.Position2.y = position.Y + (22 - yOffsets.Left);
 
             // Bottom
-            vertex.Position3.x += 22;
-            vertex.Position3.y += (44 - yOffsets.Bottom);
+            vertex.Position3.x = position.X + 22;
+            vertex.Position3.y = position.Y + (44 - yOffsets.Bottom);
+
+
+            vertex.Position0.z = depth;
+            vertex.Position1.z = depth;
+            vertex.Position2.z = depth;
+            vertex.Position3.z = depth;
+
+            vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
 
             RenderVertex(vertex, texture, hue);
-
-            return true;
         }
 
         // MobileUO: TODO: deprecated, to be deleted
@@ -666,11 +694,11 @@ namespace ClassicUO.Renderer
             RenderVertex(vertex, texture, vertex.Hue0);
         }
 
-        public bool DrawShadow(Texture2D texture, XnaVector2 position, Rectangle sourceRect, bool flip, float depth)
+        public void DrawShadow(Texture2D texture, XnaVector2 position, Rectangle sourceRect, bool flip, float depth)
         {
             if (texture.UnityTexture == null)
             {
-                return false;
+                return;
             }
 
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
@@ -686,7 +714,6 @@ namespace ClassicUO.Renderer
             //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites];
             var vertex = new PositionNormalTextureColor4();
 
-
             vertex.Position0.x = position.X + width * ratio;
             vertex.Position0.y = translatedY;
 
@@ -699,12 +726,10 @@ namespace ClassicUO.Renderer
             vertex.Position3.x = position.X + width;
             vertex.Position3.y = translatedY + height;
 
-
             vertex.Position0.z = depth;
             vertex.Position1.z = depth;
             vertex.Position2.z = depth;
             vertex.Position3.z = depth;
-
 
 
             float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
@@ -713,7 +738,6 @@ namespace ClassicUO.Renderer
             float sourceH = ((sourceRect.Height - 1f) / (float)texture.Height);
 
             byte effects = (byte)((flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None) & (SpriteEffects)0x03);
-
 
             vertex.TextureCoordinate0.x = (_cornerOffsetX[0 ^ effects] * sourceW) + sourceX;
             vertex.TextureCoordinate0.y = (_cornerOffsetY[0 ^ effects] * sourceH) + sourceY;
@@ -749,8 +773,6 @@ namespace ClassicUO.Renderer
 
             //PushSprite(texture);
             RenderVertex(vertex, texture, vertex.Hue0);
-
-            return true;
         }
 
         private void RenderVertex(PositionNormalTextureColor4 vertex, Texture2D texture, Vector3 hue)
@@ -770,259 +792,219 @@ namespace ClassicUO.Renderer
             Graphics.DrawMeshNow(reusedMesh.Mesh, Vector3.zero, Quaternion.identity);
         }
 
-        public bool DrawCharacterSitted(Texture2D texture, int x, int y, bool mirror, float h3mod, float h6mod, float h9mod, ref XnaVector3 hue)
+        public void DrawCharacterSitted
+        (
+            Texture2D texture,
+            XnaVector2 position,
+            Rectangle sourceRect,
+            XnaVector3 mod,
+            XnaVector3 hue,
+            bool flip,
+            float depth
+        )
         { 
-            float width = texture.Width;
-            float height = texture.Height;
-
-
-            float h03 = height * h3mod;
-            float h06 = height * h6mod;
-            float h09 = height * h9mod;
-
-            const float SITTING_OFFSET = 8.0f;
-
-            float widthOffset = width + SITTING_OFFSET;
-
-
-            if (mirror)
+            if (texture.UnityTexture == null)
             {
-                if (h3mod != 0.0f)
-                {
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x + width;
-                    vertex.Position0.y = y;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = 0;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x;
-                    vertex.Position1.y = y;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = 0;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x + width;
-                    vertex.Position2.y = y + h03;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = h3mod;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x;
-                    vertex.Position3.y = y + h03;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = h3mod;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
-
-                if (h6mod != 0.0f)
-                {
-
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x + width;
-                    vertex.Position0.y = y + h03;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = h3mod;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x;
-                    vertex.Position1.y = y + h03;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = h3mod;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x + widthOffset;
-                    vertex.Position2.y = y + h06;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = h6mod;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x + SITTING_OFFSET;
-                    vertex.Position3.y = y + h06;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = h6mod;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
-
-                if (h9mod != 0.0f)
-                {
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x + widthOffset;
-                    vertex.Position0.y = y + h06;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = h6mod;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x + SITTING_OFFSET;
-                    vertex.Position1.y = y + h06;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = h6mod;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x + widthOffset;
-                    vertex.Position2.y = y + h09;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = 1;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x + SITTING_OFFSET;
-                    vertex.Position3.y = y + h09;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = 1;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
-            }
-            else
-            {
-                if (h3mod != 0.0f)
-                {
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x + SITTING_OFFSET;
-                    vertex.Position0.y = y;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = 0;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x + widthOffset;
-                    vertex.Position1.y = y;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = 0;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x + SITTING_OFFSET;
-                    vertex.Position2.y = y + h03;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = h3mod;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x + widthOffset;
-                    vertex.Position3.y = y + h03;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = h3mod;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
-
-                if (h6mod != 0.0f)
-                {
-                    if (h3mod == 0.0f)
-                    {
-
-                    }
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x + SITTING_OFFSET;
-                    vertex.Position0.y = y + h03;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = h3mod;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x + widthOffset;
-                    vertex.Position1.y = y + h03;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = h3mod;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x;
-                    vertex.Position2.y = y + h06;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = h6mod;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x + width;
-                    vertex.Position3.y = y + h06;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = h6mod;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
-
-                if (h9mod != 0.0f)
-                {
-                    if (h6mod == 0.0f)
-                    {
-
-                    }
-
-                    var vertex = new PositionNormalTextureColor4();
-
-                    vertex.Position0.x = x;
-                    vertex.Position0.y = y + h06;
-                    vertex.Position0.z = 0;
-                    vertex.TextureCoordinate0.x = 0;
-                    vertex.TextureCoordinate0.y = h6mod;
-                    vertex.TextureCoordinate0.z = 0;
-
-                    vertex.Position1.x = x + width;
-                    vertex.Position1.y = y + h06;
-                    vertex.Position1.z = 0;
-                    vertex.TextureCoordinate1.x = 1;
-                    vertex.TextureCoordinate1.y = h6mod;
-                    vertex.TextureCoordinate1.z = 0;
-
-                    vertex.Position2.x = x;
-                    vertex.Position2.y = y + h09;
-                    vertex.Position2.z = 0;
-                    vertex.TextureCoordinate2.x = 0;
-                    vertex.TextureCoordinate2.y = 1;
-                    vertex.TextureCoordinate2.z = 0;
-
-                    vertex.Position3.x = x + width;
-                    vertex.Position3.y = y + h09;
-                    vertex.Position3.z = 0;
-                    vertex.TextureCoordinate3.x = 1;
-                    vertex.TextureCoordinate3.y = 1;
-                    vertex.TextureCoordinate3.z = 0;
-
-                    vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
-
-                    RenderVertex(vertex, texture, hue);
-                }
+                return;
             }
 
-            return true;
+            float h03 = sourceRect.Height * mod.X;
+            float h06 = sourceRect.Height * mod.Y;
+            float h09 = sourceRect.Height * mod.Z;
+
+            float sittingOffset = flip ? -8.0f : 8.0f;
+
+            float width = sourceRect.Width;
+            float widthOffset = sourceRect.Width + sittingOffset;
+
+            if (mod.X != 0.0f)
+            {
+                //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites];
+                var vertex = new PositionNormalTextureColor4();
+
+                vertex.Position0.x = position.X + sittingOffset;
+                vertex.Position0.y = position.Y;
+
+                vertex.Position1.x = position.X + widthOffset;
+                vertex.Position1.y = position.Y;
+
+                vertex.Position2.x = position.X + sittingOffset;
+                vertex.Position2.y = position.Y + h03;
+
+                vertex.Position3.x = position.X + widthOffset;
+                vertex.Position3.y = position.Y + h03;
+
+                vertex.Position0.z = depth;
+                vertex.Position1.z = depth;
+                vertex.Position2.z = depth;
+                vertex.Position3.z = depth;
+
+                float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
+                float sourceY = ((sourceRect.Y + 0.5f) / (float)texture.Height);
+                float sourceW = ((sourceRect.Width - 1f) / (float)texture.Width);
+                float sourceH = ((sourceRect.Height - 1f) / (float)texture.Height);
+
+                byte effects = (byte)((flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None) & (SpriteEffects)0x03);
+
+                vertex.TextureCoordinate0.x = (_cornerOffsetX[0 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate0.y = (_cornerOffsetY[0 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate1.x = (_cornerOffsetX[1 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate1.y = (_cornerOffsetY[1 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate2.x = (_cornerOffsetX[2 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate2.y = (_cornerOffsetY[2 ^ effects] * sourceH * mod.X) + sourceY;
+                vertex.TextureCoordinate3.x = (_cornerOffsetX[3 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate3.y = (_cornerOffsetY[3 ^ effects] * sourceH * mod.X) + sourceY;
+                vertex.TextureCoordinate0.z = 0;
+                vertex.TextureCoordinate1.z = 0;
+                vertex.TextureCoordinate2.z = 0;
+                vertex.TextureCoordinate3.z = 0;
+
+                vertex.Normal0.x = 0;
+                vertex.Normal0.y = 0;
+                vertex.Normal0.z = 1;
+
+                vertex.Normal1.x = 0;
+                vertex.Normal1.y = 0;
+                vertex.Normal1.z = 1;
+
+                vertex.Normal2.x = 0;
+                vertex.Normal2.y = 0;
+                vertex.Normal2.z = 1;
+
+                vertex.Normal3.x = 0;
+                vertex.Normal3.y = 0;
+                vertex.Normal3.z = 1;
+
+                vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
+
+                RenderVertex(vertex, texture, hue);
+            }
+
+            if (mod.Y != 0.0f)
+            {
+                //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites];
+                var vertex = new PositionNormalTextureColor4();
+
+                vertex.Position0.x = position.X + sittingOffset;
+                vertex.Position0.y = position.Y + h03;
+
+                vertex.Position1.x = position.X + widthOffset;
+                vertex.Position1.y = position.Y + h03;
+
+                vertex.Position2.x = position.X;
+                vertex.Position2.y = position.Y + h06;
+
+                vertex.Position3.x = position.X + width;
+                vertex.Position3.y = position.Y + h06;
+
+                vertex.Position0.z = depth;
+                vertex.Position1.z = depth;
+                vertex.Position2.z = depth;
+                vertex.Position3.z = depth;
+
+                float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
+                float sourceY = ((sourceRect.Y + 0.5f + h03) / (float)texture.Height);
+                float sourceW = ((sourceRect.Width - 1f) / (float)texture.Width);
+                float sourceH = ((sourceRect.Height - 1f - h03) / (float)texture.Height);
+
+                byte effects = (byte)((flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None) & (SpriteEffects)0x03);
+
+                vertex.TextureCoordinate0.x = (_cornerOffsetX[0 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate0.y = (_cornerOffsetY[0 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate1.x = (_cornerOffsetX[1 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate1.y = (_cornerOffsetY[1 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate2.x = (_cornerOffsetX[2 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate2.y = (_cornerOffsetY[2 ^ effects] * sourceH * mod.Y) + sourceY;
+                vertex.TextureCoordinate3.x = (_cornerOffsetX[3 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate3.y = (_cornerOffsetY[3 ^ effects] * sourceH * mod.Y) + sourceY;
+                vertex.TextureCoordinate0.z = 0;
+                vertex.TextureCoordinate1.z = 0;
+                vertex.TextureCoordinate2.z = 0;
+                vertex.TextureCoordinate3.z = 0;
+
+                vertex.Normal0.x = 0;
+                vertex.Normal0.y = 0;
+                vertex.Normal0.z = 1;
+
+                vertex.Normal1.x = 0;
+                vertex.Normal1.y = 0;
+                vertex.Normal1.z = 1;
+
+                vertex.Normal2.x = 0;
+                vertex.Normal2.y = 0;
+                vertex.Normal2.z = 1;
+
+                vertex.Normal3.x = 0;
+                vertex.Normal3.y = 0;
+                vertex.Normal3.z = 1;
+
+                vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
+
+                RenderVertex(vertex, texture, hue);
+            }
+
+            if (mod.Z != 0.0f)
+            {
+                //ref PositionNormalTextureColor4 vertex = ref _vertexInfo[_numSprites];
+                var vertex = new PositionNormalTextureColor4();
+
+                vertex.Position0.x = position.X;
+                vertex.Position0.y = position.Y + h06;
+
+                vertex.Position1.x = position.X + width;
+                vertex.Position1.y = position.Y + h06;
+
+                vertex.Position2.x = position.X;
+                vertex.Position2.y = position.Y + h09;
+
+                vertex.Position3.x = position.X + width;
+                vertex.Position3.y = position.Y + h09;
+
+                vertex.Position0.z = depth;
+                vertex.Position1.z = depth;
+                vertex.Position2.z = depth;
+                vertex.Position3.z = depth;
+
+                float sourceX = ((sourceRect.X + 0.5f) / (float)texture.Width);
+                float sourceY = ((sourceRect.Y + 0.5f + h06) / (float)texture.Height);
+                float sourceW = ((sourceRect.Width - 1f) / (float)texture.Width);
+                float sourceH = ((sourceRect.Height - 1f - h06) / (float)texture.Height);
+
+                byte effects = (byte)((flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None) & (SpriteEffects)0x03);
+
+                vertex.TextureCoordinate0.x = (_cornerOffsetX[0 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate0.y = (_cornerOffsetY[0 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate1.x = (_cornerOffsetX[1 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate1.y = (_cornerOffsetY[1 ^ effects] * sourceH) + sourceY;
+                vertex.TextureCoordinate2.x = (_cornerOffsetX[2 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate2.y = (_cornerOffsetY[2 ^ effects] * sourceH * mod.Z) + sourceY;
+                vertex.TextureCoordinate3.x = (_cornerOffsetX[3 ^ effects] * sourceW) + sourceX;
+                vertex.TextureCoordinate3.y = (_cornerOffsetY[3 ^ effects] * sourceH * mod.Z) + sourceY;
+                vertex.TextureCoordinate0.z = 0;
+                vertex.TextureCoordinate1.z = 0;
+                vertex.TextureCoordinate2.z = 0;
+                vertex.TextureCoordinate3.z = 0;
+
+                vertex.Normal0.x = 0;
+                vertex.Normal0.y = 0;
+                vertex.Normal0.z = 1;
+
+                vertex.Normal1.x = 0;
+                vertex.Normal1.y = 0;
+                vertex.Normal1.z = 1;
+
+                vertex.Normal2.x = 0;
+                vertex.Normal2.y = 0;
+                vertex.Normal2.z = 1;
+
+                vertex.Normal3.x = 0;
+                vertex.Normal3.y = 0;
+                vertex.Normal3.z = 1;
+
+                vertex.Hue0 = vertex.Hue1 = vertex.Hue2 = vertex.Hue3 = hue;
+
+                RenderVertex(vertex, texture, hue);
+            }
         }
 
         // MobileUO: TODO: deprecated, to be deleted
