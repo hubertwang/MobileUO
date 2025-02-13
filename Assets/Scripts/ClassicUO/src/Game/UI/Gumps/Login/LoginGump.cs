@@ -630,10 +630,10 @@ namespace ClassicUO.Game.UI.Gumps.Login
         // MobileUO: made public
         public class PasswordStbTextBox : StbTextBox
         {
-            private Point _caretScreenPosition;
-            private readonly RenderedText _rendererCaret;
+            private new Point _caretScreenPosition;
+            private new readonly RenderedText _rendererCaret;
 
-            private readonly RenderedText _rendererText;
+            private new readonly RenderedText _rendererText;
 
             public PasswordStbTextBox
             (
@@ -685,7 +685,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 set => SetText(value);
             }
 
-            public ushort Hue
+            public new ushort Hue
             {
                 get => _rendererText.Hue;
                 set
@@ -760,7 +760,7 @@ namespace ClassicUO.Game.UI.Gumps.Login
                 UpdateCaretScreenPosition();
             }
 
-            private void UpdateCaretScreenPosition()
+            private new void UpdateCaretScreenPosition()
             {
                 _caretScreenPosition = _rendererText.GetCaretPosition(Stb.CursorIndex);
             }
