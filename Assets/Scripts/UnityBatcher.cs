@@ -66,12 +66,13 @@ namespace ClassicUO.Renderer
         // MobileUO: TODO: flag to use depths while trying to figure out the depth issue
         private bool USE_DEPTH = false;
         private bool LOG_DEPTH = false;
+        private bool DIVIDE_DEPTH = false; // if depth values are 100 or lower, they will render. Something clips them at over 100 (100.1 or 101 or higher)
 
         public UltimaBatcher2D(GraphicsDevice device)
         {
             if (USE_DEPTH)
             {
-                UnityCamera.main.nearClipPlane = 0f;
+                UnityCamera.main.nearClipPlane = 0.01f;
                 UnityCamera.main.farClipPlane = 10000f;
             }
 
@@ -438,6 +439,9 @@ namespace ClassicUO.Renderer
             if(!USE_DEPTH)
                 depth = 0;
 
+            if(DIVIDE_DEPTH)
+                depth = depth / 1000f;
+
             if(LOG_DEPTH)
                 Log.Info($"Depth: {depth}");
 
@@ -721,6 +725,9 @@ namespace ClassicUO.Renderer
             if(!USE_DEPTH)
                 depth = 0;
 
+            if(DIVIDE_DEPTH)
+                depth = depth / 1000f;
+
             if(LOG_DEPTH)
                 Log.Info($"Depth: {depth}");
 
@@ -831,6 +838,9 @@ namespace ClassicUO.Renderer
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
             if(!USE_DEPTH)
                 depth = 0;
+
+            if(DIVIDE_DEPTH)
+                depth = depth / 1000f;
 
             if(LOG_DEPTH)
                 Log.Info($"Depth: {depth}");
@@ -1936,6 +1946,9 @@ namespace ClassicUO.Renderer
             // MobileUO: TODO: temp fix to keep things stable - hopefully future commit makes depth work
             if(!USE_DEPTH)
                 depth = 0;
+
+            if(DIVIDE_DEPTH)
+                depth = depth / 1000f;
 
             if(LOG_DEPTH)
                 Log.Info($"Depth: {depth}");
