@@ -767,7 +767,8 @@ namespace ClassicUO.IO.Resources
                 byte[] buffer = null;
 
                 // MobileUO: we get graphical issues with smaller art when using stackalloc byte[1024]
-                Span<byte> span = entry.DecompressedLength <= 1024 ? stackalloc byte[entry.DecompressedLength] : (buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(entry.DecompressedLength));
+                // MobileUO: don't use stackalloc, it's causing graphical issues, e.g. skeletons looking left or right
+                Span<byte> span = /*entry.DecompressedLength <= 1024 ? stackalloc byte[entry.DecompressedLength] :*/ (buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(entry.DecompressedLength));
                 
                 try
                 {
@@ -1453,7 +1454,8 @@ namespace ClassicUO.IO.Resources
 
             byte[] buffer = null;
 
-            Span<byte> span = decLen <= 1024 ? stackalloc byte[decLen] : (buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(decLen));
+            // MobileUO: don't use stackalloc, it's causing graphical issues, e.g. skeletons looking left or right
+            Span<byte> span = /*decLen <= 1024 ? stackalloc byte[decLen] : */(buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(decLen));
 
             fixed (byte* ptr = span)
             {
@@ -1620,7 +1622,8 @@ namespace ClassicUO.IO.Resources
 
             uint[] buffer = null;
 
-            Span<uint> data = bufferSize <= 1024 ? stackalloc uint[bufferSize] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(bufferSize));
+            // MobileUO: don't use stackalloc, it's causing graphical issues, e.g. skeletons looking left or right
+            Span<uint> data = /*bufferSize <= 1024 ? stackalloc uint[bufferSize] : */(buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(bufferSize));
 
             try
             {
@@ -1815,7 +1818,8 @@ namespace ClassicUO.IO.Resources
                             file.Seek(animDataStruct.Offset);
 
                             byte[] buffer = null;
-                            Span<byte> span = decLen <= 1024 ? stackalloc byte[decLen] : (buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(decLen));
+                            // MobileUO: don't use stackalloc, it's causing graphical issues, e.g. skeletons looking left or right
+                            Span<byte> span = /*decLen <= 1024 ? stackalloc byte[decLen] :*/ (buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(decLen));
 
                             try
                             {
