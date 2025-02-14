@@ -58,6 +58,8 @@ namespace ClassicUO.Game.UI.Gumps
         Debug,
         NetStats,
 
+        NameOverHeadHandler,
+
         // MobileUO: Assisstant buttons
         AssistantMacroButton,
         AssistantHotkeyButton

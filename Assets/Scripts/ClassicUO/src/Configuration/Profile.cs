@@ -608,6 +608,11 @@ namespace ClassicUO.Configuration
                                     gump = new NetworkStatsGump(100, 100);
 
                                     break;
+
+                                case GumpType.NameOverHeadHandler:
+                                    NameOverHeadHandlerGump.LastPosition = new Point(x, y);
+                                    // Gump gets opened by NameOverHeadManager, we just want to save the last position from profile
+                                    break;
                             }
 
                             if (gump == null)
