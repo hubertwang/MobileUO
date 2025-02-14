@@ -110,7 +110,8 @@ namespace ClassicUO.IO.Resources
 
             uint[] buffer = null;
           
-            Span<uint> pixels = entry.Width * entry.Height <= 1024 ? stackalloc uint[1024] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(entry.Width * entry.Height));
+            // MobileUO: we get graphical issues with smaller art when using stackalloc byte[1024]
+            Span<uint> pixels = entry.Width * entry.Height <= 1024 ? stackalloc uint[entry.Width * entry.Height] : (buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(entry.Width * entry.Height));
 
             try
             {
