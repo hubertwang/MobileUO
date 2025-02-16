@@ -573,22 +573,6 @@ namespace ClassicUO.Game.Scenes
                 SelectedObject.Object = obj;
             }
 
-            //if (_renderListStaticsHead == null)
-            //{
-            //    _renderListStaticsHead = _renderList = obj;
-            //}
-            //else
-            //{
-            //    _renderList.RenderListNext = obj;
-            //    _renderList = obj;
-            //}
-
-            //obj.RenderListNext = null;
-
-            //++_renderListStaticsCount;
-
-
-
             if (obj.AlphaHue != byte.MaxValue)
             {
                 if (_renderListTransparentObjectsHead == null)
@@ -597,9 +581,6 @@ namespace ClassicUO.Game.Scenes
                 }
                 else
                 {
-                    //obj.RenderListNext = _renderListTransparentObjectsHead;
-                    //_renderListTransparentObjectsHead = obj;
-
                     _renderListTransparentObjects.RenderListNext = obj;
                     _renderListTransparentObjects = obj;
                 }
@@ -743,7 +724,15 @@ namespace ClassicUO.Game.Scenes
 
                     CheckIfBehindATree(obj, worldX, worldY, ref itemData);
 
-                    PushToRenderList(obj, ref _renderList, ref _renderListStaticsHead, ref _renderListStaticsCount, allowSelection);
+                    // hacky way to render shadows without z-fight
+                    if (ProfileManager.CurrentProfile.ShadowsEnabled && ProfileManager.CurrentProfile.ShadowsStatics && (StaticFilters.IsTree(obj.Graphic, out _) || itemData.IsFoliage || StaticFilters.IsRock(obj.Graphic)))
+                    {
+                        PushToRenderList(obj, ref _renderListTransparentObjects, ref _renderListTransparentObjectsHead, ref _renderListTransparentObjectsCount, allowSelection);
+                    }
+                    else
+                    {
+                        PushToRenderList(obj, ref _renderList, ref _renderListStaticsHead, ref _renderListStaticsCount, allowSelection);
+                    } 
                 }
                 else if (obj is Multi multi)
                 {
