@@ -145,7 +145,7 @@
                     discard;
 
                 int mode = int(_Hue.y);
-                float alpha = 1 - _Hue.z;
+                float alpha = _Hue.z;
 
                 if (mode == NONE)
                 {

@@ -905,12 +905,10 @@ namespace ClassicUO.Game.UI.Controls
                 return;
             }
 
-            ResetHueVector();
+            Vector3 hueVector = ShaderHueTranslator.GetHueVector(0, false, 0.5f);
 
             int selectStart = Math.Min(Stb.SelectStart, Stb.SelectEnd);
             int selectEnd = Math.Max(Stb.SelectStart, Stb.SelectEnd);
-
-            HueVector.Z = 0.5f;
 
             if (selectStart < selectEnd)
             {
@@ -958,7 +956,7 @@ namespace ClassicUO.Game.UI.Controls
                                     endX,
                                     info.MaxHeight + 1
                                 ),
-                                HueVector
+                                hueVector
                             );
 
                             break;
@@ -976,7 +974,7 @@ namespace ClassicUO.Game.UI.Controls
                                 info.Width - drawX,
                                 info.MaxHeight + 1
                             ),
-                            HueVector
+                            hueVector
                         );
 
                         // first selection is gone. M
@@ -988,9 +986,6 @@ namespace ClassicUO.Game.UI.Controls
                     info = info.Next;
                 }
             }
-
-
-            ResetHueVector();
         }
 
         protected virtual void DrawCaret(UltimaBatcher2D batcher, int x, int y)

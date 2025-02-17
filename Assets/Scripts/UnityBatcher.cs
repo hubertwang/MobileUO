@@ -125,7 +125,7 @@ namespace ClassicUO.Renderer
             _basicUOEffect.Brighlight.SetValue(f);
         }
 
-        public void DrawString(SpriteFont spriteFont, string text, int x, int y, ref XnaVector3 color)
+        public void DrawString(SpriteFont spriteFont, string text, int x, int y, XnaVector3 color)
         {
             if (String.IsNullOrEmpty(text))
                 return;
@@ -1436,7 +1436,7 @@ namespace ClassicUO.Renderer
             int y,
             int width,
             int height,
-            ref XnaVector3 hue,
+            XnaVector3 hue,
             float depth = 0f
         )
         {
@@ -1453,7 +1453,7 @@ namespace ClassicUO.Renderer
             rect.Y = y + height;
             rect.Width = width;
             rect.Height = 1;
-             Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
+            Draw(texture, rect, null, hue, 0f, XnaVector2.Zero, SpriteEffects.None, depth);
 
 
             rect.X = x;

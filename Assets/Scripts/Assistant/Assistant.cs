@@ -723,14 +723,14 @@ namespace ClassicUO.Game.UI.Gumps
             }
         }
 
-        private readonly AlphaBlendControl _alphaBlend = new AlphaBlendControl(0.0f)
+        private readonly AlphaBlendControl _alphaBlend = new AlphaBlendControl(1.0f)
         {
             X = 1,
             Y = 1,
             Width = WIDTH - 2,
             Height = HEIGHT - 2
         };
-        private readonly AlphaBlendControl _alphaMinimizedBlend = new AlphaBlendControl(0.0f)
+        private readonly AlphaBlendControl _alphaMinimizedBlend = new AlphaBlendControl(1.0f)
         {
             X = 1,
             Y = 1,
@@ -883,7 +883,7 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void OnOpacityChanged(object sender, EventArgs e)
         {
-            float val = (99 - _opacity.Value) * 0.01f;
+            float val = (_opacity.Value) * 0.01f;
             _alphaBlend.Alpha = val;
             _alphaMinimizedBlend.Alpha = val;
             WantUpdateSize = true;
@@ -3699,8 +3699,10 @@ namespace ClassicUO.Game.UI.Gumps
                 _edge = new Texture2D(batcher.GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
                 _edge.SetData(new Color[] { Color.Gray });
             }
-            Vector3 vec = Vector3.Zero;
-            batcher.DrawRectangle(_edge, x, y, Width, Height, ref vec);
+            // MobileUO: TODO: should this be... 1?
+            Vector3 vec = ShaderHueTranslator.GetHueVector(0, false, 1);
+            //Vector3 vec = Vector3.Zero;
+            batcher.DrawRectangle(_edge, x, y, Width, Height, vec);
             return base.Draw(batcher, x, y);
         }
 

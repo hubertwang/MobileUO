@@ -121,10 +121,12 @@ namespace ClassicUO.Game.UI.Controls
             if (IsDisposed)
                 return false;
 
-            ResetHueVector();
+            // MobileUO: CUO 0.1.11.0 drops ResetHueVector()
+            var hueVector = ShaderHueTranslator.GetHueVector(0);
+            //ResetHueVector();
 
             bool ok = base.Draw(batcher, x, y);
-            batcher.Draw2D(IsChecked ? _textures[ACTIVE] : _textures[INACTIVE], x, y, ref HueVector);
+            batcher.Draw2D(IsChecked ? _textures[ACTIVE] : _textures[INACTIVE], x, y, ref hueVector);
             _text.Draw(batcher, x + _textures[ACTIVE].Width + 2, y);
 
             return ok;

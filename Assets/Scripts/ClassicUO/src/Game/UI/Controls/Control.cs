@@ -50,7 +50,6 @@ namespace ClassicUO.Game.UI.Controls
         internal static int _StepsDone = 1;
         internal static int _StepChanger = 1;
 
-        protected static Vector3 HueVector = Vector3.Zero;
         private bool _acceptKeyboardInput, _acceptMouseInput, _mouseIsDown;
         private int _activePage;
         private bool _attempToDrag;
@@ -120,7 +119,7 @@ namespace ClassicUO.Game.UI.Controls
 
         public bool IsFocused { get; set; }
 
-        public float Alpha { get; set; }
+        public float Alpha { get; set; } = 1.0f;
 
         public List<Control> Children { get; }
 
@@ -267,16 +266,6 @@ namespace ClassicUO.Game.UI.Controls
             }
         }
 
-        protected static void ResetHueVector()
-        {
-            HueVector.X = 0;
-            HueVector.Y = 0;
-            HueVector.Z = 0;
-        }
-
-
-        
-
         public virtual bool Draw(UltimaBatcher2D batcher, int x, int y)
         {
             if (IsDisposed)
@@ -373,7 +362,7 @@ namespace ClassicUO.Game.UI.Controls
         {
             if (IsVisible && CUOEnviroment.Debug)
             {
-                ResetHueVector();
+                Vector3 hueVector = ShaderHueTranslator.GetHueVector(0);
 
                 batcher.DrawRectangle
                 (
@@ -382,7 +371,7 @@ namespace ClassicUO.Game.UI.Controls
                     y,
                     Width,
                     Height,
-                    ref HueVector
+                    hueVector
                 );
             }
         }
