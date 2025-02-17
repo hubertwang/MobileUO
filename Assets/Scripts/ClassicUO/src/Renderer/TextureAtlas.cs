@@ -77,7 +77,7 @@ namespace ClassicUO.Renderer
                     0,
                     pr,
                     (IntPtr)src,
-                    sizeof(T) * pixels.Length
+                    sizeof(T) * width * height
                 );
             }
 
@@ -87,6 +87,7 @@ namespace ClassicUO.Renderer
         // MobileUO: TODO: figure out how to get packer working correctly
         private void CreateNewTexture2D(int width, int height)
         {
+            Utility.Logging.Log.Trace($"creating texture: {_width}x{_height} {_format}");
             Texture2D texture = new Texture2D(_device, width, height, false, _format);
             _textureList.Add(texture);
 

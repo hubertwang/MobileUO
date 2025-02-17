@@ -304,7 +304,8 @@ namespace ClassicUO.Configuration
         public bool WorldMapShowMarkersNames { get; set; } = true;
         public bool WorldMapShowMultis { get; set; } = true;
         public string WorldMapHiddenMarkerFiles { get; set; } = string.Empty;
-         public string WorldMapHiddenZoneFiles { get; set; } = string.Empty;
+        public string WorldMapHiddenZoneFiles { get; set; } = string.Empty;
+        public bool WorldMapShowGridIfZoomed { get; set; } = true;
 
         // MobileUO: this was moved to ProfileManager, but think we need to keep them for now
         internal static string ProfilePath { get; } = Path.Combine(CUOEnviroment.ExecutablePath, "Data", "Profiles");

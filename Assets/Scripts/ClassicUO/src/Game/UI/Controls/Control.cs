@@ -877,12 +877,15 @@ namespace ClassicUO.Game.UI.Controls
                 return;
             }
 
-            foreach (Control c in Children)
+            if (Children != null)
             {
-                c.Dispose();
-            }
+                foreach (Control c in Children)
+                {
+                    c.Dispose();
+                }
 
-            Children.Clear();
+                Children.Clear();
+            }
 
             IsDisposed = true;
         }
