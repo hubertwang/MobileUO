@@ -193,8 +193,9 @@ namespace Microsoft.Xna.Framework.Graphics
         }
 
         // https://github.com/FNA-XNA/FNA/blob/85a8457420278087dc7a81f16661ff68e67b75af/src/Graphics/Texture2D.cs#L213
-        public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength)
+        public void SetDataPointerEXT(int level, Rectangle? rect, IntPtr data, int dataLength, bool invertY = false)
         {
+            tempInvertY = invertY;
             UnityMainThreadDispatcher.Dispatch(() => SetDataPointerEXTInt(level, rect, data, dataLength));
         }
 
@@ -247,6 +248,11 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     int bufferIndex = (row * w + col) * 4;
                     int colorIndex = ((h - 1 - row) * w) + col;
+
+                    if (tempInvertY)
+                    {
+                        colorIndex =  row * w + col;
+                    }
 
                     // Ensure the buffer index is within bounds
                     if (bufferIndex + 3 < buffer.Length)
