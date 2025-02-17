@@ -92,7 +92,6 @@ namespace ClassicUO.Game.Scenes
         private bool _forceStopScene;
         private HealthLinesManager _healthLinesManager;
 
-        private bool _isListReady;
         private Point _lastSelectedMultiPositionInHouseCustomization;
         private int _lightCount;
         private readonly LightData[] _lights = new LightData[Constants.MAX_LIGHTS_DATA_INDEX_COUNT];
@@ -591,7 +590,6 @@ namespace ClassicUO.Game.Scenes
                 return;
             }
 
-            _isListReady = false;
             _alphaChanged = _alphaTimer < Time.Ticks;
 
             if (_alphaChanged)
@@ -611,7 +609,7 @@ namespace ClassicUO.Game.Scenes
             var useObjectHandles = NameOverHeadManager.IsToggled || Keyboard.Ctrl && Keyboard.Shift;
             if (useObjectHandles != _useObjectHandles)
             {
-                 _useObjectHandles = useObjectHandles;
+                _useObjectHandles = useObjectHandles;
                 if (_useObjectHandles)
                 {
                     NameOverHeadManager.Open();
@@ -699,25 +697,16 @@ namespace ClassicUO.Game.Scenes
             UpdateTextServerEntities(World.Mobiles.Values, true);
             UpdateTextServerEntities(World.Items.Values, false);
 
-            _renderIndex++;
-
-            if (_renderIndex >= 100)
-            {
-                _renderIndex = 1;
-            }
-
             UpdateDrawPosition = false;
-            _isListReady = true;
         }
 
         private void UpdateTextServerEntities<T>(IEnumerable<T> entities, bool force) where T : Entity
         {
             foreach (T e in entities)
             {
-                if (e.UseInRender != _renderIndex && e.TextContainer != null && !e.TextContainer.IsEmpty && (force || e.Graphic == 0x2006))
+                if (e.TextContainer != null && !e.TextContainer.IsEmpty && (force || e.Graphic == 0x2006))
                 {
                     e.UpdateRealScreenPosition(_offset.X, _offset.Y);
-                    e.UseInRender = (byte) _renderIndex;
                 }
             }
         }
@@ -912,11 +901,6 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
-        public override void FixedUpdate(double totalTime, double frameTime)
-        {
-            //FillGameObjectList();
-        }
-
 
         public override bool Draw(UltimaBatcher2D batcher)
         {
@@ -924,7 +908,7 @@ namespace ClassicUO.Game.Scenes
             var originalBatcherScale = batcher.scale;
             batcher.scale = 1f;
 
-            if (!World.InGame /*|| !_isListReady*/)
+            if (!World.InGame)
             {
                 return false;
             }
@@ -1087,24 +1071,7 @@ namespace ClassicUO.Game.Scenes
             }
             else
             {
-                switch (ProfileManager.CurrentProfile.FilterType)
-                {
-                    default:
-                    case 0:
-                        batcher.SetSampler(SamplerState.PointClamp);
-
-                        break;
-
-                    case 1:
-                        batcher.SetSampler(SamplerState.AnisotropicClamp);
-
-                        break;
-
-                    case 2:
-                        batcher.SetSampler(SamplerState.LinearClamp);
-
-                        break;
-                }
+                batcher.SetSampler(SamplerState.PointClamp);
             }
 
 
@@ -1154,7 +1121,7 @@ namespace ClassicUO.Game.Scenes
             Weather.Draw(batcher, 0, 0); // TODO: fix the depth
 
             batcher.End();
-            
+           
 
             int flushes = batcher.FlushesDone;
             int switches = batcher.TextureSwitches;
@@ -1262,20 +1229,13 @@ namespace ClassicUO.Game.Scenes
         {
             _healthLinesManager.Draw(batcher);
 
-            int renderIndex = _renderIndex - 1;
-
-            if (renderIndex < 1)
-            {
-                renderIndex = 99;
-            }
-
             if (!UIManager.IsMouseOverWorld)
             {
                 SelectedObject.Object = null;
             }
 
             World.WorldTextManager.ProcessWorldText(true);
-            World.WorldTextManager.Draw(batcher, x, y, renderIndex);
+            World.WorldTextManager.Draw(batcher, x, y);
 
             SelectedObject.LastObject = SelectedObject.Object;
         }
