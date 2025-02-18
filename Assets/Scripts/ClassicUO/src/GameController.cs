@@ -276,11 +276,7 @@ namespace ClassicUO
             // MobileUO: NOTE: Added this to be able to react to scene changes, mainly for calculating render scale factor
             Client.InvokeSceneChanged();
 
-            if (scene != null)
-            {
-                Window.AllowUserResizing = scene.CanResize;
-                scene.Load();
-            }
+            Scene?.Load();
         }
 
         public void SetVSync(bool value)
@@ -439,6 +435,7 @@ namespace ClassicUO
             }
 
             Time.Ticks = (uint) gameTime.TotalGameTime.TotalMilliseconds;
+            Time.Delta = (float) gameTime.ElapsedGameTime.TotalSeconds;
 
             // MobileUO: new MouseUpdate function
             // Mouse.Update();
@@ -891,6 +888,13 @@ namespace ClassicUO
             return 1;
         }
 
+        protected override void OnExiting(object sender, EventArgs args)
+        {
+            Scene?.Dispose();
+
+            base.OnExiting(sender, args);
+        }
+
         // MobileUO: commented out
         //private void TakeScreenshot()
         //{
@@ -1038,12 +1042,12 @@ namespace ClassicUO
                     if(zoomCounter > 3)
                     {
                         zoomCounter = 0;
-                        --Client.Game.Scene.Camera.ZoomIndex;
+                        --Client.Game.Scene.Camera.Zoom;
                     }
                     else if(zoomCounter < -3)
                     {
                         zoomCounter = 0;
-                        ++Client.Game.Scene.Camera.ZoomIndex;
+                        ++Client.Game.Scene.Camera.Zoom;
                     }
                 }
 

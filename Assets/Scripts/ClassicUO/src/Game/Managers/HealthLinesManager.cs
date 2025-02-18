@@ -55,25 +55,24 @@ namespace ClassicUO.Game.Managers
 
         public void Draw(UltimaBatcher2D batcher)
         {
-            int screenW = ProfileManager.CurrentProfile.GameWindowSize.X;
-            int screenH = ProfileManager.CurrentProfile.GameWindowSize.Y;
+            var camera = Client.Game.Scene.Camera;
             // MobileUO: fixed viewport boundary condition check
-            int posX = ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
-            int posY = ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
+            int posX = camera.Bounds.X + 5; // ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
+            int posY = camera.Bounds.Y + 5; // ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
 
             if (SerialHelper.IsMobile(TargetManager.LastTargetInfo.Serial))
             {
-                DrawHealthLineWithMath(batcher, TargetManager.LastTargetInfo.Serial, screenW, screenH);
+                DrawHealthLineWithMath(batcher, TargetManager.LastTargetInfo.Serial, camera.Bounds.Width, camera.Bounds.Height);
             }
 
             if (SerialHelper.IsMobile(TargetManager.SelectedTarget))
             {
-                DrawHealthLineWithMath(batcher, TargetManager.SelectedTarget, screenW, screenH);
+                DrawHealthLineWithMath(batcher, TargetManager.SelectedTarget, camera.Bounds.Width, camera.Bounds.Height);
             }
 
             if (SerialHelper.IsMobile(TargetManager.LastAttack))
             {
-                DrawHealthLineWithMath(batcher, TargetManager.LastAttack, screenW, screenH);
+                DrawHealthLineWithMath(batcher, TargetManager.LastAttack, camera.Bounds.Width, camera.Bounds.Height);
             }
 
             if (!IsEnabled)
@@ -160,7 +159,7 @@ namespace ClassicUO.Game.Managers
                             }
 
                             // MobileUO: fixed viewport boundary condition check
-                            if (!(p1.X < posX || p1.X > posX + screenW - mobile.HitsTexture.Width || p1.Y < posY || p1.Y > posY + screenH))
+                            if (!(p1.X < posX || p1.X > posX + camera.Bounds.Width - mobile.HitsTexture.Width || p1.Y < posY || p1.Y > posY + camera.Bounds.Height))
                             {
                                 mobile.HitsTexture.Draw(batcher, p1.X, p1.Y);
                             }
@@ -179,12 +178,13 @@ namespace ClassicUO.Game.Managers
                 p.Y -= BAR_HEIGHT_HALF;
 
                 // MobileUO: fixed viewport boundary condition check
-                if (p.X < posX || p.X > posX + screenW - BAR_WIDTH)
+                if (p.X < posX || p.X > posX + camera.Bounds.Width - BAR_WIDTH)
                 {
                     continue;
                 }
 
-                if (p.Y < posY || p.Y > posY + screenH - BAR_HEIGHT)
+                // MobileUO: fixed viewport boundary condition check
+                if (p.Y < posY || p.Y > posY + camera.Bounds.Height - BAR_HEIGHT)
                 {
                     continue;
                 }
@@ -221,8 +221,10 @@ namespace ClassicUO.Game.Managers
             p.Y -= BAR_HEIGHT_HALF;
 
             // MobileUO: fixed viewport boundary condition check
-            int posX = ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
-            int posY = ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
+            var camera = Client.Game.Scene.Camera;
+
+            int posX = camera.Bounds.X + 5; // ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
+            int posY = camera.Bounds.Y + 5; // ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
 
             if (p.X < posX || p.X > posX + screenW - BAR_WIDTH)
             {

@@ -72,8 +72,8 @@ namespace ClassicUO.Game.Scenes
                     Pathfinder.StopAutoWalk();
                 }
 
-                int x = ProfileManager.CurrentProfile.GameWindowPosition.X + (ProfileManager.CurrentProfile.GameWindowSize.X >> 1);
-                int y = ProfileManager.CurrentProfile.GameWindowPosition.Y + (ProfileManager.CurrentProfile.GameWindowSize.Y >> 1);
+                int x = Camera.Bounds.X + (Camera.Bounds.Width >> 1);
+                int y = Camera.Bounds.Y + (Camera.Bounds.Height >> 1);
 
                 Direction direction = (Direction) GameCursor.GetMouseDirection
                 (
@@ -174,10 +174,11 @@ namespace ClassicUO.Game.Scenes
             }
 
             // MobileUO: remove camera bounds to fix mouse selection
-            _rectangleObj.X = _selectionStart.X;
-            _rectangleObj.Y = _selectionStart.Y;
-            _rectangleObj.Width = _selectionEnd.X - _rectangleObj.X;
-            _rectangleObj.Height = _selectionEnd.Y - _rectangleObj.Y;
+
+            _rectangleObj.X = _selectionStart.X /*- Camera.Bounds.X*/;
+            _rectangleObj.Y = _selectionStart.Y /*- Camera.Bounds.Y*/;
+            _rectangleObj.Width = _selectionEnd.X /*- Camera.Bounds.X*/ - _rectangleObj.X;
+            _rectangleObj.Height = _selectionEnd.Y /*- Camera.Bounds.Y*/ - _rectangleObj.Y;
 
             int finalX = ProfileManager.CurrentProfile.DragSelectStartX;
             int finalY = ProfileManager.CurrentProfile.DragSelectStartY;
@@ -240,13 +241,13 @@ namespace ClassicUO.Game.Scenes
                             hbgc = new HealthBarGump(mobile);
                         }
 
-                        if (finalY >= ProfileManager.CurrentProfile.GameWindowPosition.Y + ProfileManager.CurrentProfile.GameWindowSize.Y - 20)
+                        if (finalY >= Camera.Bounds.Bottom - 20)
                         {
                             finalY = ProfileManager.CurrentProfile.DragSelectStartY;
                             finalX += rect.Width + 2;
                         }
 
-                        if (finalX >= ProfileManager.CurrentProfile.GameWindowPosition.X + ProfileManager.CurrentProfile.GameWindowSize.X - 20)
+                        if (finalX >= Camera.Bounds.Right - 20)
                         {
                             finalX = ProfileManager.CurrentProfile.DragSelectStartX;
                         }
@@ -265,13 +266,13 @@ namespace ClassicUO.Game.Scenes
                             {
                                 finalY = bar.Bounds.Bottom + AnchorOffset;
 
-                                if (finalY >= ProfileManager.CurrentProfile.GameWindowPosition.Y + ProfileManager.CurrentProfile.GameWindowSize.Y - 100)
+                                if (finalY >= Camera.Bounds.Bottom - 100)
                                 {
                                     finalY = ProfileManager.CurrentProfile.DragSelectStartY;
                                     finalX = bar.Bounds.Right + AnchorOffset;
                                 }
 
-                                if (finalX >= ProfileManager.CurrentProfile.GameWindowPosition.X + ProfileManager.CurrentProfile.GameWindowSize.X - 100)
+                                if (finalX >= Camera.Bounds.Right - 100)
                                 {
                                     finalX = ProfileManager.CurrentProfile.DragSelectStartX;
                                 }
@@ -928,7 +929,14 @@ namespace ClassicUO.Game.Scenes
 
             if (Keyboard.Ctrl && ProfileManager.CurrentProfile.EnableMousewheelScaleZoom)
             {
-                Camera.ZoomIndex += up ? -1 : 1;
+                if (up)
+                {
+                    Camera.ZoomOut();
+                }
+                else
+                {
+                    Camera.ZoomIn();
+                }
 
                 return true;
             }

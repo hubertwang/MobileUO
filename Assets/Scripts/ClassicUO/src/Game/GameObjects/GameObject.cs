@@ -254,13 +254,15 @@ namespace ClassicUO.Game.GameObjects
             int offsetY = 0;
 
             // MobileUO: fixed viewport boundary condition check
-            int posX = ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
-            int posY = ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
+            var camera = Client.Game.Scene.Camera;
+
+            int posX = camera.Bounds.X + 5; // ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
+            int posY = camera.Bounds.Y + 5; // ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
 
             int minX = posX + 6;
-            int maxX = posX + minX + ProfileManager.CurrentProfile.GameWindowSize.X - 6;
+            int maxX = minX + Client.Game.Scene.Camera.Bounds.Width - 6;
             int minY = posY + 0;
-            int maxY = minY + ProfileManager.CurrentProfile.GameWindowSize.Y - 6;
+            int maxY = minY + Client.Game.Scene.Camera.Bounds.Height - 6;
 
             for (TextObject item = (TextObject) TextContainer.Items; item != null; item = (TextObject) item.Next)
             {
