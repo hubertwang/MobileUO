@@ -224,10 +224,9 @@ namespace ClassicUO.Game.UI.Controls
         public bool ContainsByBounds { get; set; }
 
         // MobileUO: keep this override so we can enlarge buttons for MobileUO
-        // MobileUO: TODO: totaleTime/frameTime will be removed in a later commit
-        public override void Update(double totalTime, double frameTime)
+        public override void Update()
         {
-             base.Update(totalTime, frameTime);
+             base.Update();
 
             if (IsDisposed)
             {

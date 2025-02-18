@@ -118,6 +118,8 @@ namespace ClassicUO.Game
         public bool IsDraggingCursorForced { get; set; }
         public bool AllowDrawSDLCursor { get; set; } = true;
 
+        public ItemHold ItemHold { get; } = new ItemHold();
+
         private ushort GetDraggingItemGraphic()
         {
             if (ItemHold.Enabled)
@@ -148,7 +150,7 @@ namespace ClassicUO.Game
                     scale = UIManager.ContainerScale;
                 }
 
-                return  new Point((int)((bounds.Width >> 1) * scale) - ItemHold.MouseOffset.X, (int)((bounds.Height >> 1) * scale) - ItemHold.MouseOffset.Y);
+                return new Point((int)((bounds.Width >> 1) * scale) - ItemHold.MouseOffset.X, (int)((bounds.Height >> 1) * scale) - ItemHold.MouseOffset.Y);
             }
 
             return Point.Zero;
@@ -156,7 +158,7 @@ namespace ClassicUO.Game
 
 
 
-        public void Update(double totalTime, double frameTime)
+        public void Update()
         {
             Graphic = AssignGraphicByState();
 
@@ -284,17 +286,8 @@ namespace ClassicUO.Game
                                         break;
                                     }
 
-                                    _temp[i].X = (ushort) (selectedObj.X + item.X);
-
-                                    _temp[i].Y = (ushort) (selectedObj.Y + item.Y);
-
-                                    _temp[i].Z = (sbyte) (selectedObj.Z + z + item.Z);
-
+                                    _temp[i].SetInWorldTile((ushort)(selectedObj.X + item.X), (ushort)(selectedObj.Y + item.Y), (sbyte)(selectedObj.Z + z + item.Z));
                                     _temp[i].UpdateRealScreenPosition(gs.ScreenOffset.X, gs.ScreenOffset.Y);
-
-                                    _temp[i].UpdateScreenPosition();
-
-                                    _temp[i].AddToTile();
                                 }
                             }
                         }

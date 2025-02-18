@@ -59,8 +59,6 @@ namespace ClassicUO
 {
     internal unsafe class GameController : Microsoft.Xna.Framework.Game
     {
-        private bool _dragStarted;
-
         private SDL_EventFilter _filter;
 
         private readonly Texture2D[] _hueSamplers = new Texture2D[3];
@@ -96,6 +94,9 @@ namespace ClassicUO
         }
 
         public Scene Scene { get; private set; }
+        public GameCursor GameCursor { get; private set; }
+        public AudioManager Audio { get; private set; }
+
 
         public GraphicsDeviceManager GraphicManager { get; }
         public readonly uint[] FrameDelay = new uint[2];
@@ -114,11 +115,10 @@ namespace ClassicUO
             _uoSpriteBatch = new UltimaBatcher2D(GraphicsDevice);
 
             _filter = HandleSdlEvent;
-            SDL_AddEventWatch(_filter, IntPtr.Zero);
+            SDL_SetEventFilter(_filter, IntPtr.Zero);
 
             base.Initialize();
         }
-        
 
         protected override void LoadContent()
         {
@@ -144,12 +144,11 @@ namespace ClassicUO
                 _hueSamplers[0].SetDataPointerEXT(0, null, (IntPtr) ptr, TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint), true);
                 _hueSamplers[1].SetDataPointerEXT(0, null, (IntPtr) ptr + TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint), TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint), true);
 
-                LightColors.CreateLookupTables(buffer);
+                LightColors.CreateLightTextures(buffer, LIGHTS_TEXTURE_HEIGHT);
                 _hueSamplers[2].SetDataPointerEXT(0, null, (IntPtr)ptr, LIGHTS_TEXTURE_WIDTH * LIGHTS_TEXTURE_HEIGHT * sizeof(uint), true);
             }      
         
             System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
-
 
             GraphicsDevice.Textures[1] = _hueSamplers[0];
             GraphicsDevice.Textures[2] = _hueSamplers[1];
@@ -159,6 +158,8 @@ namespace ClassicUO
             LightsLoader.Instance.CreateAtlas(GraphicsDevice);
             AnimationsLoader.Instance.CreateAtlas(GraphicsDevice);
 
+            LightColors.LoadLights();
+
             // MobileUO: filter mode
             GraphicsDevice.Textures[1].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
             GraphicsDevice.Textures[2].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
@@ -167,8 +168,11 @@ namespace ClassicUO
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue1.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[0].UnityTexture as UnityEngine.Texture2D));
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue2.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[1].UnityTexture as UnityEngine.Texture2D));
 
-            UIManager.InitializeGameCursor();
             AnimatedStaticsManager.Initialize();
+
+            GameCursor = new GameCursor();
+            Audio = new AudioManager();
+            Audio.Initialize();
 
             SetScene(new LoginScene());
             SetWindowPositionBySettings();
@@ -188,7 +192,7 @@ namespace ClassicUO
 
             Settings.GlobalSettings.WindowPosition = new Point(Math.Max(0, Window.ClientBounds.X - left), Math.Max(0, Window.ClientBounds.Y - top));
 
-            Scene?.Unload();
+            Audio?.StopMusic();
             Settings.GlobalSettings.Save();
             Plugin.OnClosing();
 
@@ -439,20 +443,20 @@ namespace ClassicUO
             // MobileUO: new MouseUpdate function
             // Mouse.Update();
             MouseUpdate();
-            OnNetworkUpdate(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
+            OnNetworkUpdate();
             Plugin.Tick();
 
             if (Scene != null && Scene.IsLoaded && !Scene.IsDestroyed)
             {
                 Profiler.EnterContext("Update");
-                Scene.Update(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
+                Scene.Update();
                 Profiler.ExitContext("Update");
             }
 
             // MobileUO: Unity input
             UnityInputUpdate();
-            
-            UIManager.Update(gameTime.TotalGameTime.TotalMilliseconds, gameTime.ElapsedGameTime.TotalMilliseconds);
+
+            UIManager.Update();
 
             _totalElapsed += gameTime.ElapsedGameTime.TotalMilliseconds;
             _currentFpsTime += gameTime.ElapsedGameTime.TotalMilliseconds;
@@ -482,6 +486,9 @@ namespace ClassicUO
                     Thread.Sleep(1);
                 }
             }
+
+            GameCursor?.Update();
+            Audio?.Update();
 
             base.Update(gameTime);
         }
@@ -524,25 +531,9 @@ namespace ClassicUO
             SelectedObject.HealthbarObject = null;
             SelectedObject.SelectedContainer = null;
 
-            //_uoSpriteBatch.Begin();
-            //_fontRenderer.Draw
-            //(
-            //    _uoSpriteBatch,
-            //    $"New Engine ❤ 😁".AsSpan(),
-            //    new Vector2(200, 100),
-            //    5f,
-            //    new FontSettings() 
-            //    { 
-            //        IsUnicode = true, 
-            //        FontIndex = 0, 
-            //        Italic = false,
-            //        Bold = false, 
-            //        Border = true,
-            //        Underline = true,
-            //    },
-            //    new Vector3(0x44, 0, 0)
-            //);
-            //_uoSpriteBatch.End();
+            _uoSpriteBatch.Begin();
+            GameCursor.Draw(_uoSpriteBatch);
+            _uoSpriteBatch.End();
 
             base.Draw(gameTime);
 
@@ -552,7 +543,7 @@ namespace ClassicUO
             Plugin.ProcessDrawCmdList(GraphicsDevice);
         }
 
-        private void OnNetworkUpdate(double totalTime, double frameTime)
+        private void OnNetworkUpdate()
         {
             if (NetClient.LoginSocket.IsDisposed && NetClient.LoginSocket.IsConnected)
             {
@@ -561,12 +552,12 @@ namespace ClassicUO
             else if (!NetClient.Socket.IsConnected)
             {
                 NetClient.LoginSocket.Update();
-                UpdateSocketStats(NetClient.LoginSocket, totalTime);
+                UpdateSocketStats(NetClient.LoginSocket);
             }
             else if (!NetClient.Socket.IsDisposed)
             {
                 NetClient.Socket.Update();
-                UpdateSocketStats(NetClient.Socket, totalTime);
+                UpdateSocketStats(NetClient.Socket);
             }
         }
 
@@ -577,12 +568,12 @@ namespace ClassicUO
         //    return !_suppressedDraw && base.BeginDraw();
         //}
 
-        private void UpdateSocketStats(NetClient socket, double totalTime)
+        private void UpdateSocketStats(NetClient socket)
         {
-            if (_statisticsTimer < totalTime)
+            if (_statisticsTimer < Time.Ticks)
             {
                 socket.Statistics.Update();
-                _statisticsTimer = totalTime + 500;
+                _statisticsTimer = Time.Ticks + 500;
             }
         }
 
@@ -617,13 +608,13 @@ namespace ClassicUO
             {
                 if (sdlEvent->type == SDL_EventType.SDL_MOUSEMOTION)
                 {
-                    if (UIManager.GameCursor != null)
+                    if (GameCursor != null)
                     {
-                        UIManager.GameCursor.AllowDrawSDLCursor = false;
+                        GameCursor.AllowDrawSDLCursor = false;
                     }
                 }
 
-                return 0;
+                return 1;
             }
 
             switch (sdlEvent->type)
@@ -728,10 +719,10 @@ namespace ClassicUO
 
                 case SDL_EventType.SDL_MOUSEMOTION:
 
-                    if (UIManager.GameCursor != null && !UIManager.GameCursor.AllowDrawSDLCursor)
+                    if (GameCursor != null && !GameCursor.AllowDrawSDLCursor)
                     {
-                        UIManager.GameCursor.AllowDrawSDLCursor = true;
-                        UIManager.GameCursor.Graphic = 0xFFFF;
+                        GameCursor.AllowDrawSDLCursor = true;
+                        GameCursor.Graphic = 0xFFFF;
                     }
 
                     Mouse.Update();
@@ -742,11 +733,6 @@ namespace ClassicUO
                         {
                             UIManager.OnMouseDragging();
                         }
-                    }
-
-                    if (Mouse.IsDragging && !_dragStarted)
-                    {
-                        _dragStarted = true;
                     }
 
                     break;
@@ -857,11 +843,6 @@ namespace ClassicUO
 
                 case SDL_EventType.SDL_MOUSEBUTTONUP:
                 {
-                    if (_dragStarted)
-                    {
-                        _dragStarted = false;
-                    }
-
                     SDL_MouseButtonEvent mouse = sdlEvent->button;
 
                     // The values in MouseButtonType are chosen to exactly match the SDL values
@@ -907,7 +888,7 @@ namespace ClassicUO
                 }
             }
 
-            return 0;
+            return 1;
         }
 
         // MobileUO: commented out
@@ -1278,10 +1259,11 @@ namespace ClassicUO
 
         private void SimulateMouse(bool leftMouseDown, bool leftMouseUp, bool rightMouseDown, bool rightMouseUp, bool mouseMotion, bool skipSceneInput)
         {
-            if (_dragStarted && !Mouse.LButtonPressed)
-            {
-                _dragStarted = false;
-            }
+            // MobileUO: TODO: do we need to bring this back?
+            //if (_dragStarted && !Mouse.LButtonPressed)
+            //{
+            //    _dragStarted = false;
+            //}
             
             if (leftMouseDown)
             {
@@ -1386,10 +1368,11 @@ namespace ClassicUO
                         UIManager.OnMouseDragging();
                 }
 
-                if (Mouse.IsDragging && !_dragStarted)
-                {
-                    _dragStarted = true;
-                }
+                // MobileUO: TODO: do we need to bring this back?
+                //if (Mouse.IsDragging && !_dragStarted)
+                //{
+                //    _dragStarted = true;
+                //}
             }
         }
     }

@@ -299,7 +299,7 @@ namespace ClassicUO.Game.Scenes
      
         private void CheckIfBehindATree(GameObject obj, int worldX, int worldY, ref StaticTiles itemData)
         {
-            if (itemData.IsFoliage)
+            if (obj.Z < _maxZ && itemData.IsFoliage)
             {
                 if (obj.FoliageIndex != FoliageIndex)
                 {
@@ -875,13 +875,6 @@ namespace ClassicUO.Game.Scenes
                     if (screenY < _minPixel.Y || screenY > _maxPixel.Y)
                     {
                         continue;
-                    }
-
-                    if (item.IsCorpse)
-                    {
-                    }
-                    else if (itemData.IsMultiMovable)
-                    {
                     }
 
                     if (!item.IsCorpse)

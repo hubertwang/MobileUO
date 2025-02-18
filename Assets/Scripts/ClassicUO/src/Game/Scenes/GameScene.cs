@@ -110,7 +110,7 @@ namespace ClassicUO.Game.Scenes
         public float JoystickRunThreshold;
 
 
-        public GameScene() : base((int) SceneType.Game, true, true, false)
+        public GameScene() : base((int) SceneType.Game, true, true)
         {
         }
 
@@ -139,7 +139,7 @@ namespace ClassicUO.Game.Scenes
         {
             base.Load();
 
-            ItemHold.Clear();
+            Client.Game.GameCursor.ItemHold.Clear();
             Hotkeys = new HotkeysManager();
             Macros = new MacroManager();
 
@@ -340,9 +340,11 @@ namespace ClassicUO.Game.Scenes
 
         public override void Unload()
         {
-            Client.Game.SetWindowTitle(string.Empty);
+            Client.Game.Audio?.StopMusic();
+            Client.Game.Audio?.StopSounds();
 
-            ItemHold.Clear();
+            Client.Game.SetWindowTitle(string.Empty);
+            Client.Game.GameCursor.ItemHold.Clear();
 
             try
             {
@@ -556,7 +558,7 @@ namespace ClassicUO.Game.Scenes
                     return;
                 }
 
-                light.Color = ProfileManager.CurrentProfile.UseColoredLights ? LightColors.GetHue(graphic) : (ushort) 0;
+                light.Color = ProfileManager.CurrentProfile.UseColoredLights ? LightColors.GetHue(graphic, out light.IsHue) : (ushort) 0;
 
                 if (light.Color != 0)
                 {
@@ -686,7 +688,7 @@ namespace ClassicUO.Game.Scenes
                     {
                         CalculateAlpha(ref f.AlphaHue, Constants.FOLIAGE_ALPHA);
                     }
-                    else
+                    else if (f.Z < _maxZ)
                     {
                         CalculateAlpha(ref f.AlphaHue, 0xFF);
                     }
@@ -711,14 +713,14 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
-        public override void Update(double totalTime, double frameTime)
+        public override void Update()
         {
             Profile currentProfile = ProfileManager.CurrentProfile;
             Camera.SetGameWindowBounds(currentProfile.GameWindowPosition.X + 5, currentProfile.GameWindowPosition.Y + 5, currentProfile.GameWindowSize.X, currentProfile.GameWindowSize.Y);
 
             SelectedObject.TranslatedMousePositionByViewport = Camera.MouseToWorldPosition();
 
-            base.Update(totalTime, frameTime);
+            base.Update();
 
             PacketHandlers.SendMegaClilocRequests();
 
@@ -736,7 +738,7 @@ namespace ClassicUO.Game.Scenes
                 return;
             }
 
-            World.Update(totalTime, frameTime);
+            World.Update();
             AnimatedStaticsManager.Process();
             BoatMovingManager.Update();
             Pathfinder.ProcessAutoWalk();
@@ -786,10 +788,10 @@ namespace ClassicUO.Game.Scenes
             }
 
 
-            if (totalTime > _timePing)
+            if (Time.Ticks > _timePing)
             {
                 NetClient.Socket.Statistics.SendPing();
-                _timePing = (long) totalTime + 1000;
+                _timePing = (long)Time.Ticks + 1000;
             }
 
             Macros.Update();
@@ -799,7 +801,7 @@ namespace ClassicUO.Game.Scenes
                 _useItemQueue.ClearCorpses();
             }
 
-            _useItemQueue.Update(totalTime, frameTime);
+            _useItemQueue.Update();
 
             if (!UIManager.IsMouseOverWorld)
             {
@@ -851,22 +853,15 @@ namespace ClassicUO.Game.Scenes
                     y = (ushort) (y - TargetManager.MultiTargetInfo.YOff);
                     z = (sbyte) (groundZ - TargetManager.MultiTargetInfo.ZOff);
 
-                    _multi.X = x;
-                    _multi.Y = y;
-                    _multi.Z = z;
-                    _multi.UpdateScreenPosition();
+                    _multi.SetInWorldTile(x, y, z);
                     _multi.CheckGraphicChange();
-                    _multi.AddToTile();
+
                     World.HouseManager.TryGetHouse(_multi.Serial, out House house);
 
                     foreach (Multi s in house.Components)
                     {
                         s.IsHousePreview = true;
-                        s.X = (ushort) (_multi.X + s.MultiOffsetX);
-                        s.Y = (ushort) (_multi.Y + s.MultiOffsetY);
-                        s.Z = (sbyte) (_multi.Z + s.MultiOffsetZ);
-                        s.UpdateScreenPosition();
-                        s.AddToTile();
+                        s.SetInWorldTile((ushort)(_multi.X + s.MultiOffsetX), (ushort)(_multi.Y + s.MultiOffsetY), (sbyte)(_multi.Z + s.MultiOffsetZ));
                     }
                 }
             }
@@ -878,7 +873,7 @@ namespace ClassicUO.Game.Scenes
             }
 
 
-            if (_isMouseLeftDown && !ItemHold.Enabled)
+            if (_isMouseLeftDown && !Client.Game.GameCursor.ItemHold.Enabled)
             {
                 if (World.CustomHouseManager != null && World.CustomHouseManager.SelectedGraphic != 0 && !World.CustomHouseManager.SeekTile && !World.CustomHouseManager.Erasing && Time.Ticks > _timeToPlaceMultiInHouseCustomization)
                 {
@@ -1190,7 +1185,7 @@ namespace ClassicUO.Game.Scenes
             batcher.SetBlendState(BlendState.Additive);
 
             Vector3 hue = Vector3.Zero;
-            hue.Y = ShaderHueTranslator.SHADER_LIGHTS;
+
             hue.Z = 1f;
 
             for (int i = 0; i < _lightCount; i++)
@@ -1205,6 +1200,7 @@ namespace ClassicUO.Game.Scenes
                 }
 
                 hue.X = l.Color;
+                hue.Y = l.IsHue ? ShaderHueTranslator.SHADER_HUED : ShaderHueTranslator.SHADER_LIGHTS;
 
                 batcher.Draw
                 (
@@ -1335,6 +1331,7 @@ namespace ClassicUO.Game.Scenes
         {
             public byte ID;
             public ushort Color;
+            public bool IsHue;
             public int DrawX, DrawY;
         }
     }
