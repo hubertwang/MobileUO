@@ -1084,16 +1084,19 @@ namespace ClassicUO.Game.Scenes
             // https://shawnhargreaves.com/blog/depth-sorting-alpha-blended-objects.html
             batcher.SetStencil(DepthStencilState.Default);
 
+            // MobileUO: TODO: we are using one render list and sorting it by Z depth
+            // have to figure out how to get stencils and/or
+            // drawing at Z-axis to work correctly to go back to original way
             RenderedObjectsCount = 0;
             RenderedObjectsCount += DrawRenderList(batcher, _renderListStaticsHead, _renderListStaticsCount);
-            RenderedObjectsCount += DrawRenderList(batcher, _renderListAnimationsHead, _renderListAnimationCount);
-            RenderedObjectsCount += DrawRenderList(batcher, _renderListEffectsHead, _renderListEffectCount);
+            //RenderedObjectsCount += DrawRenderList(batcher, _renderListAnimationsHead, _renderListAnimationCount);
+            //RenderedObjectsCount += DrawRenderList(batcher, _renderListEffectsHead, _renderListEffectCount);
 
-            if (_renderListTransparentObjectsCount > 0)
-            {
-                batcher.SetStencil(DepthStencilState.DepthRead);
-                RenderedObjectsCount += DrawRenderList(batcher, _renderListTransparentObjectsHead, _renderListTransparentObjectsCount);
-            }
+            //if (_renderListTransparentObjectsCount > 0)
+            //{
+            //    batcher.SetStencil(DepthStencilState.DepthRead);
+            //    RenderedObjectsCount += DrawRenderList(batcher, _renderListTransparentObjectsHead, _renderListTransparentObjectsCount);
+            //}
 
             batcher.SetStencil(null);
 
@@ -1151,18 +1154,49 @@ namespace ClassicUO.Game.Scenes
         {
             int done = 0;
 
+            // MobileUO: this is my naive implementation of fixing the depth rendering issue
+            var sortedObjects = new SortedDictionary<float, List<GameObject>>();
+
             for (int i = 0; i < count; obj = obj.RenderListNext, ++i)
             {
                 if (obj.Z <= _maxGroundZ)
                 {
                     float depth = obj.CalculateDepthZ();
 
-                    if (obj.Draw(batcher, obj.RealScreenPosition.X, obj.RealScreenPosition.Y, depth))
+                    if (!sortedObjects.ContainsKey(depth))
+                    {
+                        sortedObjects[depth] = new List<GameObject>();
+                    }
+
+                    sortedObjects[depth].Add(obj);
+                }
+            }
+
+            foreach(var sortedObject in sortedObjects)
+            {
+                foreach (var subSortedObject in sortedObject.Value)
+                {
+                    if (subSortedObject.Draw(batcher, subSortedObject.RealScreenPosition.X, subSortedObject.RealScreenPosition.Y, sortedObject.Key))
                     {
                         ++done;
                     }
                 }
             }
+
+            // MobileUO: new implementation
+            // MobileUO: TODO: attempt to get this to work again
+            //for (int i = 0; i < count; obj = obj.RenderListNext, ++i)
+            //{
+            //    if (obj.Z <= _maxGroundZ)
+            //    {
+            //        float depth = obj.CalculateDepthZ();
+
+            //        if (obj.Draw(batcher, obj.RealScreenPosition.X, obj.RealScreenPosition.Y, depth))
+            //        {
+            //            ++done;
+            //        }
+            //    }
+            //}
 
             return done;
         }

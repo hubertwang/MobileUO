@@ -578,23 +578,24 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
-            if (obj.AlphaHue != byte.MaxValue)
-            {
-                if (_renderListTransparentObjectsHead == null)
-                {
-                    _renderListTransparentObjectsHead = _renderListTransparentObjects = obj;
-                }
-                else
-                {
-                    _renderListTransparentObjects.RenderListNext = obj;
-                    _renderListTransparentObjects = obj;
-                }
+            // MobileUO: TODO: try and get this version to work:
+            //if (obj.AlphaHue != byte.MaxValue)
+            //{
+            //    if (_renderListTransparentObjectsHead == null)
+            //    {
+            //        _renderListTransparentObjectsHead = _renderListTransparentObjects = obj;
+            //    }
+            //    else
+            //    {
+            //        _renderListTransparentObjects.RenderListNext = obj;
+            //        _renderListTransparentObjects = obj;
+            //    }
 
-                obj.RenderListNext = null;
+            //    obj.RenderListNext = null;
 
-                ++_renderListTransparentObjectsCount;
-            }
-            else
+            //    ++_renderListTransparentObjectsCount;
+            //}
+            //else
             {
                 // MobileUO: TODO: for some reason we must use the private static variables.
                 // If we use the ref'ed ones then mobiles will walk on top of everything (roofs, walls, etc.)
@@ -680,6 +681,7 @@ namespace ClassicUO.Game.Scenes
                         continue;
                     }
 
+                    //PushToRenderList(obj, ref _renderListLands, ref _renderListLandsHead, ref _renderListLandsCount, true);
                     PushToRenderList(obj, ref _renderList, ref _renderListStaticsHead, ref _renderListStaticsCount, true);
                 }
                 else if (obj is Static staticc)
