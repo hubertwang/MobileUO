@@ -296,7 +296,6 @@ namespace ClassicUO.IO.Resources
             } 
             _instance = null;
         }
-
         internal unsafe void LoadMap(int i)
         {
             if (i < 0 || i + 1 > Constants.MAPS_COUNT || _filesMap[i] == null)
@@ -405,7 +404,8 @@ namespace ClassicUO.IO.Resources
 
             if (isuop)
             {
-                ((UOFileUop)file)?.ClearHashes();
+                // TODO: UOLive needs hashes! we need to find out a better solution, but keep 'em for the moment
+                //((UOFileUop)file)?.ClearHashes();
             }
         }
 

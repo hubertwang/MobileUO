@@ -174,7 +174,6 @@ namespace ClassicUO.Game.Scenes
             }
 
             // MobileUO: remove camera bounds to fix mouse selection
-
             _rectangleObj.X = _selectionStart.X /*- Camera.Bounds.X*/;
             _rectangleObj.Y = _selectionStart.Y /*- Camera.Bounds.Y*/;
             _rectangleObj.Width = _selectionEnd.X /*- Camera.Bounds.X*/ - _rectangleObj.X;
@@ -305,6 +304,10 @@ namespace ClassicUO.Game.Scenes
             {
                 case MouseButtonType.Left: return OnLeftMouseDown();
                 case MouseButtonType.Right: return OnRightMouseDown();
+                case MouseButtonType.Middle:
+                case MouseButtonType.XButton1:
+                case MouseButtonType.XButton2:
+                    return OnExtraMouseDown(button);
             }
 
             return false;
@@ -903,6 +906,26 @@ namespace ClassicUO.Game.Scenes
             return false;
         }
 
+        private bool OnExtraMouseDown(MouseButtonType button)
+        {
+            if (CanExecuteMacro())
+            {
+                Macro macro = Macros.FindMacro(button, Keyboard.Alt, Keyboard.Ctrl, Keyboard.Shift);
+
+                if (macro != null && button != MouseButtonType.None)
+                {
+                    if (macro.Items is MacroObject mac)
+                    {
+                        ExecuteMacro(mac);
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
 
         internal override bool OnMouseWheel(bool up)
         {
@@ -922,6 +945,21 @@ namespace ClassicUO.Game.Scenes
                 }
             }
 
+            if (CanExecuteMacro())
+            {
+                Macro macro = Macros.FindMacro(up, Keyboard.Alt, Keyboard.Ctrl, Keyboard.Shift);
+
+                if (macro != null)
+                {
+                    if (macro.Items is MacroObject mac)
+                    {
+                        ExecuteMacro(mac);
+
+                        return true;
+                    }
+                }
+            }
+
             if (!UIManager.IsMouseOverWorld)
             {
                 return false;
@@ -931,11 +969,11 @@ namespace ClassicUO.Game.Scenes
             {
                 if (up)
                 {
-                    Camera.ZoomOut();
+                    Camera.ZoomIn();
                 }
                 else
                 {
-                    Camera.ZoomIn();
+                    Camera.ZoomOut();
                 }
 
                 return true;
@@ -1137,15 +1175,13 @@ namespace ClassicUO.Game.Scenes
                 return;
             }
 
-            bool canExecuteMacro = UIManager.KeyboardFocusControl == UIManager.SystemChat.TextBoxControl && UIManager.SystemChat.Mode >= ChatMode.Default;
-
-            if (canExecuteMacro)
+            if (CanExecuteMacro())
             {
                 Macro macro = Macros.FindMacro(e.keysym.sym, Keyboard.Alt, Keyboard.Ctrl, Keyboard.Shift);
 
                 if (macro != null && e.keysym.sym != SDL.SDL_Keycode.SDLK_UNKNOWN)
                 {
-                    if (macro.Items != null && macro.Items is MacroObject mac)
+                    if (macro.Items is MacroObject mac)
                     {
                         if (mac.Code == MacroType.Walk)
                         {
@@ -1200,10 +1236,7 @@ namespace ClassicUO.Game.Scenes
                         }
                         else
                         {
-                            Macros.SetMacroToExecute(mac);
-                            Macros.WaitingBandageTarget = false;
-                            Macros.WaitForTargetTimer = 0;
-                            Macros.Update();
+                            ExecuteMacro(mac);
                         }
                     }
                 }
@@ -1257,7 +1290,7 @@ namespace ClassicUO.Game.Scenes
 
                 if (macro != null && e.keysym.sym != SDL.SDL_Keycode.SDLK_UNKNOWN)
                 {
-                    if (macro.Items != null && macro.Items is MacroObject mac && mac.Code == MacroType.Walk)
+                    if (macro.Items is MacroObject mac && mac.Code == MacroType.Walk)
                     {
                         _flags[4] = false;
 
@@ -1363,6 +1396,19 @@ namespace ClassicUO.Game.Scenes
                     GameActions.ToggleWarMode();
                 }
             }
+        }
+
+        private bool CanExecuteMacro()
+        {
+            return UIManager.KeyboardFocusControl == UIManager.SystemChat.TextBoxControl && UIManager.SystemChat.Mode >= ChatMode.Default;
+        }
+
+        private void ExecuteMacro(MacroObject macro)
+        {
+            Macros.SetMacroToExecute(macro);
+            Macros.WaitingBandageTarget = false;
+            Macros.WaitForTargetTimer = 0;
+            Macros.Update();
         }
     }
 }

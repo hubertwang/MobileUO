@@ -168,8 +168,6 @@ namespace ClassicUO
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue1.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[0].UnityTexture as UnityEngine.Texture2D));
             // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue2.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[1].UnityTexture as UnityEngine.Texture2D));
 
-            AnimatedStaticsManager.Initialize();
-
             GameCursor = new GameCursor();
             Audio = new AudioManager();
             Audio.Initialize();
@@ -771,6 +769,10 @@ namespace ClassicUO
                         case MouseButtonType.Right:
                             lastClickTime = Mouse.LastRightButtonClickTime;
 
+                            break;
+
+                        case MouseButtonType.XButton1:
+                        case MouseButtonType.XButton2:
                             break;
 
                         default: 

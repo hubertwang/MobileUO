@@ -164,7 +164,7 @@ namespace ClassicUO.Game
 
         public static ClientFeatures ClientFeatures { get; } = new ClientFeatures();
 
-        public static string ServerName { get; set; }
+        public static string ServerName { get; set; } = "_";
 
 
 
@@ -759,6 +759,8 @@ namespace ClassicUO.Game
                 RemoveItem(item);
             }
 
+            UIManager.GetGump<BaseHealthBarGump>(Player.Serial)?.Dispose();
+
             ObjectToRemove = 0;
             LastObject = 0;
             Items.Clear();
@@ -769,7 +771,6 @@ namespace ClassicUO.Game
             Map = null;
             Light.Overall = Light.RealOverall = 0;
             Light.Personal = Light.RealPersonal = 0;
-            ClientFeatures.SetFlags(0);
             ClientLockedFeatures.SetFlags(0);
             Party?.Clear();
             TargetManager.LastAttack = 0;
