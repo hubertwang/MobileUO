@@ -52,6 +52,14 @@ namespace ClassicUO.Renderer
         public unsafe Texture2D AddSprite<T>(Span<T> pixels, int width, int height, out Rectangle pr) where T : unmanaged
         {
             var index = _textureList.Count - 1;
+            pr = new Rectangle(0, 0, width, height);
+
+            // MobileUO: handle 0x0 textures - this shouldn't happen unless the client data is missing newer textures
+            if (width <= 0 || height <= 0)
+            {
+                Utility.Logging.Log.Trace($"Texture width and height must be greater than zero. Width: {width} Height: {height} Index: {index}");
+                return null;
+            }
 
             if (index < 0)
             {
@@ -60,7 +68,7 @@ namespace ClassicUO.Renderer
             }
 
             // ref Rectangle pr = ref _spriteBounds[hash];
-            pr = new Rectangle(0, 0, width, height);
+            //pr = new Rectangle(0, 0, width, height);
             // MobileUO: TODO: figure out how to get packer working correctly
             //while (!_packer.PackRect(width, height, null, out pr))
             {
