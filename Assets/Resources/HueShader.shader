@@ -139,7 +139,7 @@
                     IN.uv.x = 1 - IN.uv.x;
                 }
 
-                float4 color = tex2D(_MainTex, IN.uv);
+                float4 color = tex2D(_MainTex, IN.uv.xy);
 
                 if (color.a == 0.0f)
                     discard;
@@ -197,7 +197,7 @@
 	            }
 	            else if (mode == SPECTRAL)
 	            {
-		            alpha = 1 - (color.r * 1.5f);
+		            alpha = 1.0f - (color.r * 1.5f);
 		            color.r = 0;
 		            color.g = 0;
 		            color.b = 0;
@@ -211,10 +211,7 @@
 	            }
 	            else if (mode == LIGHTS)
 	            {
-		            if (IN.Hue.x > 1.0f)
-		            {
-			            color.rgb = get_colored_light(IN.Hue.x - 1, color.r);
-		            }
+			        color.rgb = get_colored_light(IN.Hue.x - 1, color.r);
 	            }
 	            else if (mode == EFFECT_HUED)
 	            {
