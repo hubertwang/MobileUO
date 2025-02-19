@@ -596,19 +596,36 @@ namespace ClassicUO.Game.Scenes
             }
             else
             {
-                if (first == null)
+                // MobileUO: TODO: for some reason we must use the private static variables.
+                // If we use the ref'ed ones then mobiles will walk on top of everything (roofs, walls, etc.)
+                if (_renderListStaticsHead == null)
                 {
-                    first = renderList = obj;
+                    _renderListStaticsHead = renderList = obj;
                 }
                 else
                 {
-                    renderList.RenderListNext = obj;
-                    renderList = obj;
+                    _renderList.RenderListNext = obj;
+                    _renderList = obj;
                 }
 
                 obj.RenderListNext = null;
 
-                ++renderListCount;
+                ++_renderListStaticsCount;
+
+                // MobileUO: TODO: try and get this version to work:
+                //if (first == null)
+                //{
+                //    first = renderList = obj;
+                //}
+                //else
+                //{
+                //    renderList.RenderListNext = obj;
+                //    renderList = obj;
+                //}
+
+                //obj.RenderListNext = null;
+
+                //++renderListCount;
             }
         }
 
