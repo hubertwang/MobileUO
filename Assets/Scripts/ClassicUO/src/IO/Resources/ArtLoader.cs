@@ -375,9 +375,9 @@ namespace ClassicUO.IO.Resources
             return IntPtr.Zero;
         }
 
-        public bool PixelCheck(int index, int x, int y)
+        public bool PixelCheck(int index, int x, int y, bool pixelCheck = true)
         {
-            return _picker.Get((ulong) index, x, y);
+            return _picker.Get((ulong) index, x, y, 0, pixelCheck);
         }
 
         // MobileUO: keep function

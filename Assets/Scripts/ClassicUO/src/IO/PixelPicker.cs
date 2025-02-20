@@ -13,7 +13,7 @@ namespace ClassicUO.IO
         Dictionary<ulong, int> m_IDs = new Dictionary<ulong, int>();
         readonly List<byte> m_Data = new List<byte>(InitialDataCount); // list<t> access is 10% slower than t[].
 
-        public bool Get(ulong textureID, int x, int y, int extraRange = 0)
+        public bool Get(ulong textureID, int x, int y, int extraRange = 0, bool pixelCheck = true)
         {
             int index;
             if (!m_IDs.TryGetValue(textureID, out index))
@@ -30,6 +30,13 @@ namespace ClassicUO.IO
             {
                 return false;
             }
+
+            // MobileUO: allow coarse item selection for items on ground
+            if (!pixelCheck && x > 0 && x < width && y > 0 && y < height)
+            {
+                return true;
+            }
+
             int current = 0;
             int target = x + y * width;
             bool inTransparentSpan = true;
