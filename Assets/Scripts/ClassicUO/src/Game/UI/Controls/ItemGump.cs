@@ -201,6 +201,12 @@ namespace ClassicUO.Game.UI.Controls
             {
                 return false;
             }
+            
+            // MobileUO: allow coarse item selection
+            if(!PixelCheck)
+            {
+                return true;
+            }
 
             x -= Offset.X;
             y -= Offset.Y;
