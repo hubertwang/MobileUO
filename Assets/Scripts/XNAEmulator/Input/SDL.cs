@@ -990,12 +990,26 @@ namespace SDL2
 
         public static void SDL_SetWindowMinimumSize(IntPtr windowHandle, int width, int height)
         {
-            // TODO: stubbed the method, probably needs implementing? ~mandlar
+            
         }
 
         public static void SDL_GetCurrentDisplayMode(int i, out SDL_DisplayMode sdlDisplayMode)
         {
             sdlDisplayMode = new SDL_DisplayMode();
+        }
+
+        public static int SDL_GetWindowDisplayIndex(IntPtr windowHandle)
+        {
+            return 0;
+        }
+
+        public static int SDL_GetDisplayUsableBounds(int displayIndex, out SDL_Rect rect)
+        {
+            rect = new SDL_Rect();
+            rect.x = 0;
+            rect.y = 0;
+
+            return 0;
         }
 
         public struct SDL_DisplayMode

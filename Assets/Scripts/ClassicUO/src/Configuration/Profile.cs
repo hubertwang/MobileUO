@@ -161,6 +161,7 @@ namespace ClassicUO.Configuration
         public bool UseAlternativeLights { get; set; }
         public bool UseCustomLightLevel { get; set; }
         public byte LightLevel { get; set; }
+        public int LightLevelType { get; set; } // 0 = absolute, 1 = minimum
         public bool UseColoredLights { get; set; } = true;
         public bool UseDarkNights { get; set; }
         public int CloseHealthBarType { get; set; } // 0 = none, 1 == not exists, 2 == is dead
@@ -196,6 +197,7 @@ namespace ClassicUO.Configuration
         public int OverrideContainerLocationSetting { get; set; } // 0 = container position, 1 = top right of screen, 2 = last dragged position, 3 = remember every container
 
         public Point OverrideContainerLocationPosition { get; set; } = new Point(200, 200);
+        public bool HueContainerGumps { get; set; } = true;
         public bool DragSelectHumanoidsOnly { get; set; }
         public int DragSelectStartX { get; set; } = 100;
         public int DragSelectStartY { get; set; } = 100;
@@ -235,6 +237,7 @@ namespace ClassicUO.Configuration
         public int TerrainShadowsLevel { get; set; } = 15;
         public int AuraUnderFeetType { get; set; } // 0 = NO, 1 = in warmode, 2 = ctrl+shift, 3 = always
         public bool AuraOnMouse { get; set; } = true;
+        public bool AnimatedWaterEffect { get; set; } = false;
 
         public bool PartyAura { get; set; }
 

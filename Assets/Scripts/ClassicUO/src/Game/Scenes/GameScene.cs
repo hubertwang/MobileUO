@@ -758,6 +758,12 @@ namespace ClassicUO.Game.Scenes
                 return;
             }
 
+            if (Time.Ticks > _timePing)
+            {
+                NetClient.Socket.Statistics.SendPing();
+                _timePing = (long)Time.Ticks + 1000;
+            }
+
             World.Update();
             _animatedStaticsManager.Process();
             BoatMovingManager.Update();
@@ -805,13 +811,6 @@ namespace ClassicUO.Game.Scenes
                 {
                     StopFollowing();
                 }
-            }
-
-
-            if (Time.Ticks > _timePing)
-            {
-                NetClient.Socket.Statistics.SendPing();
-                _timePing = (long)Time.Ticks + 1000;
             }
 
             Macros.Update();

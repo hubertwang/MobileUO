@@ -65,7 +65,7 @@ namespace ClassicUO.Game.Scenes
 
         private sbyte _maxGroundZ;
         private int _maxZ;
-        private Vector2 _minPixel, _maxPixel;
+        private Vector2 _minPixel, _maxPixel, _lastCamOffset;
         private bool _noDrawRoofs;
         private Point _offset, _maxTile, _minTile, _last_scaled_offset;
         private int _oldPlayerX, _oldPlayerY, _oldPlayerZ;
@@ -982,6 +982,13 @@ namespace ClassicUO.Game.Scenes
 
             int realMinRangeX = World.Player.X - size;
 
+            // MobleUO: TODO: do we have to add this?
+            //if (Camera.Offset.X != 0 || Camera.Offset.Y != 0)
+            //{
+            //    tileOffX += (int) (zoom * (Camera.Offset.X + Camera.Offset.Y) / 44);
+            //    tileOffY += (int) (zoom * (Camera.Offset.Y - Camera.Offset.X) / 44);
+            //};
+
             if (realMinRangeX < 0)
                 realMinRangeX = 0;
             int realMaxRangeX = World.Player.X + size;
@@ -1024,9 +1031,10 @@ namespace ClassicUO.Game.Scenes
             int minPixelsY = (int) ((winGamePosY) * zoom /*- (newMaxY - maxY)*/) - drawOffset * 2;
             int maxPixlesY = (int) newMaxY;
 
-            if (UpdateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY)
+            if (UpdateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY || _lastCamOffset != Camera.Offset)
             {
                 UpdateDrawPosition = true;
+                _lastCamOffset = Camera.Offset;
 
                 if (_world_render_target == null || _world_render_target.Width != (int)(winGameWidth * zoom) || _world_render_target.Height != (int)(winGameHeight * zoom))
                 {
