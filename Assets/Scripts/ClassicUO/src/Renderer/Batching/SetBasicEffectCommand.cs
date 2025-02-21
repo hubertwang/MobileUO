@@ -1,1 +1,0 @@
-../../../../../../external/ClassicUO/src/Renderer/Batching/SetBasicEffectCommand.cs

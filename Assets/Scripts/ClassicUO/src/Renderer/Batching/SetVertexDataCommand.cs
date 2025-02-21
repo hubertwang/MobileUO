@@ -1,1 +1,0 @@
-../../../../../../external/ClassicUO/src/Renderer/Batching/SetVertexDataCommand.cs
