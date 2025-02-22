@@ -1,8 +1,8 @@
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer.Effects
 {
-    class BasicUOEffect : Effect
+    internal class BasicUOEffect : Effect
     {
         public BasicUOEffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.IsometricEffect)
         {

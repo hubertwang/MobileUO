@@ -44,6 +44,7 @@ using MathHelper = ClassicUO.Utility.MathHelper;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Utility.Logging;
+using ClassicUO.Assets;
 
 namespace ClassicUO.Game
 {
@@ -124,7 +125,7 @@ namespace ClassicUO.Game
 
                         Map = null;
 
-                        if (value >= Constants.MAPS_COUNT)
+                        if (value >= MapLoader.MAPS_COUNT)
                         {
                             value = 0;
                         }

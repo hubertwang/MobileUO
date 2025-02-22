@@ -1,17 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StbRectPackSharp;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
-using StbRectPackSharp;
-
-namespace ClassicUO.Renderer
+namespace ClassicUO.Assets
 {
-    class TextureAtlas : IDisposable
+    public class TextureAtlas : IDisposable
     {
         private readonly int _width, _height;
         private readonly SurfaceFormat _format;
@@ -19,15 +14,15 @@ namespace ClassicUO.Renderer
         private readonly List<Texture2D> _textureList;
         private Packer _packer;
 
-        public static TextureAtlas Shared { get; }
+        public static TextureAtlas Shared { get; private set; }
 
-        static TextureAtlas()
+        public static void InitializeSharedTexture(GraphicsDevice device)
         {
             const int TEXTURE_SIZE = 1024 * 4;
 
-            Shared = new TextureAtlas 
+            Shared = new TextureAtlas
             (
-                Client.Game.GraphicsDevice,
+                device,
                 TEXTURE_SIZE,
                 TEXTURE_SIZE,
                 SurfaceFormat.Color

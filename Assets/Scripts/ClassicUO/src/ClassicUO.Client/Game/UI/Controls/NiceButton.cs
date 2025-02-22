@@ -34,7 +34,7 @@ using System.Collections.Generic;
 // MobileUO: added import
 using System.Linq;
 using ClassicUO.Input;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
 

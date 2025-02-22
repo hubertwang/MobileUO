@@ -30,13 +30,13 @@
 
 #endregion
 
-using System;
 using Microsoft.Xna.Framework.Audio;
+using System;
 using static System.String;
 
 namespace ClassicUO.IO.Audio
 {
-    internal abstract class Sound : IComparable<Sound>, IDisposable
+    public abstract class Sound : IComparable<Sound>, IDisposable
     {
         private uint _lastPlayedTime;
         private string m_Name;
@@ -106,7 +106,7 @@ namespace ClassicUO.IO.Audio
             }
         }
 
-        public bool IsPlaying => SoundInstance != null && SoundInstance.State == SoundState.Playing && DurationTime > Time.Ticks;
+        public bool IsPlaying(uint curTime) => SoundInstance != null && SoundInstance.State == SoundState.Playing && DurationTime > curTime;
 
         public int CompareTo(Sound other)
         {
@@ -150,9 +150,9 @@ namespace ClassicUO.IO.Audio
         ///     Plays the effect.
         /// </summary>
         /// <param name="asEffect">Set to false for music, true for sound effects.</param>
-        public bool Play(float volume = 1.0f, float volumeFactor = 0.0f, bool spamCheck = false)
+        public bool Play(uint curTime, float volume = 1.0f, float volumeFactor = 0.0f, bool spamCheck = false)
         {
-            if (_lastPlayedTime > Time.Ticks)
+            if (_lastPlayedTime > curTime)
             {
                 return false;
             }
@@ -174,7 +174,7 @@ namespace ClassicUO.IO.Audio
             if (buffer != null && buffer.Length > 0)
             {
                 // MobileUO: added distortion fix
-                _lastPlayedTime = Time.Ticks + Delay - DistortionFix;
+                _lastPlayedTime = curTime + Delay - DistortionFix;
 
                 SoundInstance.BufferNeeded += OnBufferNeeded;
                 // MobileUO: keep this version of SubmitBuffer
@@ -183,7 +183,7 @@ namespace ClassicUO.IO.Audio
                 VolumeFactor = volumeFactor;
                 Volume = volume;
 
-                DurationTime = Time.Ticks + SoundInstance.GetSampleDuration(buffer.Length).TotalMilliseconds;
+                DurationTime = curTime + SoundInstance.GetSampleDuration(buffer.Length).TotalMilliseconds;
 
                 // MobileUO: keep this version of Play
                 // MobileUO: TODO: can we get new way to work?

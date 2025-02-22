@@ -30,16 +30,17 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using ClassicUO.Data;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class SpeechesLoader : UOFileLoader
+    public class SpeechesLoader : UOFileLoader
     {
         private static SpeechesLoader _instance;
         private SpeechEntry[] _speech;
@@ -144,7 +145,7 @@ namespace ClassicUO.IO.Resources
         {
             List<SpeechEntry> list = new List<SpeechEntry>();
 
-            if (Client.Version < ClientVersion.CV_305D)
+            if (UOFileManager.Version < ClientVersion.CV_305D)
             {
                 return list;
             }
@@ -167,7 +168,7 @@ namespace ClassicUO.IO.Resources
         }
     }
 
-    internal readonly struct SpeechEntry : IComparable<SpeechEntry>
+    public readonly struct SpeechEntry : IComparable<SpeechEntry>
     {
         public SpeechEntry(int id, string keyword)
         {

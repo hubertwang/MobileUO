@@ -1,16 +1,13 @@
-﻿using System;
+﻿using ClassicUO.Utility;
+using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using ClassicUO.Utility;
 
 namespace ClassicUO.IO
 {
-    unsafe ref struct StackDataReader
+    public unsafe ref struct StackDataReader
     {
         private const MethodImplOptions IMPL_OPTION = MethodImplOptions.AggressiveInlining
 #if !NETFRAMEWORK && !NETSTANDARD2_0

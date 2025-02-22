@@ -30,16 +30,14 @@
 
 #endregion
 
-using System;
-using ClassicUO.Configuration;
-using ClassicUO.Data;
-using MP3Sharp;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework.Audio;
+using MP3Sharp;
+using System;
 
 namespace ClassicUO.IO.Audio
 {
-    internal class UOMusic : Sound
+    public class UOMusic : Sound
     {
         private const int NUMBER_OF_PCM_BYTES_TO_READ_PER_CHUNK = 0x8000; // 32768 bytes, about 0.9 seconds
         private bool m_Playing;
@@ -48,14 +46,14 @@ namespace ClassicUO.IO.Audio
         private readonly byte[] m_WaveBuffer = new byte[NUMBER_OF_PCM_BYTES_TO_READ_PER_CHUNK];
 
 
-        public UOMusic(int index, string name, bool loop, string basePath) : base(name, index)
+        public UOMusic(int index, string name, bool loop, string fileName) : base(name, index)
         {
             m_Repeat = loop;
             m_Playing = false;
             Channels = AudioChannels.Stereo;
             Delay = 0;
             
-            Path = System.IO.Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, $"{basePath}/{Name}.mp3");
+            Path = fileName;
         }
 
         private string Path { get; }

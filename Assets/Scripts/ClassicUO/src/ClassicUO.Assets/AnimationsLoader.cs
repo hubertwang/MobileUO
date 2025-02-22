@@ -30,6 +30,11 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -37,24 +42,17 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Data;
-using ClassicUO.Game;
-using ClassicUO.Game.Data;
-using ClassicUO.Renderer;
-using ClassicUO.Utility;
-using ClassicUO.Utility.Logging;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal unsafe class AnimationsLoader : UOFileLoader
+    public unsafe class AnimationsLoader : UOFileLoader
     {
-        internal const int MAX_ACTIONS = 80; // gargoyle is like 78
-        internal const int MAX_DIRECTIONS = 5;
+        public const int MAX_ACTIONS = 80; // gargoyle is like 78
+        public const int MAX_DIRECTIONS = 5;
+        public const int MAX_ANIMATIONS_DATA_INDEX_COUNT = 2048;
 
         private static AnimationsLoader _instance;
-        private static uint _lastFlags = 0xFFFFFFFF;
+        private static BodyConvFlags _lastFlags = (BodyConvFlags)(-1);
         [ThreadStatic] private static FrameInfo[] _frames;
         [ThreadStatic] private static byte[] _decompressedData;
 
@@ -75,8 +73,7 @@ namespace ClassicUO.IO.Resources
 
         public static AnimationsLoader Instance => _instance ?? (_instance = new AnimationsLoader());
 
-        private IndexAnimation[] _dataIndex = new IndexAnimation[Constants.MAX_ANIMATIONS_DATA_INDEX_COUNT];
-        public  int MAX_ANIMATIONS_DATA_INDEX_COUNT { get { return _dataIndex.Length; } }
+        private IndexAnimation[] _dataIndex = new IndexAnimation[MAX_ANIMATIONS_DATA_INDEX_COUNT];
 
         public IReadOnlyDictionary<ushort, Dictionary<ushort, EquipConvData>> EquipConversions => _equipConv;
 
@@ -122,7 +119,7 @@ namespace ClassicUO.IO.Resources
                     _files[i] = new UOFileMul(pathmul, pathidx, un[i], i == 0 ? 6 : -1);
                 }
 
-                if (i > 0 && Client.IsUOPInstallation)
+                if (i > 0 && UOFileManager.IsUOPInstallation)
                 {
                     string pathuop = UOFileManager.GetUOFilePath($"AnimationFrame{i}.uop");
 
@@ -143,7 +140,7 @@ namespace ClassicUO.IO.Resources
                 LoadUop();
             }
 
-            if (Client.Version >= ClientVersion.CV_500A)
+            if (UOFileManager.Version >= ClientVersion.CV_500A)
             {
                 string path = UOFileManager.GetUOFilePath("mobtypes.txt");
 
@@ -183,7 +180,7 @@ namespace ClassicUO.IO.Resources
 
                             int id = int.Parse(parts[0]);
 
-                            if (id >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                            if (id >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                             {
                                 continue;
                             }
@@ -225,7 +222,7 @@ namespace ClassicUO.IO.Resources
                 }
             }
 
-            for (ushort i = 0; i < AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT; i++)
+            for (ushort i = 0; i < MAX_ANIMATIONS_DATA_INDEX_COUNT; i++)
             {
                 var idxFile = _files[0].IdxFile;
 
@@ -344,7 +341,7 @@ namespace ClassicUO.IO.Resources
 
         private void ProcessEquipConvDef()
         {
-            if (Client.Version < ClientVersion.CV_300)
+            if (UOFileManager.Version < ClientVersion.CV_300)
             {
                 return;
             }
@@ -359,21 +356,21 @@ namespace ClassicUO.IO.Resources
                     {
                         ushort body = (ushort)defReader.ReadInt();
 
-                        if (body >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (body >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
 
                         ushort graphic = (ushort)defReader.ReadInt();
 
-                        if (graphic >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (graphic >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
 
                         ushort newGraphic = (ushort)defReader.ReadInt();
 
-                        if (newGraphic >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (newGraphic >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
@@ -407,9 +404,19 @@ namespace ClassicUO.IO.Resources
             }
         }
 
-        private void ProcessBodyConvDef(LockedFeatureFlags flags)
+        [Flags]
+        public enum BodyConvFlags
         {
-            if (Client.Version < ClientVersion.CV_300)
+            Anim1 = 0x1,
+            Anim2 = 0x2,
+            Anim3 = 0x4,
+            Anim4 = 0x8,
+            Anim5 = 0x10,
+        }
+
+        private void ProcessBodyConvDef(BodyConvFlags flags)
+        {
+            if (UOFileManager.Version < ClientVersion.CV_300)
             {
                 return;
             }
@@ -424,7 +431,7 @@ namespace ClassicUO.IO.Resources
                     {
                         ushort index = (ushort)defReader.ReadInt();
 
-                        if (index >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (index >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
@@ -433,29 +440,24 @@ namespace ClassicUO.IO.Resources
                         {
                             int body = defReader.ReadInt();
 
-                            if (body >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT || body < 0)
+                            if (body >= MAX_ANIMATIONS_DATA_INDEX_COUNT || body < 0)
                             {
                                 continue;
                             }
 
-                            // adaption of this PR: https://github.com/ClassicUO/ClassicUO/pull/1525
-                            // old server sends 0x03 as flags. Original client allows the bodyconv. [tested with 7.0.95.0]
-                            if (!flags.HasFlag(LockedFeatureFlags.ExpansionUOR))
+                            // Ensure the client is allowed to use these new graphics
+                            if (i == 1)
                             {
-                                // Ensure the client is allowed to use these new graphics
-                                if (i == 1)
+                                if (!flags.HasFlag(BodyConvFlags.Anim1))
                                 {
-                                    if (!flags.HasFlag(LockedFeatureFlags.LBR))
-                                    {
-                                        continue;
-                                    }
+                                    continue;
                                 }
-                                else if (i == 2)
+                            }
+                            else if (i == 2)
+                            {
+                                if (!flags.HasFlag(BodyConvFlags.Anim2))
                                 {
-                                    if (!flags.HasFlag(LockedFeatureFlags.AOS))
-                                    {
-                                        continue;
-                                    }
+                                    continue;
                                 }
                             }
                         
@@ -463,14 +465,14 @@ namespace ClassicUO.IO.Resources
                             //       Probably it ignores the flags
                             /*else if (i == 3)
                             {
-                                if ((flags & LockedFeatureFlags.SamuraiEmpire) == 0)
+                                if (flags.HasFlag(BodyConvFlags.Anim3))
                                 {
                                     continue;
                                 }
                             }
                             else if (i == 4)
                             {
-                                if ((flags & LockedFeatureFlags.MondainsLegacy) == 0)
+                                if (flags.HasFlag(BodyConvFlags.Anim4))
                                 {
                                     continue;
                                 }
@@ -513,7 +515,7 @@ namespace ClassicUO.IO.Resources
 
                             UOFile currentIdxFile = _files[i].IdxFile;
 
-                            ANIMATION_GROUPS_TYPE realType = Client.Version < ClientVersion.CV_500A ? CalculateTypeByGraphic((ushort)body, i) : _dataIndex[index].Type;
+                            ANIMATION_GROUPS_TYPE realType = UOFileManager.Version < ClientVersion.CV_500A ? CalculateTypeByGraphic((ushort)body, i) : _dataIndex[index].Type;
 
                             long addressOffset = _dataIndex[index].CalculateOffset((ushort)body, realType, out int count);
                           
@@ -588,7 +590,7 @@ namespace ClassicUO.IO.Resources
 
         private void ProcessBodyDef()
         {
-            if (Client.Version < ClientVersion.CV_300)
+            if (UOFileManager.Version < ClientVersion.CV_300)
             {
                 return;
             }
@@ -637,7 +639,7 @@ namespace ClassicUO.IO.Resources
                             checkIndex = group[0];
                         }
 
-                        if (checkIndex >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (checkIndex >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
@@ -655,7 +657,7 @@ namespace ClassicUO.IO.Resources
 
         private void ProcessCorpseDef()
         {
-            if (Client.Version < ClientVersion.CV_300)
+            if (UOFileManager.Version < ClientVersion.CV_300)
             {
                 return;
             }
@@ -703,7 +705,7 @@ namespace ClassicUO.IO.Resources
                             checkIndex = group[0];
                         }
 
-                        if (checkIndex >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+                        if (checkIndex >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
                         {
                             continue;
                         }
@@ -720,12 +722,12 @@ namespace ClassicUO.IO.Resources
 
         private void LoadUop()
         {
-            if (Client.Version <= ClientVersion.CV_60144)
+            if (UOFileManager.Version <= ClientVersion.CV_60144)
             {
                 return;
             }
 
-            for (ushort animID = 0; animID < AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT; animID++)
+            for (ushort animID = 0; animID < MAX_ANIMATIONS_DATA_INDEX_COUNT; animID++)
             {
                 for (byte grpID = 0; grpID < MAX_ACTIONS; grpID++)
                 {
@@ -778,7 +780,7 @@ namespace ClassicUO.IO.Resources
             }
 
             UOFileUop animSeq = new UOFileUop(animationSequencePath, "build/animationsequence/{0:D8}.bin");
-            UOFileIndex[] animseqEntries = new UOFileIndex[Math.Max(animSeq.TotalEntriesCount, AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)];
+            UOFileIndex[] animseqEntries = new UOFileIndex[Math.Max(animSeq.TotalEntriesCount, MAX_ANIMATIONS_DATA_INDEX_COUNT)];
             animSeq.FillEntries(ref animseqEntries);
 
             Span<byte> spanAlloc = stackalloc byte[1024];
@@ -909,7 +911,7 @@ namespace ClassicUO.IO.Resources
 
         public void ConvertBodyIfNeeded(ref ushort graphic, bool isParent = false, bool forceUOP = false)
         {
-            if (graphic >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT)
+            if (graphic >= MAX_ANIMATIONS_DATA_INDEX_COUNT)
             {
                 return;
             }
@@ -1080,11 +1082,11 @@ namespace ClassicUO.IO.Resources
             return _picker.Get(packed, x, y);
         }
 
-        public void UpdateAnimationTable(uint flags)
+        public void UpdateAnimationTable(BodyConvFlags flags)
         {
             if (flags != _lastFlags)
             {
-                if (_lastFlags != 0xFFFFFFFF)
+                if (_lastFlags != (BodyConvFlags)(-1))
                 {
                     /* This happens when you log out of an account then into another
                      * one with different expansions activated. Just reload the anim
@@ -1093,7 +1095,7 @@ namespace ClassicUO.IO.Resources
                     LoadInternal();
                 }
 
-                ProcessBodyConvDef((LockedFeatureFlags)flags);
+                ProcessBodyConvDef(flags);
             }
 
             _lastFlags = flags;
@@ -1299,7 +1301,7 @@ namespace ClassicUO.IO.Resources
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ANIMATION_GROUPS GetGroupIndex(ushort graphic)
         {
-            if (graphic >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT || _dataIndex[graphic] == null)
+            if (graphic >= MAX_ANIMATIONS_DATA_INDEX_COUNT || _dataIndex[graphic] == null)
             {
                 return ANIMATION_GROUPS.AG_HIGHT;
             }
@@ -1321,7 +1323,7 @@ namespace ClassicUO.IO.Resources
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte GetDeathAction(ushort id, bool second, bool isRunning = false)
         {
-            if (id >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT || _dataIndex[id] == null)
+            if (id >= MAX_ANIMATIONS_DATA_INDEX_COUNT || _dataIndex[id] == null)
             {
                 return 0;
             }
@@ -1376,7 +1378,7 @@ namespace ClassicUO.IO.Resources
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsAnimationExists(ushort graphic, byte group, bool isCorpse = false)
         {
-            if (graphic < AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT && group < MAX_ACTIONS)
+            if (graphic < MAX_ANIMATIONS_DATA_INDEX_COUNT && group < MAX_ACTIONS)
             {
                 var frames = GetAnimationFrames(graphic, group, 0, out var _, out _, false, isCorpse);
 
@@ -1401,7 +1403,7 @@ namespace ClassicUO.IO.Resources
             hue = 0;
             useUOP = false;
 
-            if (id >= AnimationsLoader.Instance.MAX_ANIMATIONS_DATA_INDEX_COUNT || action >= MAX_ACTIONS || dir >= MAX_DIRECTIONS)
+            if (id >= MAX_ANIMATIONS_DATA_INDEX_COUNT || action >= MAX_ACTIONS || dir >= MAX_DIRECTIONS)
             {
                 return Span<SpriteInfo>.Empty;
             }
@@ -1834,7 +1836,7 @@ namespace ClassicUO.IO.Resources
         }
     }
 
-    internal enum ANIMATION_GROUPS
+    public enum ANIMATION_GROUPS
     {
         AG_NONE = 0,
         AG_LOW,
@@ -1842,7 +1844,7 @@ namespace ClassicUO.IO.Resources
         AG_PEOPLE
     }
 
-    internal enum ANIMATION_GROUPS_TYPE
+    public enum ANIMATION_GROUPS_TYPE
     {
         MONSTER = 0,
         SEA_MONSTER,
@@ -1852,7 +1854,7 @@ namespace ClassicUO.IO.Resources
         UNKNOWN
     }
 
-    internal enum HIGHT_ANIMATION_GROUP
+    public enum HIGHT_ANIMATION_GROUP
     {
         HAG_WALK = 0,
         HAG_STAND,
@@ -1879,7 +1881,7 @@ namespace ClassicUO.IO.Resources
         HAG_ANIMATION_COUNT
     }
 
-    internal enum PEOPLE_ANIMATION_GROUP
+    public enum PEOPLE_ANIMATION_GROUP
     {
         PAG_WALK_UNARMED = 0,
         PAG_WALK_ARMED,
@@ -1919,7 +1921,7 @@ namespace ClassicUO.IO.Resources
         PAG_ANIMATION_COUNT
     }
 
-    internal enum LOW_ANIMATION_GROUP
+    public enum LOW_ANIMATION_GROUP
     {
         LAG_WALK = 0,
         LAG_RUN,
@@ -1938,7 +1940,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [Flags]
-    internal enum ANIMATION_FLAGS : uint
+    public enum ANIMATION_FLAGS : uint
     {
         AF_NONE = 0x00000,
         AF_UNKNOWN_1 = 0x00001,
@@ -1964,7 +1966,7 @@ namespace ClassicUO.IO.Resources
         AF_FOUND = 0x80000000
     }
 
-    internal class IndexAnimation
+    public class IndexAnimation
     {
         private byte[] _uopReplaceGroupIndex;
 
@@ -2104,12 +2106,12 @@ namespace ClassicUO.IO.Resources
     }
 
 
-    internal class AnimationGroup
+    public class AnimationGroup
     {
         public AnimationDirection[] Direction = new AnimationDirection[AnimationsLoader.MAX_DIRECTIONS];
     }
 
-    internal class AnimationGroupUop : AnimationGroup
+    public class AnimationGroupUop : AnimationGroup
     {
         public uint CompressedLength;
         public uint DecompressedLength;
@@ -2117,7 +2119,7 @@ namespace ClassicUO.IO.Resources
         public uint Offset;
     }
 
-    struct AnimationDirection
+    public struct AnimationDirection
     {
         public long Address;
         public byte FrameCount;
@@ -2126,7 +2128,7 @@ namespace ClassicUO.IO.Resources
         public uint Size;
     }
 
-    struct SpriteInfo
+    public struct SpriteInfo
     {
         public Texture2D Texture;
         public Rectangle UV;
@@ -2135,7 +2137,7 @@ namespace ClassicUO.IO.Resources
         public static SpriteInfo Empty = new SpriteInfo { Texture = null };
     }
 
-    internal struct EquipConvData : IEquatable<EquipConvData>
+    public struct EquipConvData : IEquatable<EquipConvData>
     {
         public EquipConvData(ushort graphic, ushort gump, ushort color)
         {

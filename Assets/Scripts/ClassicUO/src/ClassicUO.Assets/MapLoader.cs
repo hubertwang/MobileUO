@@ -30,22 +30,18 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Configuration;
-using ClassicUO.Data;
-using ClassicUO.Game;
-using ClassicUO.Game.GameObjects;
-using ClassicUO.Network;
-using ClassicUO.Utility;
-using ClassicUO.Utility.Logging;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class MapLoader : UOFileLoader
+    public class MapLoader : UOFileLoader
     {
         private static MapLoader _instance;
         private UOFileMul[] _mapDif;
@@ -54,7 +50,10 @@ namespace ClassicUO.IO.Resources
         private UOFileMul[] _staDifi;
         private UOFileMul[] _staDifl;
 
-        private protected MapLoader()
+        // cannot be a const, due to UOLive implementation
+        public static int MAPS_COUNT = 6;
+
+        protected MapLoader()
         {
         }
 
@@ -68,12 +67,14 @@ namespace ClassicUO.IO.Resources
             }
         }
 
+        public static string MapsLayouts { get; set; }
+
         public IndexMap[][] BlockData { get; private set; }
 
         public int[,] MapBlocksSize { get; private set; }
 
         // ReSharper disable RedundantExplicitArraySize
-        public int[,] MapsDefaultSize { get; private protected set; } = new int[6, 2]
+        public int[,] MapsDefaultSize { get; protected set; } = new int[6, 2]
             // ReSharper restore RedundantExplicitArraySize
             {
                 {
@@ -100,9 +101,9 @@ namespace ClassicUO.IO.Resources
         public int[] MapPatchCount { get; private set; }
         public int[] StaticPatchCount { get; private set; }
 
-        private protected UOFileMul[] _filesIdxStatics;
-        private protected UOFile[] _filesMap;
-        private protected UOFileMul[] _filesStatics;
+        protected UOFileMul[] _filesIdxStatics;
+        protected UOFile[] _filesMap;
+        protected UOFileMul[] _filesStatics;
 
         protected static UOFile GetMapFile(int map)
         {
@@ -111,21 +112,21 @@ namespace ClassicUO.IO.Resources
 
         protected void Initialize()
         {
-            _filesMap = new UOFile[Constants.MAPS_COUNT];
-            _filesStatics = new UOFileMul[Constants.MAPS_COUNT];
-            _filesIdxStatics = new UOFileMul[Constants.MAPS_COUNT];
+            _filesMap = new UOFile[MAPS_COUNT];
+            _filesStatics = new UOFileMul[MAPS_COUNT];
+            _filesIdxStatics = new UOFileMul[MAPS_COUNT];
 
-            MapPatchCount = new int[Constants.MAPS_COUNT];
-            StaticPatchCount = new int[Constants.MAPS_COUNT];
-            MapBlocksSize = new int[Constants.MAPS_COUNT, 2];
+            MapPatchCount = new int[MAPS_COUNT];
+            StaticPatchCount = new int[MAPS_COUNT];
+            MapBlocksSize = new int[MAPS_COUNT, 2];
 
-            BlockData = new IndexMap[Constants.MAPS_COUNT][];
+            BlockData = new IndexMap[MAPS_COUNT][];
 
-            _mapDif = new UOFileMul[Constants.MAPS_COUNT];
-            _mapDifl = new UOFileMul[Constants.MAPS_COUNT];
-            _staDif = new UOFileMul[Constants.MAPS_COUNT];
-            _staDifi = new UOFileMul[Constants.MAPS_COUNT];
-            _staDifl = new UOFileMul[Constants.MAPS_COUNT];
+            _mapDif = new UOFileMul[MAPS_COUNT];
+            _mapDifl = new UOFileMul[MAPS_COUNT];
+            _staDif = new UOFileMul[MAPS_COUNT];
+            _staDifi = new UOFileMul[MAPS_COUNT];
+            _staDifl = new UOFileMul[MAPS_COUNT];
         }
 
         public override unsafe Task Load()
@@ -136,14 +137,14 @@ namespace ClassicUO.IO.Resources
                 {
                     bool foundOneMap = false;
 
-                    if (!string.IsNullOrEmpty(Settings.GlobalSettings.MapsLayouts))
+                    if (!string.IsNullOrEmpty(MapsLayouts))
                     {
-                        string[] values = Settings.GlobalSettings.MapsLayouts.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] values = MapsLayouts.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
-                        Constants.MAPS_COUNT = values.Length;
+                        MAPS_COUNT = values.Length;
                         MapsDefaultSize = new int[values.Length, 2];
 
-                        Log.Trace($"default maps size overraided. [count: {Constants.MAPS_COUNT}]");
+                        Log.Trace($"default maps size overraided. [count: {MAPS_COUNT}]");
 
 
                         int index = 0;
@@ -173,11 +174,11 @@ namespace ClassicUO.IO.Resources
 
                     Initialize();
 
-                    for (var i = 0; i < Constants.MAPS_COUNT; ++i)
+                    for (var i = 0; i < MAPS_COUNT; ++i)
                     {
                         string path = UOFileManager.GetUOFilePath($"map{i}LegacyMUL.uop");
 
-                        if (Client.IsUOPInstallation && File.Exists(path))
+                        if (UOFileManager.IsUOPInstallation && File.Exists(path))
                         {
                             _filesMap[i] = new UOFileUop(path, $"build/map{i}legacymul/{{0:D8}}.dat");
                             foundOneMap = true;
@@ -228,7 +229,7 @@ namespace ClassicUO.IO.Resources
 
                     int mapblocksize = sizeof(MapBlock);
 
-                    if (_filesMap[0].Length / mapblocksize == 393216 || Client.Version < ClientVersion.CV_4011D)
+                    if (_filesMap[0].Length / mapblocksize == 393216 || UOFileManager.Version < ClientVersion.CV_4011D)
                     {
                         MapsDefaultSize[0, 0] = MapsDefaultSize[1, 0] = 6144;
                     }
@@ -241,7 +242,7 @@ namespace ClassicUO.IO.Resources
                         _filesIdxStatics[1] = _filesIdxStatics[0];
                     }
 
-                    var res = Parallel.For(0, Constants.MAPS_COUNT, i =>
+                    var res = Parallel.For(0, MAPS_COUNT, i =>
                     {
                         MapBlocksSize[i, 0] = MapsDefaultSize[i, 0] >> 3;
                         MapBlocksSize[i, 1] = MapsDefaultSize[i, 1] >> 3;
@@ -296,9 +297,10 @@ namespace ClassicUO.IO.Resources
             } 
             _instance = null;
         }
-        internal unsafe void LoadMap(int i)
+
+        public unsafe void LoadMap(int i)
         {
-            if (i < 0 || i + 1 > Constants.MAPS_COUNT || _filesMap[i] == null)
+            if (i < 0 || i + 1 > MAPS_COUNT || _filesMap[i] == null)
             {
                 i = 0;
             }
@@ -461,9 +463,9 @@ namespace ClassicUO.IO.Resources
                 PatchesCount = 0;
             }
 
-            if (PatchesCount > Constants.MAPS_COUNT)
+            if (PatchesCount > MAPS_COUNT)
             {
-                PatchesCount = Constants.MAPS_COUNT;
+                PatchesCount = MAPS_COUNT;
             }
 
             Array.Clear(MapPatchCount, 0, MapPatchCount.Length);
@@ -591,7 +593,7 @@ namespace ClassicUO.IO.Resources
 
         private void ResetPatchesInBlockTable()
         {
-            for (int i = 0; i < Constants.MAPS_COUNT; i++)
+            for (int i = 0; i < MAPS_COUNT; i++)
             {
                 IndexMap[] list = BlockData[i];
 
@@ -648,7 +650,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct StaticsBlock
+    public ref struct StaticsBlock
     {
         public ushort Color;
         public byte X;
@@ -658,7 +660,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct StaidxBlock
+    public ref struct StaidxBlock
     {
         public uint Position;
         public uint Size;
@@ -666,7 +668,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct StaidxBlockVerdata
+    public ref struct StaidxBlockVerdata
     {
         public uint Position;
         public ushort Size;
@@ -674,14 +676,14 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct MapCells
+    public ref struct MapCells
     {
         public ushort TileID;
         public sbyte Z;
     }
 
     //[StructLayout(LayoutKind.Sequential, Pack = 1)]
-    //internal struct MapBlock
+    //public struct MapBlock
     //{
     //    public readonly uint Header;
     //    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
@@ -689,21 +691,21 @@ namespace ClassicUO.IO.Resources
     //}
 
     [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 4 + 64 * 3)]
-    internal ref struct MapBlock
+    public ref struct MapBlock
     {
         public uint Header;
         public unsafe MapCells* Cells;
     }
 
     //[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 4 + 64 * 3)]
-    //internal struct MapBlock2
+    //public struct MapBlock2
     //{
     //    public readonly uint Header;
     //    public IntPtr Cells;
     //}
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct RadarMapcells
+    public struct RadarMapcells
     {
         public ushort Graphic;
         public sbyte Z;
@@ -711,13 +713,13 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct RadarMapBlock
+    public struct RadarMapBlock
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
         public RadarMapcells[,] Cells;
     }
 
-    internal struct IndexMap
+    public struct IndexMap
     {
         public ulong MapAddress;
         public ulong OriginalMapAddress;

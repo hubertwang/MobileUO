@@ -34,7 +34,7 @@ using System;
 
 namespace ClassicUO.IO.Audio
 {
-    internal class UOSound : Sound
+    public class UOSound : Sound
     {
         // MobileUO: added variable
         protected override uint DistortionFix => 500;

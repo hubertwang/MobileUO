@@ -24,7 +24,7 @@ using Assistant.Scripts;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Collections;
@@ -694,7 +694,7 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
         internal static int InsertFriendButton => (int)ButtonType.InsertFriend;
-        internal static readonly byte FONT = (byte)(Client.Version >= ClassicUO.Data.ClientVersion.CV_305D ? 1 : 0);
+        internal static readonly byte FONT = (byte)(Client.Version >= ClassicUO.Utility.ClientVersion.CV_305D ? 1 : 0);
         //WARNING, MINIMUM WIDTH IS 500, HEIGHT IS 325, if you go lower than this, the items won't fit inside the gump! YOU HAVE BEEN WARNED!
         private static int _width = 500;
         private static int _height = 325;

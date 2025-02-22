@@ -30,15 +30,16 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Utility;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class HuesLoader : UOFileLoader
+    public class HuesLoader : UOFileLoader
     {
         private static HuesLoader _instance;
 
@@ -294,7 +295,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct HuesBlock
+    public struct HuesBlock
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
         public ushort[] ColorTable;
@@ -305,7 +306,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct HuesGroup
+    public struct HuesGroup
     {
         public uint Header;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
@@ -313,7 +314,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal readonly struct VerdataHuesBlock
+    public readonly struct VerdataHuesBlock
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
         public readonly ushort[] ColorTable;
@@ -326,14 +327,14 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal readonly struct VerdataHuesGroup
+    public readonly struct VerdataHuesGroup
     {
         public readonly uint Header;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public readonly VerdataHuesBlock[] Entries;
     }
 
-    internal struct FloatHues
+    public struct FloatHues
     {
         //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 96)]
         public float[] Palette;

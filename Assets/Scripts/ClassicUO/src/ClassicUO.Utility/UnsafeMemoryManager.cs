@@ -48,7 +48,6 @@ namespace ClassicUO.Utility
     // UnmanagedMemoryPool and stuff from --> https://www.jacksondunstan.com/articles/3770
     public static unsafe class UnsafeMemoryManager
     {
-        // MobileUO: commented out
         public static readonly int SizeOfPointer = sizeof(void*);
 
         public static readonly int MinimumPoolBlockSize = SizeOfPointer;

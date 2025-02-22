@@ -47,7 +47,7 @@ using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
 using ClassicUO.IO;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Resources;
 using ClassicUO.Utility;
@@ -1381,7 +1381,7 @@ namespace ClassicUO.Game.UI.Gumps
         {
             _mapIndex = World.MapIndex;
 
-            if (_mapIndex < 0 || _mapIndex > Constants.MAPS_COUNT)
+            if (_mapIndex < 0 || _mapIndex > MapLoader.MAPS_COUNT)
             {
                 return Task.CompletedTask;
             }

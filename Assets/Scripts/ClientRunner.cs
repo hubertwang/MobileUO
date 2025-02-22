@@ -5,7 +5,7 @@ using UnityEngine;
 using ClassicUO;
 using ClassicUO.Utility.Logging;
 using ClassicUO.Configuration;
-using ClassicUO.Data;
+using ClassicUO.Utility;
 using ClassicUO.Game;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;

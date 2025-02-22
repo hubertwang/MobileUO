@@ -30,22 +30,23 @@
 
 #endregion
 
-using System;
-using System.Threading.Tasks;
-using ClassicUO.Game;
-using ClassicUO.Renderer;
+using ClassicUO.IO;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Threading.Tasks;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class LightsLoader : UOFileLoader
+    public class LightsLoader : UOFileLoader
     {
         private static LightsLoader _instance;
         private UOFileMul _file;
         private TextureAtlas _atlas;
         private SpriteInfo[] _spriteInfos;
+
+        public const int MAX_LIGHTS_DATA_INDEX_COUNT = 100;
 
         struct SpriteInfo
         {
@@ -58,7 +59,7 @@ namespace ClassicUO.IO.Resources
         }
 
         public static LightsLoader Instance =>
-            _instance ?? (_instance = new LightsLoader(Constants.MAX_LIGHTS_DATA_INDEX_COUNT));
+            _instance ?? (_instance = new LightsLoader(MAX_LIGHTS_DATA_INDEX_COUNT));
 
         public void CreateAtlas(GraphicsDevice device)
         {
@@ -77,7 +78,7 @@ namespace ClassicUO.IO.Resources
                     FileSystemHelper.EnsureFileExists(path);
                     FileSystemHelper.EnsureFileExists(pathidx);
 
-                    _file = new UOFileMul(path, pathidx, Constants.MAX_LIGHTS_DATA_INDEX_COUNT);
+                    _file = new UOFileMul(path, pathidx, MAX_LIGHTS_DATA_INDEX_COUNT);
                     _file.FillEntries(ref Entries);
                     _spriteInfos = new SpriteInfo[Entries.Length];
                 }

@@ -30,31 +30,33 @@
 
 #endregion
 
+using Microsoft.Xna.Framework.Graphics;
+
 namespace ClassicUO.Renderer
 {
-    internal static class Fonts
+    public static class Fonts
     {
-        static Fonts()
+        public static void Initialize(GraphicsDevice device)
         {
             // MobileUO: removed "ClassicUO.Renderer.fonts." and ".xnb" from fonts
-            Regular = SpriteFont.Create("regular_font");
-            Bold = SpriteFont.Create("bold_font");
+            Regular = SpriteFont.Create(device, "regular_font");
+            Bold = SpriteFont.Create(device, "bold_font");
 
-            Map1 = SpriteFont.Create("map1_font");
-            Map2 = SpriteFont.Create("map2_font");
-            Map3 = SpriteFont.Create("map3_font");
-            Map4 = SpriteFont.Create("map4_font");
-            Map5 = SpriteFont.Create("map5_font");
-            Map6 = SpriteFont.Create("map6_font");
+            Map1 = SpriteFont.Create(device, "map1_font");
+            Map2 = SpriteFont.Create(device, "map2_font");
+            Map3 = SpriteFont.Create(device, "map3_font");
+            Map4 = SpriteFont.Create(device, "map4_font");
+            Map5 = SpriteFont.Create(device, "map5_font");
+            Map6 = SpriteFont.Create(device, "map6_font");
         }
 
-        public static SpriteFont Regular { get; }
-        public static SpriteFont Bold { get; }
-        public static SpriteFont Map1 { get; }
-        public static SpriteFont Map2 { get; }
-        public static SpriteFont Map3 { get; }
-        public static SpriteFont Map4 { get; }
-        public static SpriteFont Map5 { get; }
-        public static SpriteFont Map6 { get; }
+        public static SpriteFont Regular { get; private set; }
+        public static SpriteFont Bold { get; private set; }
+        public static SpriteFont Map1 { get; private set; }
+        public static SpriteFont Map2 { get; private set; }
+        public static SpriteFont Map3 { get; private set; }
+        public static SpriteFont Map4 { get; private set; }
+        public static SpriteFont Map5 { get; private set; }
+        public static SpriteFont Map6 { get; private set; }
     }
 }

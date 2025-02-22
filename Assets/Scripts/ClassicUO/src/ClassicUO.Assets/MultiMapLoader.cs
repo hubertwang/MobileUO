@@ -30,19 +30,18 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Game;
-using ClassicUO.Renderer;
-using ClassicUO.Utility;
-using ClassicUO.Utility.Logging;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class MultiMapLoader : UOFileLoader
+    public class MultiMapLoader : UOFileLoader
     {
         private static MultiMapLoader _instance;
         private readonly UOFileMul[] _facets = new UOFileMul[256];
@@ -54,7 +53,7 @@ namespace ClassicUO.IO.Resources
 
         public static MultiMapLoader Instance => _instance ?? (_instance = new MultiMapLoader());
 
-        internal bool HasFacet(int map)
+        public bool HasFacet(int map)
         {
             return map >= 0 && map < _facets.Length && _facets[map] != null;
         }
@@ -87,6 +86,7 @@ namespace ClassicUO.IO.Resources
 
         public unsafe Texture2D LoadMap
         (
+            GraphicsDevice device,
             int width,
             int height,
             int startx,
@@ -199,7 +199,7 @@ namespace ClassicUO.IO.Resources
                 ushort* huesData = (ushort*) (byte*) (ptr + 30800);
 
                 uint[] colorTable = System.Buffers.ArrayPool<uint>.Shared.Rent(maxPixelValue);
-                Texture2D texture = new Texture2D(Client.Game.GraphicsDevice, width, height, false, SurfaceFormat.Color);
+                Texture2D texture = new Texture2D(device, width, height, false, SurfaceFormat.Color);
 
                 try
                 {
@@ -244,6 +244,7 @@ namespace ClassicUO.IO.Resources
 
         public Texture2D LoadFacet
         (
+            GraphicsDevice device,
             int facet,
             int width,
             int height,
@@ -253,7 +254,7 @@ namespace ClassicUO.IO.Resources
             int endy
         )
         {
-            if (_file == null || facet < 0 || facet > Constants.MAPS_COUNT || _facets[facet] == null)
+            if (_file == null || facet < 0 || facet > MapLoader.MAPS_COUNT || _facets[facet] == null)
             {
                 return null;
             }
@@ -279,7 +280,7 @@ namespace ClassicUO.IO.Resources
             int pheight = endY - startY;
 
             uint[] map = System.Buffers.ArrayPool<uint>.Shared.Rent(pwidth * pheight);
-            Texture2D texture = new Texture2D(Client.Game.GraphicsDevice, pwidth, pheight, false, SurfaceFormat.Color);
+            Texture2D texture = new Texture2D(device, pwidth, pheight, false, SurfaceFormat.Color);
 
             try
             {

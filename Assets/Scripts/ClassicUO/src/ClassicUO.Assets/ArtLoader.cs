@@ -30,34 +30,33 @@
 
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using ClassicUO.Configuration;
-using ClassicUO.Game;
-using ClassicUO.Game.Data;
-using ClassicUO.Renderer;
+using ClassicUO.IO;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SDL2;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class ArtLoader : UOFileLoader
+    public class ArtLoader : UOFileLoader
     {
         private static ArtLoader _instance;
         private UOFile _file;
         private readonly ushort _graphicMask;
         private readonly PixelPicker _picker = new PixelPicker();
 
+        public const int MAX_LAND_DATA_INDEX_COUNT = 0x4000;
+        public const int MAX_STATIC_DATA_INDEX_COUNT = 0x14000;
+
         private ArtLoader(int staticCount, int landCount)
         {
-            _graphicMask = Client.IsUOPInstallation ? (ushort) 0xFFFF : (ushort) 0x3FFF;
+            _graphicMask = UOFileManager.IsUOPInstallation ? (ushort) 0xFFFF : (ushort) 0x3FFF;
         }
 
-        public static ArtLoader Instance => _instance ?? (_instance = new ArtLoader(Constants.MAX_STATIC_DATA_INDEX_COUNT, Constants.MAX_LAND_DATA_INDEX_COUNT));
+        public static ArtLoader Instance => _instance ?? (_instance = new ArtLoader(MAX_STATIC_DATA_INDEX_COUNT, MAX_LAND_DATA_INDEX_COUNT));
 
 
         public override Task Load()
@@ -68,10 +67,10 @@ namespace ClassicUO.IO.Resources
                 {
                     string filePath = UOFileManager.GetUOFilePath("artLegacyMUL.uop");
 
-                    if (Client.IsUOPInstallation && File.Exists(filePath))
+                    if (UOFileManager.IsUOPInstallation && File.Exists(filePath))
                     {
                         _file = new UOFileUop(filePath, "build/artlegacymul/{0:D8}.tga");
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_STATIC_DATA_INDEX_COUNT)];
+                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, MAX_STATIC_DATA_INDEX_COUNT)];
                     }
                     else
                     {
@@ -80,7 +79,7 @@ namespace ClassicUO.IO.Resources
 
                         if (File.Exists(filePath) && File.Exists(idxPath))
                         {
-                            _file = new UOFileMul(filePath, idxPath, Constants.MAX_STATIC_DATA_INDEX_COUNT);
+                            _file = new UOFileMul(filePath, idxPath, MAX_STATIC_DATA_INDEX_COUNT);
                         }
                     }
 
@@ -375,6 +374,7 @@ namespace ClassicUO.IO.Resources
             return IntPtr.Zero;
         }
 
+        // MobileUO: added PixelCheck
         public bool PixelCheck(int index, int x, int y, bool pixelCheck = true)
         {
             return _picker.Get((ulong) index, x, y, 0, pixelCheck);
@@ -463,10 +463,12 @@ namespace ClassicUO.IO.Resources
             int pos1 = 0;
             int minX = width, minY = height, maxX = 0, maxY = 0;
 
+            /* Temporarily broken. This isn't the right way to do it anyway since it can't be toggled on/off.
             if (StaticFilters.IsCave(graphic) && ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.EnableCaveBorder)
             {
                 AddBlackBorder(pixels, width, height);
             }
+            */
 
             for (int y = 0; y < height; ++y)
             {

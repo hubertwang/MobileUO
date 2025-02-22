@@ -30,18 +30,17 @@
 
 #endregion
 
-using System;
-using System.Collections.Generic;
-using ClassicUO.Data;
 using ClassicUO.IO;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
+using ClassicUO.Renderer;
 using ClassicUO.Utility;
-using ClassicUO.Utility.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StbTextEditSharp;
+using System;
+using System.Collections.Generic;
 
-namespace ClassicUO.Renderer
+namespace ClassicUO.Game
 {
     [Flags]
     internal enum FontStyle : ushort
@@ -640,7 +639,7 @@ namespace ClassicUO.Renderer
             return true;
         }
 
-        public void CreateTexture()
+        public unsafe void CreateTexture()
         {
             if (Texture != null && !Texture.IsDisposed)
             {
@@ -655,12 +654,11 @@ namespace ClassicUO.Renderer
 
             FontsLoader.Instance.RecalculateWidthByInfo = RecalculateWidthByInfo;
 
-
+            FontsLoader.FontInfo fi;
             if (IsUnicode)
             {
-                FontsLoader.Instance.GenerateUnicode
+                fi = FontsLoader.Instance.GenerateUnicode
                 (
-                    this,
                     Font,
                     Text,
                     Hue,
@@ -675,9 +673,8 @@ namespace ClassicUO.Renderer
             }
             else
             {
-                FontsLoader.Instance.GenerateASCII
+                fi = FontsLoader.Instance.GenerateASCII
                 (
-                    this,
                     Font,
                     Text,
                     Hue,
@@ -690,8 +687,35 @@ namespace ClassicUO.Renderer
                 );
             }
 
+            if (fi.Data != null && fi.Data.Length > 0 && (Texture == null || Texture.IsDisposed))
+            {
+                Texture = new Texture2D(Client.Game.GraphicsDevice, fi.Width, fi.Height, false, SurfaceFormat.Color);
+            }
+
+            Links.Clear();
+            if (fi.Links != null)
+            {
+                for (int i = 0; i < fi.Links.Length; ++i)
+                {
+                    Links.Add(fi.Links[i]);
+                }
+            }
+
+            LinesCount = fi.LineCount;
+ 
             if (Texture != null)
             {
+                fixed (uint* dataPtr = fi.Data)
+                {
+                    Texture.SetDataPointerEXT
+                    (
+                        0,
+                        null,
+                        (IntPtr)dataPtr,
+                        fi.Width * fi.Height * sizeof(uint)
+                    );
+                }
+
                 Width = Texture.Width;
                 Height = Texture.Height;
             }

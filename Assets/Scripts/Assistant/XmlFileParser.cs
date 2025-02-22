@@ -12,7 +12,7 @@ using ClassicUO.Utility.Logging;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.Scenes;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Assistant;
 

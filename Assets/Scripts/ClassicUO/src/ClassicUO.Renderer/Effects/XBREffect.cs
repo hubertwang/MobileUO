@@ -35,12 +35,11 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
-    internal class XBREffect : Effect
+    public class XBREffect : Effect
     {
         public XBREffect(GraphicsDevice graphicsDevice) : base(graphicsDevice, Resources.xBREffect)
         {
             MatrixTransform = Parameters["MatrixTransform"];
-            // MobileUO: commented out
             TextureSize = Parameters["textureSize"];
         }
 

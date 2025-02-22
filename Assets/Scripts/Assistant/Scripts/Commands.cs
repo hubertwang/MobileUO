@@ -9,7 +9,7 @@ using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Game;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Data;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using UOScript;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;

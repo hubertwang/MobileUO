@@ -30,16 +30,18 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Data;
-using ClassicUO.Game;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class MultiLoader : UOFileLoader
+    public class MultiLoader : UOFileLoader
     {
         private static MultiLoader _instance;
+
+        public const int MAX_MULTI_DATA_INDEX_COUNT = 0x2200;
 
         private MultiLoader()
         {
@@ -62,9 +64,9 @@ namespace ClassicUO.IO.Resources
                 {
                     string uopPath = UOFileManager.GetUOFilePath("MultiCollection.uop");
 
-                    if (Client.IsUOPInstallation && System.IO.File.Exists(uopPath))
+                    if (UOFileManager.IsUOPInstallation && System.IO.File.Exists(uopPath))
                     {
-                        Count = Constants.MAX_MULTI_DATA_INDEX_COUNT;
+                        Count = MAX_MULTI_DATA_INDEX_COUNT;
                         File = new UOFileUop(uopPath, "build/multicollection/{0:D6}.bin");
                         Entries = new UOFileIndex[Count];
                         IsUOP = true;
@@ -76,9 +78,9 @@ namespace ClassicUO.IO.Resources
 
                         if (System.IO.File.Exists(path) && System.IO.File.Exists(pathidx))
                         {
-                            File = new UOFileMul(path, pathidx, Constants.MAX_MULTI_DATA_INDEX_COUNT, 14);
+                            File = new UOFileMul(path, pathidx, MAX_MULTI_DATA_INDEX_COUNT, 14);
 
-                            Count = Offset = Client.Version >= ClientVersion.CV_7090 ? sizeof(MultiBlockNew) + 2 : sizeof(MultiBlock);
+                            Count = Offset = UOFileManager.Version >= ClientVersion.CV_7090 ? sizeof(MultiBlockNew) + 2 : sizeof(MultiBlock);
                         }
                     }
 
@@ -97,7 +99,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct MultiBlock
+    public ref struct MultiBlock
     {
         public ushort ID;
         public short X;
@@ -107,7 +109,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal ref struct MultiBlockNew
+    public ref struct MultiBlockNew
     {
         public ushort ID;
         public short X;

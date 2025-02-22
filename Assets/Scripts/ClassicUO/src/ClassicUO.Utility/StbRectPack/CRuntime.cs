@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace StbRectPackSharp
 {
-	internal static unsafe class CRuntime
+	public static unsafe class CRuntime
 	{
 		public static void* malloc(ulong size)
 		{

@@ -30,22 +30,21 @@
 
 #endregion
 
+using ClassicUO.Configuration;
+using ClassicUO.IO;
+using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
+using ClassicUO.Utility.Platforms;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Configuration;
-using ClassicUO.Data;
-using ClassicUO.Game;
-using ClassicUO.IO.Resources;
-using ClassicUO.Utility.Logging;
-using ClassicUO.Utility.Platforms;
 
-namespace ClassicUO.IO
+namespace ClassicUO.Assets
 {
-    internal static class UOFileManager
+    public static class UOFileManager
     {
         public static string GetUOFilePath(string file)
         {
@@ -76,20 +75,20 @@ namespace ClassicUO.IO
 
             if (!UOFilesOverrideMap.Instance.TryGetValue(file.ToLowerInvariant(), out string uoFilePath))
             {
-                uoFilePath = Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, file);
+                uoFilePath = Path.Combine(BasePath, file);
             }
 
             //If the file with the given name doesn't exist, check for it with alternative casing if not on windows
             if (!PlatformHelper.IsWindows && !File.Exists(uoFilePath))
             {
                 FileInfo finfo = new FileInfo(uoFilePath);
-                var dir = Path.GetFullPath(finfo.DirectoryName ?? Settings.GlobalSettings.UltimaOnlineDirectory);
+                var dir = Path.GetFullPath(finfo.DirectoryName ?? BasePath);
 
                 if (Directory.Exists(dir))
                 {
                     var files = Directory.GetFiles(dir);
                     var matches = 0;
-
+                    
                     foreach (var f in files)
                     {
                         if (string.Equals(f, uoFilePath, StringComparison.OrdinalIgnoreCase))
@@ -109,10 +108,21 @@ namespace ClassicUO.IO
             return uoFilePath;
         }
 
+        public static ClientVersion Version;
+        public static string BasePath;
+        public static bool IsUOPInstallation;
 
-        public static void Load()
+        public static void Load(ClientVersion version, string basePath, bool useVerdata, string lang)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            Version = version;
+            BasePath = basePath;
+
+            UOFilesOverrideMap.Instance.Load(); // need to load this first so that it manages can perform the file overrides if needed
+
+            IsUOPInstallation = Version >= ClientVersion.CV_7000 && File.Exists(GetUOFilePath("MainMisc.uop"));
+
             // MobileUO: refactor load one by one
             // List<Task> tasks = new List<Task>
             // {
@@ -138,8 +148,6 @@ namespace ClassicUO.IO
             // {
             //     Log.Panic("Loading files timeout.");
             // }
-            
-            UOFilesOverrideMap.Instance.Load(); // need to load this first so that it manages can perform the file overrides if needed
 
             AnimationsLoader.Instance.Load().Wait();
             AnimDataLoader.Instance.Load().Wait();
@@ -163,16 +171,16 @@ namespace ClassicUO.IO
 
             UOFileMul verdata = Verdata.File;
 
-            bool useVerdata = Client.Version < ClientVersion.CV_500A || verdata != null && verdata.Length != 0 && Verdata.Patches.Length != 0;
+            bool forceVerdata = Version < ClientVersion.CV_500A || verdata != null && verdata.Length != 0 && Verdata.Patches.Length != 0;
 
-            if (!Settings.GlobalSettings.UseVerdata && useVerdata)
+            if (!useVerdata && forceVerdata)
             {
-                Settings.GlobalSettings.UseVerdata = useVerdata;
+                useVerdata = true;
             }
 
-            Log.Trace($"Use verdata.mul: {(Settings.GlobalSettings.UseVerdata ? "Yes" : "No")}");
+            Log.Trace($"Use verdata.mul: {(useVerdata ? "Yes" : "No")}");
 
-            if (Settings.GlobalSettings.UseVerdata)
+            if (useVerdata)
             {
                 if (verdata != null && Verdata.Patches.Length != 0)
                 {
@@ -266,7 +274,7 @@ namespace ClassicUO.IO
                                 {
                                     ulong flags;
 
-                                    if (Client.Version < ClientVersion.CV_7090)
+                                    if (Version < ClientVersion.CV_7090)
                                     {
                                         flags = verdata.ReadUInt();
                                     }
@@ -293,7 +301,7 @@ namespace ClassicUO.IO
                                 {
                                     ulong flags;
 
-                                    if (Client.Version < ClientVersion.CV_7090)
+                                    if (Version < ClientVersion.CV_7090)
                                     {
                                         flags = verdata.ReadUInt();
                                     }
@@ -348,7 +356,7 @@ namespace ClassicUO.IO
             stopwatch.Stop();
         }
 
-        internal static void MapLoaderReLoad(MapLoader newloader)
+        public static void MapLoaderReLoad(MapLoader newloader)
         {
             MapLoader.Instance?.Dispose();
             MapLoader.Instance = newloader;
@@ -369,7 +377,7 @@ namespace ClassicUO.IO
                     {
                         int index = reader.ReadInt();
 
-                        if (index < 0 || index >= Constants.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
+                        if (index < 0 || index >= ArtLoader.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
                         {
                             continue;
                         }
@@ -385,7 +393,7 @@ namespace ClassicUO.IO
                         {
                             int checkIndex = group[i];
 
-                            if (checkIndex < 0 || checkIndex >= Constants.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
+                            if (checkIndex < 0 || checkIndex >= ArtLoader.MAX_LAND_DATA_INDEX_COUNT + tiledataLoader.StaticData.Length)
                             {
                                 continue;
                             }
@@ -401,8 +409,8 @@ namespace ClassicUO.IO
                                 }
                             }
 
-                            if (index < Constants.MAX_LAND_DATA_INDEX_COUNT &&
-                                checkIndex < Constants.MAX_LAND_DATA_INDEX_COUNT && 
+                            if (index < ArtLoader.MAX_LAND_DATA_INDEX_COUNT &&
+                                checkIndex < ArtLoader.MAX_LAND_DATA_INDEX_COUNT && 
                                 checkIndex < tiledataLoader.LandData.Length && 
                                 index < tiledataLoader.LandData.Length &&
                                 !tiledataLoader.LandData[checkIndex].Equals(default) &&
@@ -413,7 +421,7 @@ namespace ClassicUO.IO
                                 break;
                             }
 
-                            if (index >= Constants.MAX_LAND_DATA_INDEX_COUNT && checkIndex >= Constants.MAX_LAND_DATA_INDEX_COUNT &&
+                            if (index >= ArtLoader.MAX_LAND_DATA_INDEX_COUNT && checkIndex >= ArtLoader.MAX_LAND_DATA_INDEX_COUNT &&
                                 index < tiledataLoader.StaticData.Length && checkIndex < tiledataLoader.StaticData.Length &&
                                 tiledataLoader.StaticData[index].Equals(default) && !tiledataLoader.StaticData[checkIndex].Equals(default))
                             {

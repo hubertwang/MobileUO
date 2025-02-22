@@ -30,33 +30,35 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.IO.Audio;
+using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ClassicUO.Configuration;
-using ClassicUO.Data;
-using ClassicUO.Game;
-using ClassicUO.IO.Audio;
 // MobileUO: added imports
 using System.Text.RegularExpressions;
 using ClassicUO.Utility.Logging;
 using System.Linq;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class SoundsLoader : UOFileLoader
+    public class SoundsLoader : UOFileLoader
     {
         private static readonly char[] _configFileDelimiters = { ' ', ',', '\t' };
         private static readonly Dictionary<int, Tuple<string, bool>> _musicData = new Dictionary<int, Tuple<string, bool>>();
 
         private static SoundsLoader _instance;
 
+        public const int MAX_SOUND_DATA_INDEX_COUNT = 0xFFFF;
+
         private UOFile _file;
-        private readonly Sound[] _musics = new Sound[Constants.MAX_SOUND_DATA_INDEX_COUNT];
-        private readonly Sound[] _sounds = new Sound[Constants.MAX_SOUND_DATA_INDEX_COUNT];
+        private readonly Sound[] _musics = new Sound[MAX_SOUND_DATA_INDEX_COUNT];
+        private readonly Sound[] _sounds = new Sound[MAX_SOUND_DATA_INDEX_COUNT];
 
         private bool _useDigitalMusicFolder;
 
@@ -74,10 +76,10 @@ namespace ClassicUO.IO.Resources
                 {
                     string path = UOFileManager.GetUOFilePath("soundLegacyMUL.uop");
 
-                    if (Client.IsUOPInstallation && File.Exists(path))
+                    if (UOFileManager.IsUOPInstallation && File.Exists(path))
                     {
                         _file = new UOFileUop(path, "build/soundlegacymul/{0:D8}.dat");
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_SOUND_DATA_INDEX_COUNT)];
+                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, MAX_SOUND_DATA_INDEX_COUNT)];
                     }
                     else
                     {
@@ -86,7 +88,7 @@ namespace ClassicUO.IO.Resources
 
                         if (File.Exists(path) && File.Exists(idxpath))
                         {
-                            _file = new UOFileMul(path, idxpath, Constants.MAX_SOUND_DATA_INDEX_COUNT);
+                            _file = new UOFileMul(path, idxpath, MAX_SOUND_DATA_INDEX_COUNT);
                         }
                         else
                         {
@@ -106,7 +108,7 @@ namespace ClassicUO.IO.Resources
                             {
                                 int index = reader.ReadInt();
 
-                                if (index < 0 || index >= Constants.MAX_SOUND_DATA_INDEX_COUNT || index >= _file.Length || Entries[index].Length != 0)
+                                if (index < 0 || index >= MAX_SOUND_DATA_INDEX_COUNT || index >= _file.Length || Entries[index].Length != 0)
                                 {
                                     continue;
                                 }
@@ -122,7 +124,7 @@ namespace ClassicUO.IO.Resources
                                 {
                                     int checkIndex = group[i];
 
-                                    if (checkIndex < -1 || checkIndex >= Constants.MAX_SOUND_DATA_INDEX_COUNT)
+                                    if (checkIndex < -1 || checkIndex >= MAX_SOUND_DATA_INDEX_COUNT)
                                     {
                                         continue;
                                     }
@@ -149,7 +151,7 @@ namespace ClassicUO.IO.Resources
                         }
                     }
 
-                    path = UOFileManager.GetUOFilePath(Client.Version >= ClientVersion.CV_4011C ?  @"Music/Digital/Config.txt" : @"Music/Config.txt");
+                    path = UOFileManager.GetUOFilePath(UOFileManager.Version >= ClientVersion.CV_4011C ?  @"Music/Digital/Config.txt" : @"Music/Config.txt");
 
                     if (File.Exists(path))
                     {
@@ -242,7 +244,7 @@ namespace ClassicUO.IO.Resources
                         _musicData.Add(66, new Tuple<string, bool>("valoriaships", true));
                     }
 
-                    _useDigitalMusicFolder = Directory.Exists(Path.Combine(Settings.GlobalSettings.UltimaOnlineDirectory, "Music", "Digital"));
+                    _useDigitalMusicFolder = Directory.Exists(Path.Combine(UOFileManager.BasePath, "Music", "Digital"));
                 }
             );
         }
@@ -383,7 +385,7 @@ namespace ClassicUO.IO.Resources
 
         public Sound GetSound(int index)
         {
-            if (index >= 0 && index < Constants.MAX_SOUND_DATA_INDEX_COUNT)
+            if (index >= 0 && index < MAX_SOUND_DATA_INDEX_COUNT)
             {
                 ref Sound sound = ref _sounds[index];
 
@@ -400,13 +402,14 @@ namespace ClassicUO.IO.Resources
 
         public Sound GetMusic(int index)
         {
-            if (index >= 0 && index < Constants.MAX_SOUND_DATA_INDEX_COUNT)
+            if (index >= 0 && index < MAX_SOUND_DATA_INDEX_COUNT)
             {
                 ref Sound music = ref _musics[index];
 
                 if (music == null && TryGetMusicData(index, out string name, out bool loop))
                 {
-                    music = _useDigitalMusicFolder ? new UOMusic(index, name, loop, "Music/Digital/") : new UOMusic(index, name, loop, "Music/");
+                    music = _useDigitalMusicFolder ? new UOMusic(index, name, loop, UOFileManager.GetUOFilePath($"Music/Digital/{name}.mp3")) :
+                                                     new UOMusic(index, name, loop, UOFileManager.GetUOFilePath($"Music/{name}.mp3"));
                 }
 
                 return music;
@@ -415,9 +418,11 @@ namespace ClassicUO.IO.Resources
             return null;
         }
 
+        public const float SOUND_DELTA = 250;
+
         public override void ClearResources()
         {
-            for (int i = 0; i < Constants.SOUND_DELTA; i++)
+            for (int i = 0; i < SOUND_DELTA; i++)
             {
                 if (_sounds[i] != null)
                 {

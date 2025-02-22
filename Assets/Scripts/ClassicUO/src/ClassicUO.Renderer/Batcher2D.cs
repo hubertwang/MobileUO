@@ -30,15 +30,15 @@
 
 #endregion
 
+using ClassicUO.Renderer.Effects;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using ClassicUO.Renderer.Effects;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
@@ -116,10 +116,10 @@ namespace ClassicUO.Renderer
         }
 
 
-        public Matrix TransformMatrix => _transformMatrix;
+        private Matrix TransformMatrix => _transformMatrix;
 
 
-        public DepthStencilState Stencil { get; } = new DepthStencilState
+        private DepthStencilState Stencil { get; } = new DepthStencilState
         {
             StencilEnable = false,
             DepthBufferEnable = false,
@@ -1493,7 +1493,7 @@ namespace ClassicUO.Renderer
     }
 
 
-    internal class Resources
+    public class Resources
     {
         private static byte[] _isometricEffect, _xBREffect;
 

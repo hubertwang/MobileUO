@@ -30,15 +30,22 @@
 
 #endregion
 
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 
 namespace ClassicUO.Renderer
 {
-    internal static class SolidColorTextureCache
+    public static class SolidColorTextureCache
     {
         private static readonly Dictionary<Color, Texture2D> _textures = new Dictionary<Color, Texture2D>();
+
+        private static GraphicsDevice _device;
+
+        public static void Initialize(GraphicsDevice device)
+        {
+            _device = device;
+        }
 
         public static Texture2D GetTexture(Color color)
         {
@@ -49,7 +56,7 @@ namespace ClassicUO.Renderer
 
             texture = new Texture2D
             (
-                Client.Game.GraphicsDevice,
+                _device,
                 1,
                 1,
                 false,

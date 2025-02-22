@@ -4,10 +4,10 @@ using static StbRectPackSharp.StbRectPack;
 
 namespace StbRectPackSharp
 {
-	/// <summary>
-	/// Simple Packer class that doubles size of the atlas if the place runs out
-	/// </summary>
-	unsafe class Packer : IDisposable
+    /// <summary>
+    /// Simple Packer class that doubles size of the atlas if the place runs out
+    /// </summary>
+    public unsafe class Packer : IDisposable
 	{
 		private readonly stbrp_context _context;
 

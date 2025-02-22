@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ClassicUO.IO
+namespace ClassicUO.Assets
 {
-    class PixelPicker
+    public class PixelPicker
     {
         const int InitialDataCount = 0x40000; // 256kb
 
         Dictionary<ulong, int> m_IDs = new Dictionary<ulong, int>();
         readonly List<byte> m_Data = new List<byte>(InitialDataCount); // list<t> access is 10% slower than t[].
 
+        // MobileUO: added PixelCheck
         public bool Get(ulong textureID, int x, int y, int extraRange = 0, bool pixelCheck = true)
         {
             int index;

@@ -30,15 +30,16 @@
 
 #endregion
 
+using ClassicUO.IO;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class AnimDataLoader : UOFileLoader
+    public class AnimDataLoader : UOFileLoader
     {
         private static AnimDataLoader _instance;
         private UOFileMul _file;
@@ -97,7 +98,7 @@ namespace ClassicUO.IO.Resources
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal unsafe struct AnimDataFrame
+    public unsafe struct AnimDataFrame
     {
         public fixed sbyte FrameData[64];
         public byte Unknown;

@@ -36,7 +36,7 @@ using ClassicUO.Utility.Platforms;
 
 namespace ClassicUO.Utility
 {
-    internal static class ZLib
+    public static class ZLib
     {
         // thanks ServUO :)
 

@@ -33,7 +33,7 @@
 using System.Collections.Generic;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Input;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
@@ -275,7 +275,7 @@ namespace ClassicUO.Game.UI.Controls
                 return false;
             }
 
-             Vector3 hue = ShaderHueTranslator.GetHueVector
+            Vector3 hue = ShaderHueTranslator.GetHueVector
                             (
                                 Hue,
                                 false,

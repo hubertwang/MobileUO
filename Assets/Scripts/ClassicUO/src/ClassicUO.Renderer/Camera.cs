@@ -30,18 +30,17 @@
 
 #endregion
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
-using ClassicUO.Game;
 // MobileUO: added using
 using ClassicUO.Configuration;
 using ClassicUO.Input;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
-    class Camera
+    public class Camera
     {
         private const float MAX_PEEK_DISTANCE = 250f;
         private const float MIN_PEEK_SPEED = 0.01f;
@@ -103,12 +102,18 @@ namespace ClassicUO.Renderer
 
         public bool PeekBackwards;
 
-        public void Update(bool force)
+        private float _timeDelta = 0;
+        private Point _mousePos;
+
+        public void Update(bool force, float timeDelta, Point mousePos)
         {
             if (force)
             {
                 _updateMatrixes = true;
             }
+
+            _timeDelta= timeDelta;
+            _mousePos = mousePos;
 
             UpdateMatrices();
         }
@@ -155,7 +160,7 @@ namespace ClassicUO.Renderer
 
         public Point MouseToWorldPosition()
         {
-            Point mouse = Mouse.Position;
+            Point mouse = _mousePos;
 
             //mouse.X -= Bounds.X;
             //mouse.Y -= Bounds.Y;
@@ -213,7 +218,7 @@ namespace ClassicUO.Renderer
 
             if (PeekingToMouse)
             {
-                Vector2 target = new Vector2(Mouse.Position.X - Bounds.X, Mouse.Position.Y - Bounds.Y);
+                Vector2 target = new Vector2(_mousePos.X - Bounds.X, _mousePos.Y - Bounds.Y);
 
                 if (PeekBackwards)
                 {
@@ -235,7 +240,7 @@ namespace ClassicUO.Renderer
 
             if (dist > 1f)
             {
-                float time = Math.Max(Utility.Easings.OutQuart(dist / MAX_PEEK_DISTANCE) * Time.Delta * PEEK_TIME_FACTOR, MIN_PEEK_SPEED);
+                float time = Math.Max(Utility.Easings.OutQuart(dist / MAX_PEEK_DISTANCE) * _timeDelta * PEEK_TIME_FACTOR, MIN_PEEK_SPEED);
                 _lerpOffset = Vector2.Lerp(_lerpOffset, target_offset, time);
             }
             else

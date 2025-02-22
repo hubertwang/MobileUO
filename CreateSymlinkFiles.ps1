@@ -1,3 +1,5 @@
+# This takes an input file of a list of absolute paths of files that we want to symlink to the external CUO git submodule
+
 # Define the target base directory
 $targetBase = "C:\mobileuo\Assets\Scripts\ClassicUO\src"
 

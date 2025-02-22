@@ -30,17 +30,16 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using ClassicUO.Data;
-using ClassicUO.Game;
-using ClassicUO.Utility;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class TileDataLoader : UOFileLoader
+    public class TileDataLoader : UOFileLoader
     {
         private static TileDataLoader _instance;
 
@@ -69,7 +68,7 @@ namespace ClassicUO.IO.Resources
                     UOFileMul tileData = new UOFileMul(path);
 
 
-                    bool isold = Client.Version < ClientVersion.CV_7090;
+                    bool isold = UOFileManager.Version < ClientVersion.CV_7090;
                     const int LAND_SIZE = 512;
 
                     int land_group = isold ? Marshal.SizeOf<LandGroupOld>() : Marshal.SizeOf<LandGroupNew>();
@@ -83,7 +82,7 @@ namespace ClassicUO.IO.Resources
 
                     tileData.Seek(0);
 
-                    _landData = new LandTiles[Constants.MAX_LAND_DATA_INDEX_COUNT];
+                    _landData = new LandTiles[ArtLoader.MAX_LAND_DATA_INDEX_COUNT];
                     _staticData = new StaticTiles[staticscount * 32];
 
                     byte* bufferString = stackalloc byte[20];
@@ -312,7 +311,7 @@ namespace ClassicUO.IO.Resources
         }
     }
 
-    internal struct LandTiles
+    public struct LandTiles
     {
         public LandTiles(ulong flags, ushort textId, string name)
         {
@@ -331,14 +330,14 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct LandGroup
+    public struct LandGroup
     {
         public uint Unknown;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
         public LandTiles[] Tiles;
     }
 
-    internal struct StaticTiles
+    public struct StaticTiles
     {
         public StaticTiles
         (
@@ -402,7 +401,7 @@ namespace ClassicUO.IO.Resources
     // old
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct LandGroupOld
+    public struct LandGroupOld
     {
         public uint Unknown;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -410,7 +409,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct LandTilesOld
+    public struct LandTilesOld
     {
         public uint Flags;
         public ushort TexID;
@@ -419,7 +418,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct StaticGroupOld
+    public struct StaticGroupOld
     {
         public uint Unk;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -427,7 +426,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct StaticTilesOld
+    public struct StaticTilesOld
     {
         public uint Flags;
         public byte Weight;
@@ -444,7 +443,7 @@ namespace ClassicUO.IO.Resources
     // new 
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct LandGroupNew
+    public struct LandGroupNew
     {
         public uint Unknown;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -452,7 +451,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct LandTilesNew
+    public struct LandTilesNew
     {
         public TileFlag Flags;
         public ushort TexID;
@@ -461,7 +460,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct StaticGroupNew
+    public struct StaticGroupNew
     {
         public uint Unk;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -469,7 +468,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    internal struct StaticTilesNew
+    public struct StaticTilesNew
     {
         public TileFlag Flags;
         public byte Weight;
@@ -484,7 +483,7 @@ namespace ClassicUO.IO.Resources
     }
 
     [Flags]
-    internal enum TileFlag : ulong
+    public enum TileFlag : ulong
     {
         /// <summary>
         ///     Nothing is flagged.

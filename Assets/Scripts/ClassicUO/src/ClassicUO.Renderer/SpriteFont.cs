@@ -30,18 +30,18 @@
 
 #endregion
 
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
-    internal sealed class SpriteFont
+    public sealed class SpriteFont
     {
         private SpriteFont
         (
@@ -68,15 +68,15 @@ namespace ClassicUO.Renderer
         }
 
 
-        public ReadOnlyCollection<char> Characters { get; }
-        public char? DefaultCharacter { get; }
-        public int LineSpacing { get; }
-        public float Spacing { get; }
-        public Texture2D Texture { get; }
-        public List<Rectangle> GlyphData { get; }
-        public List<Rectangle> CroppingData { get; }
-        public List<Vector3> Kerning { get; }
-        public List<char> CharacterMap { get; }
+        internal ReadOnlyCollection<char> Characters { get; }
+        internal char? DefaultCharacter { get; }
+        internal int LineSpacing { get; }
+        internal float Spacing { get; }
+        internal Texture2D Texture { get; }
+        internal List<Rectangle> GlyphData { get; }
+        internal List<Rectangle> CroppingData { get; }
+        internal List<Vector3> Kerning { get; }
+        internal List<char> CharacterMap { get; }
 
 
         public Vector2 MeasureString(string text)
@@ -177,7 +177,7 @@ namespace ClassicUO.Renderer
         }
 
 
-        public static SpriteFont Create(string name)
+        internal static SpriteFont Create(GraphicsDevice device, string name)
         {
             // MobileUO: load resource from Unity
             var bytes = UnityEngine.Resources.Load<UnityEngine.TextAsset>(name).bytes;
@@ -234,7 +234,7 @@ namespace ClassicUO.Renderer
 
                 Texture2D texture = new Texture2D
                 (
-                    Client.Game.GraphicsDevice,
+                    device,
                     width,
                     height,
                     false,
@@ -326,7 +326,7 @@ namespace ClassicUO.Renderer
             }
         }
 
-        internal static byte[] DecompressDxt3(Stream imageStream, int width, int height)
+        private static byte[] DecompressDxt3(Stream imageStream, int width, int height)
         {
             byte[] imageData = new byte[width * height * 4];
 
@@ -550,7 +550,7 @@ namespace ClassicUO.Renderer
             {
             }
 
-            internal new int Read7BitEncodedInt()
+            public new int Read7BitEncodedInt()
             {
                 return base.Read7BitEncodedInt();
             }

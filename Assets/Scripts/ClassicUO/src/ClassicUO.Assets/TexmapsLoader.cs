@@ -30,28 +30,29 @@
 
 #endregion
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using ClassicUO.Game;
-using ClassicUO.Renderer;
+using ClassicUO.IO;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class TexmapsLoader : UOFileLoader
+    public class TexmapsLoader : UOFileLoader
     {
         private static TexmapsLoader _instance;
         private UOFile _file;
+
+        public const int MAX_LAND_TEXTURES_DATA_INDEX_COUNT = 0x4000;
 
         private TexmapsLoader(int count)
         {
         }
 
         public static TexmapsLoader Instance =>
-            _instance ?? (_instance = new TexmapsLoader(Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT));
+            _instance ?? (_instance = new TexmapsLoader(MAX_LAND_TEXTURES_DATA_INDEX_COUNT));
 
         public override Task Load()
         {
@@ -65,7 +66,7 @@ namespace ClassicUO.IO.Resources
                     FileSystemHelper.EnsureFileExists(path);
                     FileSystemHelper.EnsureFileExists(pathidx);
 
-                    _file = new UOFileMul(path, pathidx, Constants.MAX_LAND_TEXTURES_DATA_INDEX_COUNT, 10);
+                    _file = new UOFileMul(path, pathidx, MAX_LAND_TEXTURES_DATA_INDEX_COUNT, 10);
                     _file.FillEntries(ref Entries);
                     string pathdef = UOFileManager.GetUOFilePath("TexTerr.def");
 

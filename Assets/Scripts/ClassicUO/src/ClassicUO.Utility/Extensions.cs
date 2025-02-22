@@ -43,7 +43,7 @@ using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Utility
 {
-    internal static class Exstentions
+    public static class Exstentions
     {
         public static void Raise(this EventHandler handler, object sender = null)
         {
@@ -167,7 +167,8 @@ namespace ClassicUO.Utility
             return inrect;
         }
 
-        // MobileUO: NOTE: Commented out because ZipArchive is not available in Unity's .NET version, it seems, and also not needed
+        
+// MobileUO: NOTE: Commented out because ZipArchive is not available in Unity's .NET version, it seems, and also not needed
         //NOTE: since this is only used by the Updater class
 //#if NETFRAMEWORK
 //        public static void ExtractToDirectory(this ZipArchive archive, string destinationDirectoryName, bool overwrite)

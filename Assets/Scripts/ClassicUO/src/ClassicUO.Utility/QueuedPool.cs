@@ -35,7 +35,7 @@ using System.Collections.Generic;
 
 namespace ClassicUO.Utility
 {
-    internal class QueuedPool<T> where T : class, new()
+    public class QueuedPool<T> where T : class, new()
     {
         private readonly Action<T> _on_pickup;
         // MobileUO: made variable public

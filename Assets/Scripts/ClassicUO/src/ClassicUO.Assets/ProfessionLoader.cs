@@ -30,15 +30,40 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using ClassicUO.Game.UI.Gumps.CharCreation;
-using ClassicUO.Utility;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class ProfessionLoader : UOFileLoader
+    public class ProfessionInfo
+    {
+        public static readonly int[,] _VoidSkills = new int[4, 2]
+        {
+            { 0, InitialSkillValue }, { 0, InitialSkillValue },
+            { 0, UOFileManager.Version < ClientVersion.CV_70160 ? 0 : InitialSkillValue }, { 0, InitialSkillValue }
+        };
+        public static readonly int[] _VoidStats = new int[3] { 60, RemainStatValue, RemainStatValue };
+        public static int InitialSkillValue => UOFileManager.Version >= ClientVersion.CV_70160 ? 30 : 50;
+        public static int RemainStatValue => UOFileManager.Version >= ClientVersion.CV_70160 ? 15 : 10;
+        public string Name { get; set; }
+        public string TrueName { get; set; }
+        public int Localization { get; set; }
+        public int Description { get; set; }
+        public int DescriptionIndex { get; set; }
+        public ProfessionLoader.PROF_TYPE Type { get; set; }
+
+        public ushort Graphic { get; set; }
+
+        public bool TopLevel { get; set; }
+        public int[,] SkillDefVal { get; set; } = _VoidSkills;
+        public int[] StatsVal { get; set; } = _VoidStats;
+        public List<string> Childrens { get; set; }
+    }
+
+    public class ProfessionLoader : UOFileLoader
     {
         private static ProfessionLoader _instance;
         private readonly string[] _Keys =
@@ -384,7 +409,7 @@ namespace ClassicUO.IO.Resources
             _instance = null;
         }
 
-        internal enum PROF_TYPE
+        public enum PROF_TYPE
         {
             NO_PROF = 0,
             CATEGORY,

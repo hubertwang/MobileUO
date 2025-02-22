@@ -32,7 +32,7 @@
 
 using System;
 using System.Collections.Generic;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
@@ -240,7 +240,7 @@ namespace ClassicUO.Game.UI.Controls
         {
             if (batcher.ClipBegin(x, y, Width, Height))
             {
-               Vector3 hueVector = ShaderHueTranslator.GetHueVector
+                Vector3 hueVector = ShaderHueTranslator.GetHueVector
                                     (
                                         0,
                                         false,

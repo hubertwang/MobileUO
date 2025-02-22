@@ -32,16 +32,14 @@
 
 #define USE_MMF
 
+using ClassicUO.Utility.Logging;
 using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using System.Runtime.CompilerServices;
-using ClassicUO.Utility;
-using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.IO
 {
-    internal unsafe class UOFile : DataReader
+    public unsafe class UOFile : DataReader
     {
         public UOFile(string filepath, bool loadFile = false)
         {
@@ -55,8 +53,8 @@ namespace ClassicUO.IO
 
         public string FilePath { get; }
 #if USE_MMF
-        private protected MemoryMappedViewAccessor _accessor;
-        private protected MemoryMappedFile _file;
+        protected MemoryMappedViewAccessor _accessor;
+        protected MemoryMappedFile _file;
 #endif
 
         protected virtual void Load()

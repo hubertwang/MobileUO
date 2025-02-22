@@ -34,13 +34,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ClassicUO.Data;
+using ClassicUO.Utility;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Gumps;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 
 namespace ClassicUO.Network
 {

@@ -30,10 +30,7 @@
 
 #endregion
 
-using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
+using ClassicUO.Assets;
 using ClassicUO.Configuration;
 using ClassicUO.Game;
 using ClassicUO.Game.Data;
@@ -44,7 +41,6 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
-using ClassicUO.IO.Resources;
 using ClassicUO.Network;
 using ClassicUO.Renderer;
 using ClassicUO.Resources;
@@ -52,7 +48,10 @@ using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SDL2;
+using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using static SDL2.SDL;
 
 namespace ClassicUO
@@ -154,6 +153,12 @@ namespace ClassicUO
             GraphicsDevice.Textures[2] = _hueSamplers[1];
             GraphicsDevice.Textures[3] = _hueSamplers[2];
 
+            MapLoader.MapsLayouts = Settings.GlobalSettings.MapsLayouts;
+
+            Fonts.Initialize(GraphicsDevice);
+            SolidColorTextureCache.Initialize(GraphicsDevice);
+
+            TextureAtlas.InitializeSharedTexture(GraphicsDevice);
             GumpsLoader.Instance.CreateAtlas(GraphicsDevice);
             LightsLoader.Instance.CreateAtlas(GraphicsDevice);
             AnimationsLoader.Instance.CreateAtlas(GraphicsDevice);
@@ -235,7 +240,6 @@ namespace ClassicUO
             {
                 NetClient.Socket.Disconnect();
             }
-
             base.UnloadContent();
         }
 
@@ -358,6 +362,7 @@ namespace ClassicUO
 
             if (borderless)
             {
+                SetWindowSize(width, height);
                 SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(Window.Handle), out SDL_Rect rect);
                 SDL_SetWindowPosition(Window.Handle, rect.x, rect.y);
             }

@@ -38,7 +38,7 @@ using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.Map;
-using ClassicUO.IO.Resources;
+using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
@@ -681,7 +681,6 @@ namespace ClassicUO.Game.Scenes
                         continue;
                     }
 
-                    //PushToRenderList(obj, ref _renderListLands, ref _renderListLandsHead, ref _renderListLandsCount, true);
                     PushToRenderList(obj, ref _renderList, ref _renderListStaticsHead, ref _renderListStaticsCount, true);
                 }
                 else if (obj is Static staticc)

@@ -30,15 +30,16 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using ClassicUO.Utility;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class SkillsLoader : UOFileLoader
+    public class SkillsLoader : UOFileLoader
     {
         private static SkillsLoader _instance;
         private UOFileMul _file;
@@ -115,7 +116,7 @@ namespace ClassicUO.IO.Resources
         }
     }
 
-    internal class SkillEntry
+    public class SkillEntry
     {
         public SkillEntry(int index, string name, bool hasAction)
         {
@@ -133,7 +134,7 @@ namespace ClassicUO.IO.Resources
             return Name;
         }
 
-        internal enum HardCodedName
+        public enum HardCodedName
         {
             Alchemy,
             Anatomy,

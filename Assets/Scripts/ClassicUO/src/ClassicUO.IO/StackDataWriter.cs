@@ -1,18 +1,14 @@
+using ClassicUO.Utility;
 using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using ClassicUO.Utility;
 
 namespace ClassicUO.IO
 {
-    ref struct StackDataWriter
+    public ref struct StackDataWriter
     {
         private const MethodImplOptions IMPL_OPTION = MethodImplOptions.AggressiveInlining
 #if !NETFRAMEWORK && !NETSTANDARD2_0

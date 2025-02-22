@@ -37,7 +37,7 @@ using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Utility.Platforms
 {
-    internal static class PlatformHelper
+    public static class PlatformHelper
     {
         public static readonly bool IsMonoRuntime = Type.GetType("Mono.Runtime") != null;
 

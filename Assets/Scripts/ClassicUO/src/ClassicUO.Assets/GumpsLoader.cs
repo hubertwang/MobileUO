@@ -30,30 +30,33 @@
 
 #endregion
 
+using ClassicUO.IO;
+using ClassicUO.Utility;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using ClassicUO.Game;
-using ClassicUO.Renderer;
-using ClassicUO.Utility;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace ClassicUO.IO.Resources
+namespace ClassicUO.Assets
 {
-    internal class GumpsLoader : UOFileLoader
+    public class GumpsLoader : UOFileLoader
     {
         private static GumpsLoader _instance;
         private UOFile _file;
         private PixelPicker _picker = new PixelPicker();
+
+        public const int MAX_GUMP_DATA_INDEX_COUNT = 0x10000;
 
         private GumpsLoader(int count)
         {
         }
 
         public static GumpsLoader Instance =>
-            _instance ?? (_instance = new GumpsLoader(Constants.MAX_GUMP_DATA_INDEX_COUNT));
+            _instance ?? (_instance = new GumpsLoader(MAX_GUMP_DATA_INDEX_COUNT));
+
+        public bool UseUOPGumps = false;
 
         public override Task Load()
         {
@@ -63,11 +66,11 @@ namespace ClassicUO.IO.Resources
                 {
                     string path = UOFileManager.GetUOFilePath("gumpartLegacyMUL.uop");
 
-                    if (Client.IsUOPInstallation && File.Exists(path))
+                    if (UOFileManager.IsUOPInstallation && File.Exists(path))
                     {
                         _file = new UOFileUop(path, "build/gumpartlegacymul/{0:D8}.tga", true);
-                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, Constants.MAX_GUMP_DATA_INDEX_COUNT)];
-                        Client.UseUOPGumps = true;
+                        Entries = new UOFileIndex[Math.Max(((UOFileUop) _file).TotalEntriesCount, MAX_GUMP_DATA_INDEX_COUNT)];
+                        UseUOPGumps = true;
                     }
                     else
                     {
@@ -84,9 +87,9 @@ namespace ClassicUO.IO.Resources
                             pathidx = UOFileManager.GetUOFilePath("Gumpidx.mul");
                         }
 
-                        _file = new UOFileMul(path, pathidx, Constants.MAX_GUMP_DATA_INDEX_COUNT, 12);
+                        _file = new UOFileMul(path, pathidx, MAX_GUMP_DATA_INDEX_COUNT, 12);
 
-                        Client.UseUOPGumps = false;
+                        UseUOPGumps = false;
                     }
 
                     _file.FillEntries(ref Entries);
@@ -105,7 +108,7 @@ namespace ClassicUO.IO.Resources
                         {
                             int ingump = defReader.ReadInt();
 
-                            if (ingump < 0 || ingump >= Constants.MAX_GUMP_DATA_INDEX_COUNT || ingump >= Entries.Length || Entries[ingump].Length > 0)
+                            if (ingump < 0 || ingump >= MAX_GUMP_DATA_INDEX_COUNT || ingump >= Entries.Length || Entries[ingump].Length > 0)
                             {
                                 continue;
                             }
@@ -121,7 +124,7 @@ namespace ClassicUO.IO.Resources
                             {
                                 int checkIndex = group[i];
 
-                                if (checkIndex < 0 || checkIndex >= Constants.MAX_GUMP_DATA_INDEX_COUNT || checkIndex >= Entries.Length || Entries[checkIndex].Length <= 0)
+                                if (checkIndex < 0 || checkIndex >= MAX_GUMP_DATA_INDEX_COUNT || checkIndex >= Entries.Length || Entries[checkIndex].Length <= 0)
                                 {
                                     continue;
                                 }
