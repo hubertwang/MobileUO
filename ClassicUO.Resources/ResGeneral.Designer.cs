@@ -1,1 +1,1 @@
-../external/ClassicUO/src/Resources/ResGeneral.Designer.cs
+../external/ClassicUO/src/ClassicUO.Client/Resources/ResGeneral.Designer.cs

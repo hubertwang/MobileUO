@@ -1,1 +1,1 @@
-../external/ClassicUO/src/Resources/ResErrorMessages.Designer.cs
+../external/ClassicUO/src/ClassicUO.Client/Resources/ResErrorMessages.Designer.cs

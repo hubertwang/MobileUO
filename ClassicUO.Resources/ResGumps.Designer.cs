@@ -1,1 +1,1 @@
-../external/ClassicUO/src/Resources/ResGumps.Designer.cs
+../external/ClassicUO/src/ClassicUO.Client/Resources/ResGumps.Designer.cs
