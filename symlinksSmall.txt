@@ -1,3 +1,12 @@
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Client\Game\UI\Controls\GumpPic.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Client\Game\UI\Controls\ResizePic.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Client\Game\UI\Controls\ScrollFlag.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Client\Game\UI\Controls\StaticPic.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.IO\UOFileLoader.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Renderer\Effects\XBREffect.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Utility\StbRectPack\CRuntime.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Utility\StbRectPack\Packer.cs
+C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Utility\UnsafeMemoryManager.cs
 C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Assets\ClilocLoader.cs
 C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Assets\Verdata.cs
 C:\mobileuo\Assets\Scripts\ClassicUO\src\ClassicUO.Client\ClientException.cs
