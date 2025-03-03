@@ -29,11 +29,12 @@ namespace ClassicUO.Renderer
                 return false;
             }
 
-            // MobileUO: allow coarse item selection for items on ground
-            if (!pixelCheck && x > 0 && x < width && y > 0 && y < height)
-            {
-                return true;
-            }
+            // MobileUO: PixelCheck: allow coarse item selection for items on ground
+            // MobileUO: TODO: bring this back later, it needs improvements or at least a settings flag for it
+            //if (!pixelCheck && x > 0 && x < width && y > 0 && y < height)
+            //{
+            //    return true;
+            //}
 
             int current = 0;
             int target = x + y * width;
