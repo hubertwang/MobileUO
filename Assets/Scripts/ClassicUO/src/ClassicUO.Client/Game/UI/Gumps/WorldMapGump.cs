@@ -56,9 +56,18 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SDL2;
 using SpriteFont = ClassicUO.Renderer.SpriteFont;
+using System.Text.Json.Serialization;
+using static ClassicUO.Game.UI.Gumps.WorldMapGump;
 
 namespace ClassicUO.Game.UI.Gumps
 {
+    [JsonSourceGenerationOptions(WriteIndented = true, GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(ZonesFile), GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(ZonesFileZoneData), GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(List<ZonesFileZoneData>), GenerationMode = JsonSourceGenerationMode.Metadata)]
+    [JsonSerializable(typeof(List<int>), GenerationMode = JsonSourceGenerationMode.Metadata)]
+    sealed partial class ZonesJsonContext : JsonSerializerContext { }
+
     internal class WorldMapGump : ResizableGump
     {
         private static Point _last_position = new Point(100, 100);
@@ -107,6 +116,7 @@ namespace ClassicUO.Game.UI.Gumps
         private bool _showPlayerName = true;
         private int _zoomIndex = 4;
         private bool _showGridIfZoomed = true;
+        private bool _allowPositionalTarget = false;
 
         private WMapMarker _gotoMarker;
 
@@ -225,6 +235,7 @@ namespace ClassicUO.Game.UI.Gumps
             _hiddenZoneFiles = string.IsNullOrEmpty(ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles) ? new List<string>() : ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles.Split(',').ToList();
 
             _showGridIfZoomed = ProfileManager.CurrentProfile.WorldMapShowGridIfZoomed;
+            _allowPositionalTarget = ProfileManager.CurrentProfile.WorldMapAllowPositionalTarget;
             TopMost = ProfileManager.CurrentProfile.WorldMapTopMost;
             FreeView = ProfileManager.CurrentProfile.WorldMapFreeView;
         }
@@ -263,6 +274,7 @@ namespace ClassicUO.Game.UI.Gumps
             ProfileManager.CurrentProfile.WorldMapHiddenZoneFiles = string.Join(",", _hiddenZoneFiles);
 
             ProfileManager.CurrentProfile.WorldMapShowGridIfZoomed = _showGridIfZoomed;
+            ProfileManager.CurrentProfile.WorldMapAllowPositionalTarget = _allowPositionalTarget;
         }
 
         private bool ParseBool(string boolStr)
@@ -381,6 +393,10 @@ namespace ClassicUO.Game.UI.Gumps
             _options["show_coordinates"] = new ContextMenuItemEntry(ResGumps.ShowYourCoordinates, () => { _showCoordinates = !_showCoordinates; SaveSettings(); }, true, _showCoordinates);
 
             _options["show_mouse_coordinates"] = new ContextMenuItemEntry(ResGumps.ShowMouseCoordinates, () => { _showMouseCoordinates = !_showMouseCoordinates; }, true, _showMouseCoordinates);
+
+            _options["allow_positional_target"] = new ContextMenuItemEntry(
+                ResGumps.AllowPositionalTargeting, () => { _allowPositionalTarget = !_allowPositionalTarget; SaveSettings(); }, true, _allowPositionalTarget
+            );
 
             _options["markers_manager"] = new ContextMenuItemEntry(ResGumps.MarkersManager,
                 () =>
@@ -555,6 +571,7 @@ namespace ClassicUO.Game.UI.Gumps
             ContextMenu.Add(_options["show_multis"]);
             ContextMenu.Add(_options["show_coordinates"]);
             ContextMenu.Add(_options["show_mouse_coordinates"]);
+            ContextMenu.Add(_options["allow_positional_target"]);
             ContextMenu.Add("", null);
             ContextMenu.Add(_options["markers_manager"]);
             ContextMenu.Add(_options["add_marker_on_player"]);
@@ -717,6 +734,21 @@ namespace ClassicUO.Game.UI.Gumps
             }
 
             return offset + 8;
+        }
+
+        internal void HandlePositionTarget()
+        {
+            var position = Mouse.Position;
+            int x = position.X - X - ParentX;
+            int y = position.Y - Y - ParentY;
+            CanvasToWorld(x, y, out int xMap, out int yMap);
+            TargetManager.Target
+            (
+                0,
+                (ushort)xMap,
+                (ushort)yMap,
+                World.Map.GetTileZ(xMap, yMap)
+            );
         }
 
         public override void Dispose()
@@ -1589,30 +1621,23 @@ namespace ClassicUO.Game.UI.Gumps
             );
         }
 
-        [DataContract]
         internal class ZonesFileZoneData
         {
-            [DataMember]
-            public string Label = null;
+            public string Label { get; set; }
 
-            [DataMember]
-            public string Color = null;
+            public string Color { get; set; }
 
-            [DataMember]
-            public List<List<int>> Polygon = null;
+            public List<List<int>> Polygon { get; set; }
         }
 
-        [DataContract]
         internal class ZonesFile
         {
-            [DataMember]
-            public int MapIndex;
-
-            [DataMember]
-            public List<ZonesFileZoneData> Zones;
+            public int MapIndex { get; set; }
+            public List<ZonesFileZoneData> Zones { get; set; }
         }
 
-        private class Zone {
+        private class Zone 
+        {
             public string Label;
             public Color Color;
             public Rectangle BoundingRectangle;
@@ -1675,31 +1700,19 @@ namespace ClassicUO.Game.UI.Gumps
 
         private class ZoneSets
         {
-            public Dictionary<string, ZoneSet> ZoneSetDict = new Dictionary<string, ZoneSet>();
+            public Dictionary<string, ZoneSet> ZoneSetDict { get; } = new Dictionary<string, ZoneSet>();
 
             public void AddZoneSetByFileName(string filename, bool hidden)
             {
-                FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(ZonesFile));
-                ZonesFile zf = null;
-
                 try
                 {
-                    zf = (ZonesFile) ser.ReadObject(fs);
+                    var zf = System.Text.Json.JsonSerializer.Deserialize(File.ReadAllText(filename), ZonesJsonContext.Default.ZonesFile);
+                    ZoneSetDict[filename] = new ZoneSet(zf, filename, hidden);
+                    GameActions.Print(string.Format(ResGumps.MapZoneFileLoaded, ZoneSetDict[filename].NiceFileName), 0x3A /* yellow green */);
                 }
                 catch (Exception ee)
                 {
                     Log.Error($"{ee}");
-                }
-                finally
-                {
-                    fs.Dispose();
-                }
-
-                if (!(zf is null))
-                {
-                    ZoneSetDict[filename] = new ZoneSet(zf, filename, hidden);
-                    GameActions.Print(String.Format(ResGumps.MapZoneFileLoaded, ZoneSetDict[filename].NiceFileName), 0x3A /* yellow green */);
                 }
             }
 
@@ -3244,6 +3257,12 @@ namespace ClassicUO.Game.UI.Gumps
 
         protected override void OnMouseUp(int x, int y, MouseButtonType button)
         {
+            var allowTarget = _allowPositionalTarget && TargetManager.IsTargeting && TargetManager.TargetingState == CursorTarget.Position;
+            if (allowTarget && button == MouseButtonType.Left)
+            {
+                HandlePositionTarget();
+            }
+            
             if (button == MouseButtonType.Left && !Keyboard.Alt)
             {
                 _isScrolling = false;

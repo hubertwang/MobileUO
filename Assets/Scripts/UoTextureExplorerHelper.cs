@@ -9,6 +9,7 @@ using ClassicUO.Utility.Logging;
 using UnityEditor;
 using UnityEngine;
 using Texture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
+using ClassicUO.Utility.Platforms;
 
 public static class UoTextureExplorerHelper
 {
@@ -117,7 +118,7 @@ public static class UoTextureExplorerHelper
 
     public static Texture2D GetGumpTexture(ushort g)
     {
-        var uoTexture = GumpsLoader.Instance.GetGumpTexture(g, out _);
+        var uoTexture = Client.Game.Gumps.GetGump(g).Texture;
         return uoTexture != null && uoTexture.UnityTexture != null ? uoTexture : null;
     }
 

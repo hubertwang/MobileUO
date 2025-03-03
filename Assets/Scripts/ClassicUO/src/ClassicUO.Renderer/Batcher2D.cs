@@ -1493,47 +1493,19 @@ namespace ClassicUO.Renderer
     }
 
 
-    public class Resources
+    partial class Resources
     {
-        private static byte[] _isometricEffect, _xBREffect;
-
-        public static byte[] IsometricEffect => _isometricEffect ?? (_isometricEffect = GetResource("ClassicUO.shaders.IsometricWorld.fxc"));
-
-        public static byte[] xBREffect => _xBREffect ?? (_xBREffect = GetResource("ClassicUO.shaders.xBR.fxc"));
-
-        // MobileUO: commented out
-        // public static byte[] StandardEffect
-        // {
-        //     get
-        //     {
-        //         Stream stream = typeof(SpriteBatch).Assembly.GetManifestResourceStream(
-        //                                                                                "Microsoft.Xna.Framework.Graphics.Effect.Resources.SpriteEffect.fxb"
-        //                                                                               );
-        //
-        //         using (MemoryStream ms = new MemoryStream())
-        //         {
-        //             stream.CopyTo(ms);
-        //
-        //             return ms.ToArray();
-        //         }
-        //     }
-        // }
-
-        private static byte[] GetResource(string name)
+        // MobileUO: added implementation stubs - these aren't used
+        //[EmbedResourceCSharp.FileEmbed("shaders/IsometricWorld.fxc")]
+        public static ReadOnlySpan<byte> GetUOShader()
         {
-            // MobileUO: early return
-            return new byte[1];
-            
-            Stream stream = typeof(UltimaBatcher2D).Assembly.GetManifestResourceStream(
-                                                                                       name
-                                                                                      );
+            return null;
+        }
 
-            using (MemoryStream ms = new MemoryStream())
-            {
-                stream.CopyTo(ms);
-
-                return ms.ToArray();
-            }
+        //[EmbedResourceCSharp.FileEmbed("shaders/xBR.fxc")]
+        public static ReadOnlySpan<byte> GetXBRShader()
+        {
+            return null;
         }
     }
 }

@@ -100,13 +100,7 @@ namespace ClassicUO.Game.Scenes
             _autoLogin = Settings.GlobalSettings.AutoLogin;
 
             UIManager.Add(new LoginBackground());
-            UIManager.Add(_currentGump = new LoginGump(this));
-
-            // Registering Packet Events
-            //NetClient.PacketReceived += NetClient_PacketReceived;
-            NetClient.Socket.Disconnected += NetClient_Disconnected;
-            NetClient.LoginSocket.Connected += NetClient_Connected;
-            NetClient.LoginSocket.Disconnected += Login_NetClient_Disconnected;
+            UIManager.Add(_currentGump = new LoginGump(this));          
 
             Client.Game.Audio.PlayMusic(Client.Game.Audio.LoginMusicIndex, false, true);
 
@@ -144,19 +138,17 @@ namespace ClassicUO.Game.Scenes
             _currentGump?.Dispose();
 
             // UnRegistering Packet Events           
-            // NetClient.Socket.Connected -= NetClient_Connected;
-            NetClient.Socket.Disconnected -= NetClient_Disconnected;
-            NetClient.LoginSocket.Connected -= NetClient_Connected;
-            NetClient.LoginSocket.Disconnected -= Login_NetClient_Disconnected;
-            //NetClient.PacketReceived -= NetClient_PacketReceived;
+            NetClient.Socket.Connected -= OnNetClientConnected;
+            NetClient.Socket.Disconnected -= OnNetClientDisconnected;
 
             Client.Game.GameCursor.IsLoading = false;
             // MobileUO: NOTE: We force the login socket to disconnect in case it hasn't already been disposed
             //This is good practice since the Client can be quit while the socket is still active
-            if (NetClient.LoginSocket.IsDisposed == false)
-            {
-                NetClient.LoginSocket.Disconnect();
-            }
+            // MobileUO: TODO: version 1.0.0.0 drops LoginSocket
+            //if (NetClient.LoginSocket.IsDisposed == false)
+            //{
+            //    NetClient.LoginSocket.Disconnect();
+            //}
 
             //UIManager.GameCursor.IsLoading = false;
             // MobileUO: added Clear
@@ -180,7 +172,7 @@ namespace ClassicUO.Game.Scenes
                 _lastLoginStep = CurrentLoginStep;
             }
 
-            if (Reconnect && (CurrentLoginStep == LoginSteps.PopUpMessage || CurrentLoginStep == LoginSteps.Main) && !NetClient.Socket.IsConnected && !NetClient.LoginSocket.IsConnected)
+            if (Reconnect && (CurrentLoginStep == LoginSteps.PopUpMessage || CurrentLoginStep == LoginSteps.Main) && !NetClient.Socket.IsConnected)
             {
                 if (_reconnectTime < Time.Ticks)
                 {
@@ -209,13 +201,9 @@ namespace ClassicUO.Game.Scenes
             {
                 // Note that this will not be an ICMP ping, so it's better that this *not* be affected by -no_server_ping.
 
-                if (NetClient.Socket != null && NetClient.Socket.IsConnected)
+                if (NetClient.Socket.IsConnected)
                 {
                     NetClient.Socket.Statistics.SendPing();
-                }
-                else if (NetClient.LoginSocket != null && NetClient.LoginSocket.IsConnected)
-                {
-                    NetClient.LoginSocket.Statistics.SendPing();
                 }
 
                 _pingTime = Time.Ticks + 60000;
@@ -329,7 +317,7 @@ namespace ClassicUO.Game.Scenes
             }
         }
 
-        public async void Connect(string account, string password)
+        public void Connect(string account, string password)
         {
             if (CurrentLoginStep == LoginSteps.Connecting)
             {
@@ -354,14 +342,21 @@ namespace ClassicUO.Game.Scenes
             {
                 CurrentLoginStep = LoginSteps.Connecting;
             }
-            
-            if (!await NetClient.LoginSocket.Connect(Settings.GlobalSettings.IP, Settings.GlobalSettings.Port))
-            {
-                PopupMessage = ResGeneral.CheckYourConnectionAndTryAgain;
-                CurrentLoginStep = LoginSteps.PopUpMessage;
-                Log.Error("No Internet Access");
-            }
+
+            //NetClient.LoginSocket.Disconnected += (o, e) => {
+            //    PopupMessage = ResGeneral.CheckYourConnectionAndTryAgain;
+            //    CurrentLoginStep = LoginSteps.PopUpMessage;
+            //    Log.Error("No Internet Access");
+            //};
+
+            NetClient.Socket.Connected -= OnNetClientConnected;
+            NetClient.Socket.Disconnected -= OnNetClientDisconnected;
+            NetClient.Socket.Connected += OnNetClientConnected;
+            NetClient.Socket.Disconnected += OnNetClientDisconnected;
+            NetClient.Socket.Connect(Settings.GlobalSettings.IP, Settings.GlobalSettings.Port);
         }
+
+
 
         public int GetServerIndexByName(string name)
         {
@@ -419,7 +414,7 @@ namespace ClassicUO.Game.Scenes
 
                 World.ServerName = Servers[ServerIndex].Name;
 
-                NetClient.LoginSocket.Send_SelectServer(index);
+                NetClient.Socket.Send_SelectServer(index);
             }
         }
 
@@ -490,7 +485,7 @@ namespace ClassicUO.Game.Scenes
                 case LoginSteps.ServerSelection:
                     DisposeAllServerEntries();
                     CurrentLoginStep = LoginSteps.Main;
-                    NetClient.LoginSocket.Disconnect();
+                    NetClient.Socket.Disconnect();
 
                     break;
 
@@ -509,7 +504,6 @@ namespace ClassicUO.Game.Scenes
 
                 case LoginSteps.PopUpMessage:
                 case LoginSteps.CharacterSelection:
-                    NetClient.LoginSocket.Disconnect();
                     NetClient.Socket.Disconnect();
                     Characters = null;
                     DisposeAllServerEntries();
@@ -529,12 +523,12 @@ namespace ClassicUO.Game.Scenes
             return null;
         }
 
-        private void NetClient_Connected(object sender, EventArgs e)
+        private void OnNetClientConnected(object sender, EventArgs e)
         {
             Log.Info("Connected!");
             CurrentLoginStep = LoginSteps.VerifyingAccount;
 
-            uint address = NetClient.LoginSocket.LocalIP;
+            uint address = NetClient.Socket.LocalIP;
 
             EncryptionHelper.Initialize(true, address, (ENCRYPTION_TYPE)Settings.GlobalSettings.Encryption);
 
@@ -548,34 +542,24 @@ namespace ClassicUO.Game.Scenes
                 byte extra = (byte) clientVersion;
 
 
-                NetClient.LoginSocket.Send_Seed(address, major, minor, build, extra);
+                NetClient.Socket.Send_Seed(address, major, minor, build, extra);
             }
             else
             {
-                NetClient.LoginSocket.Send_Seed_Old(address);
+                NetClient.Socket.Send_Seed_Old(address);
             }
 
-            NetClient.LoginSocket.Send_FirstLogin(Account, Password);
+            NetClient.Socket.Send_FirstLogin(Account, Password);
         }
 
-        private void NetClient_Disconnected(object sender, SocketError e)
+        private void OnNetClientDisconnected(object sender, SocketError e)
         {
-            Log.Warn("Disconnected (game socket)!");
+            Log.Warn("Disconnected");
 
             if (CurrentLoginStep == LoginSteps.CharacterCreation)
             {
                 return;
             }
-
-            Characters = null;
-            DisposeAllServerEntries();
-            PopupMessage = string.Format(ResGeneral.ConnectionLost0, StringHelper.AddSpaceBeforeCapital(e.ToString()));
-            CurrentLoginStep = LoginSteps.PopUpMessage;
-        }
-
-        private void Login_NetClient_Disconnected(object sender, SocketError e)
-        {
-            Log.Warn("Disconnected (login socket)!");
 
             if (e != 0)
             {
@@ -706,31 +690,23 @@ namespace ClassicUO.Game.Scenes
             ushort port = p.ReadUInt16BE();
             uint seed = p.ReadUInt32BE();
 
-            NetClient.LoginSocket.Disconnect();
+            NetClient.Socket.Disconnect();
+            NetClient.Socket = new NetClient();
             EncryptionHelper.Initialize(false, seed, (ENCRYPTION_TYPE) Settings.GlobalSettings.Encryption);
 
-            NetClient.Socket.Connect(new IPAddress(ip), port)
-                     .ContinueWith
-                     (
-                         t =>
-                         {
-                             if (!t.IsFaulted)
-                             {
-                                 NetClient.Socket.EnableCompression();
+            NetClient.Socket.Connect(new IPAddress(ip).ToString(), port);
 
-                                 unsafe
-                                 {
-                                     Span<byte> b = stackalloc byte[4] { (byte)(seed >> 24), (byte)(seed >> 16), (byte)(seed >> 8), (byte)seed };
-                                     StackDataWriter writer = new StackDataWriter(b);
-                                     NetClient.Socket.Send(writer.AllocatedBuffer, writer.BytesWritten, true, true);
-                                     writer.Dispose();
-                                 }
+            if (NetClient.Socket.IsConnected)
+            {
+                NetClient.Socket.EnableCompression();
+                unsafe
+                {
+                    Span<byte> b = stackalloc byte[4] { (byte)(seed >> 24), (byte)(seed >> 16), (byte)(seed >> 8), (byte)seed };
+                    NetClient.Socket.Send(b, true, true);
+                }
 
-                                 NetClient.Socket.Send_SecondLogin(Account, Password, seed);
-                             }
-                         },
-                         TaskContinuationOptions.ExecuteSynchronously
-                     );
+                NetClient.Socket.Send_SecondLogin(Account, Password, seed);
+            }
         }
 
 
@@ -954,6 +930,7 @@ namespace ClassicUO.Game.Scenes
     internal class ServerListEntry
     {
         private IPAddress _ipAddress;
+        private IPAddress _ipAddressLittleEndian;
         private Ping _pinger = new Ping();
         private bool _sending;
         private readonly bool[] _last10Results = new bool[10];
@@ -987,6 +964,19 @@ namespace ClassicUO.Game.Scenes
                         (byte) (entry.Address & 0xFF)
                     }
                 );
+
+                // IP address in little-endian format, required for server ping
+                entry._ipAddressLittleEndian = new IPAddress
+                (
+                    new byte[]
+                    {
+                        (byte) (entry.Address & 0xFF),
+                        (byte) ((entry.Address >> 8) & 0xFF),
+                        (byte) ((entry.Address >> 16) & 0xFF),
+                        (byte) ((entry.Address >> 24) & 0xFF)
+                    }
+                );
+                
             }
             catch (Exception e)
             {
@@ -1024,7 +1014,7 @@ namespace ClassicUO.Game.Scenes
                 {
                     _pinger.SendAsync
                     (
-                        _ipAddress,
+                        _ipAddressLittleEndian,
                         1000,
                         _buffData,
                         _pingOptions,

@@ -38,6 +38,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using System.Xml.Linq;
 
 namespace ClassicUO.Renderer
 {
@@ -176,12 +177,16 @@ namespace ClassicUO.Renderer
             return result;
         }
 
-
+        // MobileUO: TODO: implement new way after looking at font.cs
         internal static SpriteFont Create(GraphicsDevice device, string name)
+        //internal static SpriteFont Create(GraphicsDevice device, ReadOnlySpan<byte> resource)
         {
             // MobileUO: load resource from Unity
             var bytes = UnityEngine.Resources.Load<UnityEngine.TextAsset>(name).bytes;
             var stream = new MemoryStream(bytes);
+
+            //using (var ms = new MemoryStream(resource.ToArray()))
+            //using (var reader = new BinReader(ms))
 
             using (BinReader reader = new BinReader(stream))
             {
@@ -242,6 +247,13 @@ namespace ClassicUO.Renderer
                 );
 
                 texture.SetData(levelData);
+
+                // MobileUO: TODO: using this causes Debug/Network gumps text to look broken
+                //unsafe
+                //{
+                //    fixed (byte* ptr = levelData)
+                //        texture.SetDataPointerEXT(0, null, (IntPtr)ptr, width * height * sizeof(byte));
+                //}
 
                 reader.Read7BitEncodedInt();
                 int glyphCount = reader.ReadInt32();

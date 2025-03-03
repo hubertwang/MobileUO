@@ -31,9 +31,37 @@
 #endregion
 
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace ClassicUO.Renderer
 {
+    partial class FontResources
+    {
+        //[EmbedResourceCSharp.FileEmbed("fonts/regular_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetRegularFont();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/bold_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetBoldFont();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map1_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap1Font();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map2_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap2Font();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map3_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap3Font();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map4_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap4Font();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map5_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap5Font();
+
+        //[EmbedResourceCSharp.FileEmbed("fonts/map6_font.xnb")]
+        //public static partial ReadOnlySpan<byte> GetMap6Font();
+    }
+
     public static class Fonts
     {
         public static void Initialize(GraphicsDevice device)
@@ -48,6 +76,16 @@ namespace ClassicUO.Renderer
             Map4 = SpriteFont.Create(device, "map4_font");
             Map5 = SpriteFont.Create(device, "map5_font");
             Map6 = SpriteFont.Create(device, "map6_font");
+
+            // MobileUO: TODO: Implement this newer way
+            //Regular = SpriteFont.Create(device, FontResources.GetRegularFont());
+            //Bold = SpriteFont.Create(device, FontResources.GetBoldFont());
+            //Map1 = SpriteFont.Create(device, FontResources.GetMap1Font());
+            //Map2 = SpriteFont.Create(device, FontResources.GetMap2Font());
+            //Map3 = SpriteFont.Create(device, FontResources.GetMap3Font());
+            //Map4 = SpriteFont.Create(device, FontResources.GetMap4Font());
+            //Map5 = SpriteFont.Create(device, FontResources.GetMap5Font());
+            //Map6 = SpriteFont.Create(device, FontResources.GetMap6Font());
         }
 
         public static SpriteFont Regular { get; private set; }

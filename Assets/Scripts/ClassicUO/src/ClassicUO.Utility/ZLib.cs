@@ -48,14 +48,14 @@ namespace ClassicUO.Utility
             _compressor = new ManagedUniversal();
         }
 
-        public static void Decompress(byte[] source, int offset, byte[] dest, int length)
+        public static ZLibError Decompress(byte[] source, int offset, byte[] dest, int length)
         {
-            _compressor.Decompress(dest, ref length, source, source.Length - offset);
+            return _compressor.Decompress(dest, ref length, source, source.Length - offset);
         }
 
-        public static void Decompress(IntPtr source, int sourceLength, int offset, IntPtr dest, int length)
+        public static ZLibError Decompress(IntPtr source, int sourceLength, int offset, IntPtr dest, int length)
         {
-            _compressor.Decompress(dest, ref length, source, sourceLength - offset);
+            return _compressor.Decompress(dest, ref length, source, sourceLength - offset);
         }
 
         private enum ZLibQuality
@@ -68,7 +68,7 @@ namespace ClassicUO.Utility
             Size = 9
         }
 
-        private enum ZLibError
+        public enum ZLibError
         {
             VersionError = -6,
             BufferError = -5,
@@ -95,7 +95,120 @@ namespace ClassicUO.Utility
             ZLibError Decompress(IntPtr dest, ref int destLength, IntPtr source, int sourceLength);
         }
 
-        // MobileUO: removed Compressor64 and CompressorUnix64 classes
+
+        private sealed class Compressor64 : ICompressor
+        {
+            public string Version => SafeNativeMethods.zlibVersion();
+
+            public ZLibError Compress(byte[] dest, ref int destLength, byte[] source, int sourceLength)
+            {
+                return SafeNativeMethods.compress(dest, ref destLength, source, sourceLength);
+            }
+
+            public ZLibError Compress(byte[] dest, ref int destLength, byte[] source, int sourceLength, ZLibQuality quality)
+            {
+                return SafeNativeMethods.compress2
+                (
+                    dest,
+                    ref destLength,
+                    source,
+                    sourceLength,
+                    quality
+                );
+            }
+
+            public ZLibError Decompress(byte[] dest, ref int destLength, byte[] source, int sourceLength)
+            {
+                return SafeNativeMethods.uncompress(dest, ref destLength, source, sourceLength);
+            }
+
+            public ZLibError Decompress(IntPtr dest, ref int destLength, IntPtr source, int sourceLength)
+            {
+                return SafeNativeMethods.uncompress(dest, ref destLength, source, sourceLength);
+            }
+
+            private class SafeNativeMethods
+            {
+                [DllImport("zlib")]
+                public static extern string zlibVersion();
+
+                [DllImport("zlib")]
+                public static extern ZLibError compress(byte[] dest, ref int destLength, byte[] source, int sourceLength);
+
+                [DllImport("zlib")]
+                public static extern ZLibError compress2(byte[] dest, ref int destLength, byte[] source, int sourceLength, ZLibQuality quality);
+
+                [DllImport("zlib")]
+                public static extern ZLibError uncompress(byte[] dest, ref int destLen, byte[] source, int sourceLen);
+
+                [DllImport("zlib")]
+                public static extern ZLibError uncompress(IntPtr dest, ref int destLen, IntPtr source, int sourceLen);
+            }
+        }
+
+        private sealed class CompressorUnix64 : ICompressor
+        {
+            public string Version => SafeNativeMethods.zlibVersion();
+
+            public ZLibError Compress(byte[] dest, ref int destLength, byte[] source, int sourceLength)
+            {
+                long destLengthLong = destLength;
+                ZLibError z = SafeNativeMethods.compress(dest, ref destLengthLong, source, sourceLength);
+                destLength = (int) destLengthLong;
+
+                return z;
+            }
+
+            public ZLibError Compress(byte[] dest, ref int destLength, byte[] source, int sourceLength, ZLibQuality quality)
+            {
+                long destLengthLong = destLength;
+
+                ZLibError z = SafeNativeMethods.compress2
+                (
+                    dest,
+                    ref destLengthLong,
+                    source,
+                    sourceLength,
+                    quality
+                );
+
+                destLength = (int) destLengthLong;
+
+                return z;
+            }
+
+            public ZLibError Decompress(byte[] dest, ref int destLength, byte[] source, int sourceLength)
+            {
+                long destLengthLong = destLength;
+                ZLibError z = SafeNativeMethods.uncompress(dest, ref destLengthLong, source, sourceLength);
+                destLength = (int) destLengthLong;
+
+                return z;
+            }
+
+            public ZLibError Decompress(IntPtr dest, ref int destLength, IntPtr source, int sourceLength)
+            {
+                return SafeNativeMethods.uncompress(dest, ref destLength, source, sourceLength);
+            }
+
+            private class SafeNativeMethods
+            {
+                [DllImport("libz")]
+                public static extern string zlibVersion();
+
+                [DllImport("libz")]
+                public static extern ZLibError compress(byte[] dest, ref long destLength, byte[] source, long sourceLength);
+
+                [DllImport("libz")]
+                public static extern ZLibError compress2(byte[] dest, ref long destLength, byte[] source, long sourceLength, ZLibQuality quality);
+
+                [DllImport("libz")]
+                public static extern ZLibError uncompress(byte[] dest, ref long destLen, byte[] source, long sourceLen);
+
+                [DllImport("libz")]
+                public static extern ZLibError uncompress(IntPtr dest, ref int destLen, IntPtr source, int sourceLen);
+            }
+        }
 
         private sealed class ManagedUniversal : ICompressor
         {

@@ -4,7 +4,7 @@
 $targetBase = "C:\mobileuo\Assets\Scripts\ClassicUO\src"
 
 # Read the list of file paths from the text file
-$filePaths = Get-Content -Path "symlinkssmall.txt"
+$filePaths = Get-Content -Path "symlinks1.0.0.0.txt"
 
 # Change to the target base directory
 Set-Location -Path $targetBase

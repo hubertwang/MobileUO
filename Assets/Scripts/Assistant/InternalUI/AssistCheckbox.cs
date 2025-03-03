@@ -40,8 +40,8 @@ namespace ClassicUO.Game.UI.Controls
 
         public AssistCheckbox(ushort inactive, ushort active, string text = "", byte font = 0, ushort color = 0, bool isunicode = true, int maxWidth = 0)
         {
-            _textures[INACTIVE] = GumpsLoader.Instance.GetGumpTexture(inactive, out _);
-            _textures[ACTIVE] = GumpsLoader.Instance.GetGumpTexture(active, out _);
+            _textures[INACTIVE] = Client.Game.Gumps.GetGump(inactive).Texture;
+            _textures[ACTIVE] =  Client.Game.Gumps.GetGump(active).Texture;
 
             if (_textures[0] == null || _textures[1] == null)
             {
