@@ -13,6 +13,7 @@ using Assistant.Core;
 using Assistant.Scripts;
 
 using AssistGump = ClassicUO.Game.UI.Gumps.AssistantGump;
+using ClassicUO;
 
 namespace Assistant
 {
