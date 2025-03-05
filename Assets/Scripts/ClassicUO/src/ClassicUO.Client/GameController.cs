@@ -1,6 +1,6 @@
 ﻿#region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,11 +60,9 @@ namespace ClassicUO
     {
         private SDL_EventFilter _filter;
 
-        private readonly Texture2D[] _hueSamplers = new Texture2D[3];
         private bool _ignoreNextTextInput;
         private readonly float[] _intervalFixedUpdate = new float[2];
-        private double _totalElapsed,
-            _currentFpsTime;
+        private double _totalElapsed, _currentFpsTime;
         private uint _totalFrames;
         private UltimaBatcher2D _uoSpriteBatch;
         private bool _suppressedDraw;
@@ -74,11 +72,15 @@ namespace ClassicUO
         public UltimaBatcher2D Batcher => _uoSpriteBatch;
         public static UnityEngine.TouchScreenKeyboard TouchScreenKeyboard;
 
-        public GameController()
+        public GameController(IPluginHost pluginHost)
         {
             GraphicManager = new GraphicsDeviceManager(this);
             // MobileUO: commented out
-            //GraphicManager.PreparingDeviceSettings += (sender, e) => { e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.DiscardContents; };
+            //GraphicManager.PreparingDeviceSettings += (sender, e) =>
+            //{
+            //    e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage =
+            //        RenderTargetUsage.DiscardContents;
+            //};
 
             GraphicManager.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
             SetVSync(false);
@@ -90,23 +92,18 @@ namespace ClassicUO
 
             IsFixedTimeStep = false; // Settings.GlobalSettings.FixedTimeStep;
             TargetElapsedTime = TimeSpan.FromMilliseconds(1000.0 / 250.0);
-            InactiveSleepTime = TimeSpan.Zero;
+            PluginHost = pluginHost;
         }
 
         public Scene Scene { get; private set; }
-        public GameCursor GameCursor { get; private set; }
         public AudioManager Audio { get; private set; }
+        public UltimaOnline UO { get; } = new UltimaOnline();
 
-        public Renderer.Animations.Animations Animations { get; private set; }
-        public Renderer.Arts.Art Arts { get; private set; }
-        public Renderer.Gumps.Gump Gumps { get; private set; }
-        public Renderer.Texmaps.Texmap Texmaps { get; private set; }
-        public Renderer.Lights.Light Lights { get; private set; }
-        public Renderer.MultiMaps.MultiMap MultiMaps { get; private set; }
-        public Renderer.Sounds.Sound Sounds { get; private set; }
+        public IPluginHost PluginHost { get; private set; }
 
         public GraphicsDeviceManager GraphicManager { get; }
         public readonly uint[] FrameDelay = new uint[2];
+
 
         protected override void Initialize()
         {
@@ -131,86 +128,11 @@ namespace ClassicUO
         {
             base.LoadContent();
 
-            const int TEXTURE_WIDTH = 32;
-            const int TEXTURE_HEIGHT = 2048;
-
-            const int LIGHTS_TEXTURE_WIDTH = 32;
-            const int LIGHTS_TEXTURE_HEIGHT = 63;
-
-            _hueSamplers[0] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-            _hueSamplers[1] = new Texture2D(GraphicsDevice, TEXTURE_WIDTH, TEXTURE_HEIGHT);
-            _hueSamplers[2] = new Texture2D(
-                GraphicsDevice,
-                LIGHTS_TEXTURE_WIDTH,
-                LIGHTS_TEXTURE_HEIGHT
-            );
-
-            uint[] buffer = System.Buffers.ArrayPool<uint>.Shared.Rent(
-                Math.Max(
-                    LIGHTS_TEXTURE_WIDTH * LIGHTS_TEXTURE_HEIGHT,
-                    TEXTURE_WIDTH * TEXTURE_HEIGHT * 2
-                )
-            );
-
-            fixed (uint* ptr = buffer)
-            {
-                HuesLoader.Instance.CreateShaderColors(buffer);
-                // MobileUO: true parameters for invertY
-                _hueSamplers[0].SetDataPointerEXT(
-                    0,
-                    null,
-                    (IntPtr)ptr,
-                    TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint),
-                    true
-                );
-                _hueSamplers[1].SetDataPointerEXT(
-                    0,
-                    null,
-                    (IntPtr)ptr + TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint),
-                    TEXTURE_WIDTH * TEXTURE_HEIGHT * sizeof(uint),
-                    true
-                );
-
-                LightColors.CreateLightTextures(buffer, LIGHTS_TEXTURE_HEIGHT);
-                _hueSamplers[2].SetDataPointerEXT(
-                    0,
-                    null,
-                    (IntPtr)ptr,
-                    LIGHTS_TEXTURE_WIDTH * LIGHTS_TEXTURE_HEIGHT * sizeof(uint),
-                    true
-                );
-            }
-
-            System.Buffers.ArrayPool<uint>.Shared.Return(buffer, true);
-
-            GraphicsDevice.Textures[1] = _hueSamplers[0];
-            GraphicsDevice.Textures[2] = _hueSamplers[1];
-            GraphicsDevice.Textures[3] = _hueSamplers[2];
-
             MapLoader.MapsLayouts = Settings.GlobalSettings.MapsLayouts;
 
             Fonts.Initialize(GraphicsDevice);
             SolidColorTextureCache.Initialize(GraphicsDevice);
 
-            Animations = new Renderer.Animations.Animations(GraphicsDevice);
-            Arts = new Renderer.Arts.Art(GraphicsDevice);
-            Gumps = new Renderer.Gumps.Gump(GraphicsDevice);
-            Texmaps = new Renderer.Texmaps.Texmap(GraphicsDevice);
-            Lights = new Renderer.Lights.Light(GraphicsDevice);
-            MultiMaps = new Renderer.MultiMaps.MultiMap(GraphicsDevice);
-            Sounds = new Renderer.Sounds.Sound();
-
-            LightColors.LoadLights();
-
-            // MobileUO: filter mode
-            GraphicsDevice.Textures[1].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
-            GraphicsDevice.Textures[2].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
-            GraphicsDevice.Textures[3].UnityTexture.filterMode = UnityEngine.FilterMode.Point;
-            
-            // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue1.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[0].UnityTexture as UnityEngine.Texture2D));
-            // File.WriteAllBytes(Path.Combine(UnityEngine.Application.persistentDataPath, "hue2.png"), UnityEngine.ImageConversion.EncodeToPNG(_hues_sampler[1].UnityTexture as UnityEngine.Texture2D));
-
-            GameCursor = new GameCursor();
             Audio = new AudioManager();
             Audio.Initialize();
 
@@ -219,7 +141,24 @@ namespace ClassicUO
             //using var ms = new MemoryStream(bytes);
             //_background = Texture2D.FromStream(GraphicsDevice, ms);
 
-            SetScene(new LoginScene());
+#if false
+            SetScene(new MainScene(this));
+#else
+            UO.Load(this);
+
+            Log.Trace("Loading plugins...");
+
+            PluginHost?.Initialize();
+
+            foreach (string p in Settings.GlobalSettings.Plugins)
+            {
+                Plugin.Create(p);
+            }
+
+            Log.Trace("Done!");
+
+            SetScene(new LoginScene(UO.World));
+#endif
             SetWindowPositionBySettings();
         }
 
@@ -237,33 +176,16 @@ namespace ClassicUO
             Settings.GlobalSettings.Save();
             Plugin.OnClosing();
 
-            ArtLoader.Instance.Dispose();
-            GumpsLoader.Instance.Dispose();
-            TexmapsLoader.Instance.Dispose();
-            AnimationsLoader.Instance.Dispose();
-            LightsLoader.Instance.Dispose();
-            TileDataLoader.Instance.Dispose();
-            AnimDataLoader.Instance.Dispose();
-            ClilocLoader.Instance.Dispose();
-            FontsLoader.Instance.Dispose();
-            HuesLoader.Instance.Dispose();
-            MapLoader.Instance.Dispose();
-            MultiLoader.Instance.Dispose();
-            MultiMapLoader.Instance.Dispose();
-            ProfessionLoader.Instance.Dispose();
-            SkillsLoader.Instance.Dispose();
-            SoundsLoader.Instance.Dispose();
-            SpeechesLoader.Instance.Dispose();
-            Verdata.File?.Dispose();
-            World.Map?.Destroy();
+            UO.Unload();
 
             // MobileUO: NOTE: My dispose related changes, see if they're still necessary
-            _hueSamplers[0]?.Dispose();
-            _hueSamplers[0] = null;
-            _hueSamplers[1]?.Dispose();
-            _hueSamplers[1] = null;
+            // MobileUO: TODO: hueSamplers were moved to Client.cs
+            //_hueSamplers[0]?.Dispose();
+            //_hueSamplers[0] = null;
+            //_hueSamplers[1]?.Dispose();
+            //_hueSamplers[1] = null;
             Scene?.Dispose();
-            AuraManager.Dispose();
+            //AuraManager.Dispose();
             UIManager.Dispose();
             SolidColorTextureCache.Dispose();
             RenderedText.Dispose();
@@ -478,7 +400,8 @@ namespace ClassicUO
             MouseUpdate();
 
             var data = NetClient.Socket.CollectAvailableData();
-            var packetsCount = PacketHandlers.Handler.ParsePackets(data);
+            var packetsCount = PacketHandlers.Handler.ParsePackets(UO.World, data);
+
             NetClient.Socket.Statistics.TotalPacketsReceived += (uint)packetsCount;
             NetClient.Socket.Flush();
 
@@ -531,7 +454,7 @@ namespace ClassicUO
                 }
             }
 
-            GameCursor?.Update();
+            UO.GameCursor?.Update();
             Audio?.Update();
 
             base.Update(gameTime);
@@ -576,7 +499,7 @@ namespace ClassicUO
 
             UIManager.Draw(_uoSpriteBatch);
 
-            if (World.InGame && SelectedObject.Object is TextObject t)
+            if ((UO.World?.InGame ?? false) && SelectedObject.Object is TextObject t)
             {
                 if (t.IsTextGump)
                 {
@@ -584,7 +507,7 @@ namespace ClassicUO
                 }
                 else
                 {
-                    World.WorldTextManager?.MoveToTop(t);
+                    UO.World.WorldTextManager?.MoveToTop(t);
                 }
             }
 
@@ -592,15 +515,15 @@ namespace ClassicUO
             SelectedObject.SelectedContainer = null;
 
             _uoSpriteBatch.Begin();
-            GameCursor.Draw(_uoSpriteBatch);
+            UO.GameCursor?.Draw(_uoSpriteBatch);
             _uoSpriteBatch.End();
-
-            base.Draw(gameTime);
 
             Profiler.ExitContext("RenderFrame");
             Profiler.EnterContext("OutOfContext");
 
             Plugin.ProcessDrawCmdList(GraphicsDevice);
+
+            base.Draw(gameTime);
         }
 
         // MobileUO: commented out
@@ -617,14 +540,15 @@ namespace ClassicUO
 
             if (!IsWindowMaximized())
             {
-                ProfileManager.CurrentProfile.WindowClientBounds = new Point(width, height);
+                if (ProfileManager.CurrentProfile != null)
+                    ProfileManager.CurrentProfile.WindowClientBounds = new Point(width, height);
             }
 
             SetWindowSize(width, height);
 
             WorldViewportGump viewport = UIManager.GetGump<WorldViewportGump>();
 
-            if (viewport != null && ProfileManager.CurrentProfile.GameWindowFullSize)
+            if (viewport != null && ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.GameWindowFullSize)
             {
                 viewport.ResizeGameWindow(new Point(width, height));
                 viewport.X = -5;
@@ -641,9 +565,9 @@ namespace ClassicUO
             {
                 if (sdlEvent->type == SDL_EventType.SDL_MOUSEMOTION)
                 {
-                    if (GameCursor != null)
+                    if (UO.GameCursor != null)
                     {
-                        GameCursor.AllowDrawSDLCursor = false;
+                        UO.GameCursor.AllowDrawSDLCursor = false;
                     }
                 }
 
@@ -764,10 +688,10 @@ namespace ClassicUO
 
                 case SDL_EventType.SDL_MOUSEMOTION:
 
-                    if (GameCursor != null && !GameCursor.AllowDrawSDLCursor)
+                    if (UO.GameCursor != null && !UO.GameCursor.AllowDrawSDLCursor)
                     {
-                        GameCursor.AllowDrawSDLCursor = true;
-                        GameCursor.Graphic = 0xFFFF;
+                        UO.GameCursor.AllowDrawSDLCursor = true;
+                        UO.GameCursor.Graphic = 0xFFFF;
                     }
 
                     Mouse.Update();
@@ -1290,7 +1214,7 @@ namespace ClassicUO
                         //Textbox text has been cleared, set it again
                         UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));
                         break;
-                    case ',' when ChatManager.ChatIsEnabled == ChatStatus.Enabled:
+                    case ',' when UO.World.ChatManager.ChatIsEnabled == ChatStatus.Enabled:
                         UIManager.SystemChat.Mode = ChatMode.UOChat;
                         //Textbox text has been cleared, set it again
                         UIManager.SystemChat.TextBoxControl.InvokeTextInput(text.Substring(1));

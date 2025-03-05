@@ -157,7 +157,7 @@ namespace ClassicUO.Network
         {
             int skillcount = 3;
 
-            if (Client.Version >= ClientVersion.CV_70160)
+            if (Client.Game.UO.Version >= ClientVersion.CV_70160)
             {
                 skillcount++;
                 this[0] = 0xF8;
@@ -170,14 +170,14 @@ namespace ClassicUO.Network
             WriteASCII(character.Name, 30);
             WriteUShort(0x00);
 
-            WriteUInt((uint) Client.Protocol);
+            WriteUInt((uint) Client.Game.UO.Protocol);
             WriteUInt(0x01);
             WriteUInt(0x0);
             WriteByte(profession); // Profession
             Skip(15);
             byte val;
 
-            if (Client.Version < ClientVersion.CV_4011D)
+            if (Client.Game.UO.Version < ClientVersion.CV_4011D)
             {
                 val = Convert.ToByte(character.Flags.HasFlag(Flags.Female));
             }
@@ -185,7 +185,7 @@ namespace ClassicUO.Network
             {
                 val = (byte) character.Race;
 
-                if (Client.Version < ClientVersion.CV_7000)
+                if (Client.Game.UO.Version < ClientVersion.CV_7000)
                 {
                     val--;
                 }
@@ -296,7 +296,7 @@ namespace ClassicUO.Network
             WriteUInt(0xEDEDEDED);
             WriteASCII(name, 30);
             Skip(2);
-            WriteUInt((uint) Client.Protocol);
+            WriteUInt((uint) Client.Game.UO.Protocol);
             Skip(24);
             WriteUInt(index);
             WriteUInt(ipclient);
@@ -543,7 +543,7 @@ namespace ClassicUO.Network
     {
         public PCastSpell(int idx) : base(0xBF)
         {
-            if (Client.Version >= ClientVersion.CV_60142)
+            if (Client.Game.UO.Version >= ClientVersion.CV_60142)
             {
                 WriteUShort(0x1C);
                 WriteUShort(0x02);
@@ -1094,7 +1094,7 @@ namespace ClassicUO.Network
             // other packets sends Client.Protocol directly without doing this. Why not here?
             uint clientFlag = 0;
 
-            for (int i = 0; i < (uint) Client.Protocol; i++)
+            for (int i = 0; i < (uint) Client.Game.UO.Protocol; i++)
             {
                 clientFlag |= (uint) (1 << i);
             }
@@ -1213,7 +1213,7 @@ namespace ClassicUO.Network
     {
         public PGuildMenuRequest() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x28);
             WriteByte(0x0A);
         }
@@ -1223,7 +1223,7 @@ namespace ClassicUO.Network
     {
         public PQuestMenuRequest() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x32);
             WriteByte(0x00);
         }
@@ -1233,7 +1233,7 @@ namespace ClassicUO.Network
     {
         public PEquipLastWeapon() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x1E);
             WriteByte(0x0A);
         }
@@ -1434,7 +1434,7 @@ namespace ClassicUO.Network
     {
         public PUseCombatAbility(byte idx) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x19);
             WriteUInt(0);
             WriteByte(idx);
@@ -1537,7 +1537,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseBackup() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x02);
             WriteByte(0x0A);
         }
@@ -1547,7 +1547,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseRestore() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x03);
             WriteByte(0x0A);
         }
@@ -1557,7 +1557,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseCommit() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x04);
             WriteByte(0x0A);
         }
@@ -1567,7 +1567,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseBuildingExit() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x0C);
             WriteByte(0x0A);
         }
@@ -1577,7 +1577,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseGoToFloor(byte floor) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x12);
             WriteUInt(0);
             WriteByte(floor);
@@ -1589,7 +1589,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseSync() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x0E);
             WriteByte(0x0A);
         }
@@ -1599,7 +1599,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseClear() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x10);
             WriteByte(0x0A);
         }
@@ -1609,7 +1609,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseRevert() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x1A);
             WriteByte(0x0A);
         }
@@ -1619,7 +1619,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseResponse() : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x0A);
             WriteByte(0x0A);
         }
@@ -1629,7 +1629,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseAddItem(ushort graphic, int x, int y) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x06);
             WriteByte(0);
             WriteUInt(graphic);
@@ -1645,7 +1645,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseDeleteItem(ushort graphic, int x, int y, int z) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x05);
             WriteByte(0);
             WriteUInt(graphic);
@@ -1663,7 +1663,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseAddRoof(ushort graphic, int x, int y, int z) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x13);
             WriteByte(0);
             WriteUInt(graphic);
@@ -1681,7 +1681,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseDeleteRoof(ushort graphic, int x, int y, int z) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x14);
             WriteByte(0);
             WriteUInt(graphic);
@@ -1699,7 +1699,7 @@ namespace ClassicUO.Network
     {
         public PCustomHouseAddStair(ushort graphic, int x, int y) : base(0xD7)
         {
-            WriteUInt(World.Player);
+            WriteUInt(Client.Game.UO.World.Player);
             WriteUShort(0x0D);
             WriteByte(0);
             WriteUInt(graphic);

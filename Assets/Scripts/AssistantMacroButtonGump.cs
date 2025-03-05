@@ -19,7 +19,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Texture2D backgroundTexture;
         private Label label;
 
-        public AssistantMacroButtonGump(string macroName, int x, int y) : this()
+        public AssistantMacroButtonGump(World world, string macroName, int x, int y) : this(world)
         {
             X = x;
             Y = y;
@@ -27,7 +27,7 @@ namespace ClassicUO.Game.UI.Gumps
             BuildGump();
         }
 
-        public AssistantMacroButtonGump() : base(0, 0)
+        public AssistantMacroButtonGump(World world) : base(world, 0, 0)
         {
             CanMove = true;
             AcceptMouseInput = true;

@@ -20,7 +20,7 @@ namespace ClassicUO.Game.UI.Gumps
         private Texture2D backgroundTexture;
         private Label label;
 
-        public AssistantHotkeyButtonGump(string hotkeyName, int x, int y) : this()
+        public AssistantHotkeyButtonGump(World world, string hotkeyName, int x, int y) : this(world)
         {
             X = x;
             Y = y;
@@ -28,7 +28,7 @@ namespace ClassicUO.Game.UI.Gumps
             BuildGump();
         }
 
-        public AssistantHotkeyButtonGump() : base(0, 0)
+        public AssistantHotkeyButtonGump(World world) : base(world, 0, 0)
         {
             CanMove = true;
             AcceptMouseInput = true;

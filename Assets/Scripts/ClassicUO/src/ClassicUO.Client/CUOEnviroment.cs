@@ -1,6 +1,6 @@
 ﻿#region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -49,17 +49,16 @@ namespace ClassicUO
         public static uint CurrentRefreshRate;
         public static bool SkipLoginScreen;
         public static bool IsOutlands;
-        public static bool PacketLog;
         public static bool NoServerPing;
 
         public static readonly bool IsUnix = Environment.OSVersion.Platform != PlatformID.Win32NT && Environment.OSVersion.Platform != PlatformID.Win32Windows && Environment.OSVersion.Platform != PlatformID.Win32S && Environment.OSVersion.Platform != PlatformID.WinCE;
 
         // MobileUO: hard coded CUO version MobileUO is based on
-        public static readonly Version Version = new Version(1, 0, 0, 0);//Assembly.GetExecutingAssembly().GetName().Version;
+        public static readonly string Version = "1.1.0.0";// Assembly.GetExecutingAssembly()?.GetName()?.Version?.ToString() ?? "0.0.0.0";
         // MobileUO: removed readonly
-        public static string ExecutablePath = 
+        public static string ExecutablePath =
 #if NETFRAMEWORK
-            Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+           AppContext.BaseDirectory; // Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
 #else
             Environment.CurrentDirectory;
 #endif

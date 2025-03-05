@@ -37,9 +37,12 @@
             static const int EFFECT_HUED = 10;
             static const int GUMP = 20;
             
-            static const float HuesPerTexture = 2048;
-
             static const float3 LIGHT_DIRECTION = float3(0.0f, 1.0f, 1.0f);
+
+            static const float HUE_ROWS = 1024;
+            static const float HUE_COLUMNS = 16;
+            static const float HUE_WIDTH = 32;
+            static const float HUES_PER_TEXTURE = HUE_ROWS * HUE_COLUMNS;
 
             struct appdata
             {
@@ -73,16 +76,14 @@
 
             float3 get_rgb(float gray, float hue)
             {
-                if (hue <= HuesPerTexture)
-                {
-                    float2 texcoord = float2(gray, hue / HuesPerTexture);
-                    return tex2D(_HueTex1, texcoord).rgb;
-                }
-                else
-                {
-                    float2 texcoord = float2(gray, (hue - HuesPerTexture) / HuesPerTexture);
-                    return tex2D(_HueTex2, texcoord).rgb;
-                }
+                float halfPixelX = (1.0f / (HUE_COLUMNS * HUE_WIDTH)) * 0.5f;
+                float hueColumnWidth = 1.0f / HUE_COLUMNS;
+                float hueStart = frac(hue / HUE_COLUMNS);
+
+                float xPos = hueStart + gray / HUE_COLUMNS;
+                xPos = clamp(xPos, hueStart + halfPixelX, hueStart + hueColumnWidth - halfPixelX);
+                float yPos = (hue % HUES_PER_TEXTURE) / (HUES_PER_TEXTURE - 1);
+                return tex2D(_HueTex1, float2(xPos, yPos)).rgb;
             }
 
             float get_light(float3 norm)
@@ -100,7 +101,7 @@
             {
 	            float2 texcoord = float2(gray, (shader - 0.5) / 63);
 
-	            return tex2D(_HueTex3, texcoord).rgb;
+	            return tex2D(_HueTex2, texcoord).rgb;
             }
 
             v2f vert (appdata v)

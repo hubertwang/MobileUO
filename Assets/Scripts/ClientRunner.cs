@@ -239,14 +239,14 @@ public class ClientRunner : MonoBehaviour
 		if (forceEnterWorld && Client.Game.Scene is LoginScene)
 		{
 			ProfileManager.Load("fakeserver", "fakeaccount", "fakecharacter");
-			World.Mobiles.Add(World.Player = new PlayerMobile(0));
-			World.MapIndex = 0;
-			World.Player.X = 1443;
-			World.Player.Y = 1677;
-			World.Player.Z = 0;
-			World.Player.UpdateScreenPosition();
-			World.Player.AddToTile();
-			Client.Game.SetScene(new GameScene());
+			Client.Game.UO.World.Mobiles.Add(Client.Game.UO.World.Player = new PlayerMobile(Client.Game.UO.World, 0));
+			Client.Game.UO.World.MapIndex = 0;
+			Client.Game.UO.World.Player.X = 1443;
+			Client.Game.UO.World.Player.Y = 1677;
+			Client.Game.UO.World.Player.Z = 0;
+			Client.Game.UO.World.Player.UpdateScreenPosition();
+			Client.Game.UO.World.Player.AddToTile();
+			Client.Game.SetScene(new GameScene(Client.Game.UO.World));
 		}
 
 		float deltaTime = UnityEngine.Time.deltaTime;
@@ -357,7 +357,8 @@ public class ClientRunner : MonoBehaviour
 	    try
 	    {
 		    Client.SceneChanged += OnSceneChanged;
-		    Client.Run();
+			// MobileUO: TODO: will passing null be a problem?
+		    Client.Run(null);
 #if ENABLE_INTERNAL_ASSISTANT
 		    if (UserPreferences.EnableAssistant.CurrentValue == (int) PreferenceEnums.EnableAssistant.On)
 		    {

@@ -1897,7 +1897,7 @@ namespace ClassicUO.Renderer
         {
             hueMaterial.SetTexture(HueTex1, GraphicsDevice.Textures[1].UnityTexture);
             hueMaterial.SetTexture(HueTex2, GraphicsDevice.Textures[2].UnityTexture);
-            hueMaterial.SetTexture(HueTex3, GraphicsDevice.Textures[3].UnityTexture);
+            //hueMaterial.SetTexture(HueTex3, GraphicsDevice.Textures[3].UnityTexture);
             Begin(null, Matrix.Identity);
         }
 

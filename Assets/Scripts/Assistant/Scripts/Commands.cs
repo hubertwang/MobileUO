@@ -1075,10 +1075,10 @@ namespace Assistant.Scripts
             }
 
             ScriptManager.LastWalk = DateTime.UtcNow + TimeSpan.FromMilliseconds(MovementSpeed.TimeToCompleteMovement(false,
-                                                                             World.Player.IsMounted ||
-                                                                             World.Player.SpeedMode == CharacterSpeedType.FastUnmount ||
-                                                                             World.Player.SpeedMode == CharacterSpeedType.FastUnmountAndCantRun ||
-                                                                             World.Player.IsFlying
+                                                                             Client.Game.UO.World.Player.IsMounted ||
+                                                                             Client.Game.UO.World.Player.SpeedMode == CharacterSpeedType.FastUnmount ||
+                                                                             Client.Game.UO.World.Player.SpeedMode == CharacterSpeedType.FastUnmountAndCantRun ||
+                                                                             Client.Game.UO.World.Player.IsFlying
                                                                              ));
 
             Direction dir = _MoveDirection.Dequeue();
@@ -1130,10 +1130,10 @@ namespace Assistant.Scripts
             }
 
             ScriptManager.LastWalk = DateTime.UtcNow + TimeSpan.FromMilliseconds(MovementSpeed.TimeToCompleteMovement(true,
-                                                                             World.Player.IsMounted ||
-                                                                             World.Player.SpeedMode == CharacterSpeedType.FastUnmount ||
-                                                                             World.Player.SpeedMode == CharacterSpeedType.FastUnmountAndCantRun ||
-                                                                             World.Player.IsFlying
+                                                                             Client.Game.UO.World.Player.IsMounted ||
+                                                                             Client.Game.UO.World.Player.SpeedMode == CharacterSpeedType.FastUnmount ||
+                                                                             Client.Game.UO.World.Player.SpeedMode == CharacterSpeedType.FastUnmountAndCantRun ||
+                                                                             Client.Game.UO.World.Player.IsFlying
                                                                              ));
 
             Direction dir = _MoveDirection.Dequeue();
@@ -1672,10 +1672,10 @@ namespace Assistant.Scripts
 
         private static bool ShowNames(string command, Argument[] args, bool quiet, bool force)
         {
-            if (World.Player == null)
+            if (Client.Game.UO.World.Player == null)
                 return true;
             byte type = 1;//mobile as default
-            int range = World.ClientViewRange;
+            int range = Client.Game.UO.World.ClientViewRange;
             if (args.Length > 0)
             {
                 switch (args[0].AsString())
@@ -1928,7 +1928,7 @@ namespace Assistant.Scripts
                     string title = args[0].AsString(), body = args[1].AsString();
                     MessageEnded = false;
                     HasMessageGump = true;
-                    UIManager.Add(new AssistantGump.MessageBoxGump(title, body));
+                    UIManager.Add(new AssistantGump.MessageBoxGump(Client.Game.UO.World, title, body));
                 }
                 else
                     MessageEnded = true;
@@ -2048,13 +2048,13 @@ namespace Assistant.Scripts
 
         private static bool GuildButton(string command, Argument[] args, bool quiet, bool force)
         {
-            GameActions.OpenGuildGump();
+            GameActions.OpenGuildGump(Client.Game.UO.World);
             return true;
         }
 
         private static bool QuestsButton(string command, Argument[] args, bool quiet, bool force)
         {
-            GameActions.RequestQuestMenu();
+            GameActions.RequestQuestMenu(Client.Game.UO.World);
             return true;
         }
 
@@ -2333,7 +2333,7 @@ namespace Assistant.Scripts
                 return true;
             }
             int color = args.Length >= 2 ? args[1].AsUShort() : -1;
-            int range = args.Length >= 3 ? args[2].AsInt() : World.ClientViewRange;
+            int range = args.Length >= 3 ? args[2].AsInt() : Client.Game.UO.World.ClientViewRange;
             Point3D p = Point3D.MinusOne;
             foreach (UOEntity ie in UOSObjects.EntitiesInRange(range))
             {

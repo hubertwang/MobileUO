@@ -1,6 +1,6 @@
 #region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ namespace ClassicUO.Game.UI.Controls
             _pressed = pressed;
             _over = over;
 
-            ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(normal);
+            ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(normal);
             if (gumpInfo.Texture == null)
             {
                 Dispose();
@@ -177,7 +177,7 @@ namespace ClassicUO.Game.UI.Controls
             {
                 _normal = value;
 
-                ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(value);
+                ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(value);
                 // MobileUO: added if
                 // MobileUO: TODO: do we need to re-add this? it's the above GetGumpTexture
                 //if (_textures[NORMAL] == null) return;
@@ -194,7 +194,7 @@ namespace ClassicUO.Game.UI.Controls
             {
                 _pressed = value;
 
-                ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(value);
+                ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(value);
                 // MobileUO: added if
                 // MobileUO: TODO: do we need to re-add this? it's the above GetGumpTexture
                 //if (_textures[PRESSED] == null) return;
@@ -211,7 +211,7 @@ namespace ClassicUO.Game.UI.Controls
             {
                 _over = value;
 
-                ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(value);
+                ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(value);
                 // MobileUO: added if
                 // MobileUO: TODO: do we need to re-add this? it's the above GetGumpTexture
                 //if (_textures[OVER] == null) return;
@@ -263,14 +263,14 @@ namespace ClassicUO.Game.UI.Controls
             {
                 if (IsClicked && _pressed > 0)
                 {
-                    ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(_pressed);
+                    ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(_pressed);
                     texture = gumpInfo.Texture;
                     bounds = gumpInfo.UV;
                 }
 
                 if (texture == null && _over > 0)
                 {
-                    ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(_over);
+                    ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(_over);
                     texture = gumpInfo.Texture;
                     bounds = gumpInfo.UV;
                 }
@@ -278,7 +278,7 @@ namespace ClassicUO.Game.UI.Controls
 
             if (texture == null)
             {
-                ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(_normal);
+                ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(_normal);
                 texture = gumpInfo.Texture;
                 bounds = gumpInfo.UV;
             }
@@ -364,7 +364,7 @@ namespace ClassicUO.Game.UI.Controls
 
             return ContainsByBounds
                 ? base.Contains(x, y)
-                : Client.Game.Gumps.PixelCheck(_normal, x - Offset.X, y - Offset.Y);
+                : Client.Game.UO.Gumps.PixelCheck(_normal, x - Offset.X, y - Offset.Y);
         }
 
         public sealed override void Dispose()

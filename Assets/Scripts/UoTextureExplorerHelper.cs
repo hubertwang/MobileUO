@@ -35,7 +35,8 @@ public static class UoTextureExplorerHelper
         Log.Start( LogTypes.All );
         Settings.GlobalSettings = new Settings();
         Settings.GlobalSettings.UltimaOnlineDirectory = folderPath;
-        Client.Game = new GameController();
+        // MobileUO: TODO: pluginHost - is null okay?
+        Client.Game = new GameController(null);
         //Calling the getter to trigger the creation of GraphicsDevice
         var graphicsDevice = Client.Game.GraphicsDevice;
         ArtLoader.Instance.Load().Wait();
@@ -118,7 +119,7 @@ public static class UoTextureExplorerHelper
 
     public static Texture2D GetGumpTexture(ushort g)
     {
-        var uoTexture = Client.Game.Gumps.GetGump(g).Texture;
+        var uoTexture = Client.Game.UO.Gumps.GetGump(g).Texture;
         return uoTexture != null && uoTexture.UnityTexture != null ? uoTexture : null;
     }
 

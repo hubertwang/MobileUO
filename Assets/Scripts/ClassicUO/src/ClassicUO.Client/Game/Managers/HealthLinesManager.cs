@@ -1,6 +1,6 @@
 ﻿#region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,11 @@ using ClassicUO.Game.GameObjects;
 using ClassicUO.Assets;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework;
+using ClassicUO.Game.Scenes;
 
 namespace ClassicUO.Game.Managers
 {
-    internal class HealthLinesManager
+    internal sealed class HealthLinesManager
     {
         private const int BAR_WIDTH = 34; //28;
         private const int BAR_HEIGHT = 8;
@@ -48,6 +49,10 @@ namespace ClassicUO.Game.Managers
 
         const ushort BACKGROUND_GRAPHIC = 0x1068;
         const ushort HP_GRAPHIC = 0x1069;
+
+        private readonly World _world;
+
+        public HealthLinesManager(World world) { _world = world; }
 
         public bool IsEnabled =>
             ProfileManager.CurrentProfile != null && ProfileManager.CurrentProfile.ShowMobilesHP;
@@ -59,31 +64,31 @@ namespace ClassicUO.Game.Managers
             int posX = camera.Bounds.X + 5; // ProfileManager.CurrentProfile.GameWindowPosition.X + 5;
             int posY = camera.Bounds.Y + 5; // ProfileManager.CurrentProfile.GameWindowPosition.Y + 5;
 
-            if (SerialHelper.IsMobile(TargetManager.LastTargetInfo.Serial))
+            if (SerialHelper.IsMobile(_world.TargetManager.LastTargetInfo.Serial))
             {
                 DrawHealthLineWithMath(
                     batcher,
-                    TargetManager.LastTargetInfo.Serial,
+                    _world.TargetManager.LastTargetInfo.Serial,
                     camera.Bounds.Width,
                     camera.Bounds.Height
                 );
             }
 
-            if (SerialHelper.IsMobile(TargetManager.SelectedTarget))
+            if (SerialHelper.IsMobile(_world.TargetManager.SelectedTarget))
             {
                 DrawHealthLineWithMath(
                     batcher,
-                    TargetManager.SelectedTarget,
+                    _world.TargetManager.SelectedTarget,
                     camera.Bounds.Width,
                     camera.Bounds.Height
                 );
             }
 
-            if (SerialHelper.IsMobile(TargetManager.LastAttack))
+            if (SerialHelper.IsMobile(_world.TargetManager.LastAttack))
             {
                 DrawHealthLineWithMath(
                     batcher,
-                    TargetManager.LastAttack,
+                    _world.TargetManager.LastAttack,
                     camera.Bounds.Width,
                     camera.Bounds.Height
                 );
@@ -103,7 +108,7 @@ namespace ClassicUO.Game.Managers
 
             int showWhen = ProfileManager.CurrentProfile.MobileHPShowWhen;
 
-            foreach (Mobile mobile in World.Mobiles.Values)
+            foreach (Mobile mobile in _world.Mobiles.Values)
             {
                 if (mobile.IsDestroyed)
                 {
@@ -133,7 +138,7 @@ namespace ClassicUO.Game.Managers
                     {
                         if (mobile.HitsPercentage != 0)
                         {
-                            Client.Game.Animations.GetAnimationDimensions(
+                            Client.Game.UO.Animations.GetAnimationDimensions(
                                 mobile.AnimIndex,
                                 mobile.GetGraphicForAnimation(),
                                 /*(byte) m.GetDirectionForAnimation()*/
@@ -187,9 +192,9 @@ namespace ClassicUO.Game.Managers
                 }
 
                 if (
-                    mobile.Serial == TargetManager.LastTargetInfo.Serial
-                    || mobile.Serial == TargetManager.SelectedTarget
-                    || mobile.Serial == TargetManager.LastAttack
+                    mobile.Serial == _world.TargetManager.LastTargetInfo.Serial
+                    || mobile.Serial == _world.TargetManager.SelectedTarget
+                    || mobile.Serial == _world.TargetManager.LastAttack
                 )
                 {
                     continue;
@@ -214,7 +219,7 @@ namespace ClassicUO.Game.Managers
 
                 if (mode >= 1)
                 {
-                    DrawHealthLine(batcher, mobile, p.X, p.Y, mobile.Serial != World.Player.Serial);
+                    DrawHealthLine(batcher, mobile, p.X, p.Y, mobile.Serial != _world.Player.Serial);
                 }
             }
         }
@@ -226,7 +231,7 @@ namespace ClassicUO.Game.Managers
             int screenH
         )
         {
-            Entity entity = World.Get(serial);
+            Entity entity = _world.Get(serial);
 
             if (entity == null)
             {
@@ -292,7 +297,7 @@ namespace ClassicUO.Game.Managers
 
             const int MULTIPLER = 1;
 
-            ref readonly var gumpInfo = ref Client.Game.Gumps.GetGump(BACKGROUND_GRAPHIC);
+            ref readonly var gumpInfo = ref Client.Game.UO.Gumps.GetGump(BACKGROUND_GRAPHIC);
 
             batcher.Draw(
                 gumpInfo.Texture,
@@ -312,7 +317,7 @@ namespace ClassicUO.Game.Managers
                     offset = per;
                 }
 
-                gumpInfo = ref Client.Game.Gumps.GetGump(HP_GRAPHIC);
+                gumpInfo = ref Client.Game.UO.Gumps.GetGump(HP_GRAPHIC);
 
                 batcher.DrawTiled(
                     gumpInfo.Texture,
@@ -345,7 +350,7 @@ namespace ClassicUO.Game.Managers
 
                 hueVec.X = hue;
 
-                gumpInfo = ref Client.Game.Gumps.GetGump(HP_GRAPHIC);
+                gumpInfo = ref Client.Game.UO.Gumps.GetGump(HP_GRAPHIC);
                 batcher.DrawTiled(
                     gumpInfo.Texture,
                     new Rectangle(x, y, per * MULTIPLER, gumpInfo.UV.Height * MULTIPLER),

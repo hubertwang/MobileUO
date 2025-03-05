@@ -44,7 +44,7 @@ namespace ClassicUO.Game.UI.Gumps
     {
         internal class MessageBoxGump : Gump
         {
-            internal MessageBoxGump(string title, string body) : base(0, 0)
+            internal MessageBoxGump(World world, string title, string body) : base(world, 0, 0)
             {
                 AssistantGump gump = UOSObjects.Gump;
                 if(gump == null || gump.IsDisposed || string.IsNullOrEmpty(body))
@@ -99,7 +99,7 @@ namespace ClassicUO.Game.UI.Gumps
                 invulnerable = 0x07,
             }
 
-            internal ObjectInspectorGump(UOEntity inspected) : base(0, 0)
+            internal ObjectInspectorGump(World world, UOEntity inspected) : base(world, 0, 0)
             {
                 AssistantGump gump = UOSObjects.Gump;
                 if (gump == null || gump.IsDisposed || inspected == null)
@@ -213,7 +213,7 @@ namespace ClassicUO.Game.UI.Gumps
         internal class ChangeAssistantGump : Gump
         {
             Checkbox _control;
-            internal ChangeAssistantGump(OptionsGump gump, Checkbox control) : base(0, 0)
+            internal ChangeAssistantGump(World world, OptionsGump gump, Checkbox control) : base(world, 0, 0)
             {
                 if (gump != null && !gump.IsDisposed && control != null && !control.IsDisposed)
                 {
@@ -275,7 +275,7 @@ namespace ClassicUO.Game.UI.Gumps
             private Label _warning;
             private Line[] _lines;
             private AlphaBlendControl _alpha;
-            internal NewProfileGump() : base(0,0)
+            internal NewProfileGump(World world) : base(world, 0, 0)
             {
                 AcceptMouseInput = true;
                 CanMove = false;
@@ -391,7 +391,7 @@ namespace ClassicUO.Game.UI.Gumps
             private Label _warning;
             private Line[] _lines;
             private AlphaBlendControl _alpha;
-            internal NewMacroGump() : base(0, 0)
+            internal NewMacroGump(World world) : base(world, 0, 0)
             {
                 AcceptMouseInput = true;
                 CanMove = false;
@@ -481,7 +481,7 @@ namespace ClassicUO.Game.UI.Gumps
             private HotKeyOpts _hotkeyOpts;
             private AssistHotkeyBox _hkbox;
             private string _selHK;
-            internal OverWriteHKGump(uint num, HotKeyOpts hkopts, AssistHotkeyBox box, ref string selHK, string oldHKname) : base(0, 0)
+            internal OverWriteHKGump(World world, uint num, HotKeyOpts hkopts, AssistHotkeyBox box, ref string selHK, string oldHKname) : base(world, 0, 0)
             {
                 if (!string.IsNullOrEmpty(selHK) && hkopts != null && !string.IsNullOrEmpty(hkopts.Action))
                 {
@@ -694,7 +694,7 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
         internal static int InsertFriendButton => (int)ButtonType.InsertFriend;
-        internal static readonly byte FONT = (byte)(Client.Version >= ClassicUO.Utility.ClientVersion.CV_305D ? 1 : 0);
+        internal static readonly byte FONT = (byte)(Client.Game.UO.Version >= ClassicUO.Utility.ClientVersion.CV_305D ? 1 : 0);
         //WARNING, MINIMUM WIDTH IS 500, HEIGHT IS 325, if you go lower than this, the items won't fit inside the gump! YOU HAVE BEEN WARNED!
         private static int _width = 500;
         private static int _height = 325;
@@ -775,7 +775,7 @@ namespace ClassicUO.Game.UI.Gumps
         private static int _buttonHeight = HEIGHT / 13;
         private static int _buttonWidth = WIDTH / 20;
 
-        public AssistantGump() : base(0, 0)
+        public AssistantGump(World world) : base(world, 0, 0)
         {
             _controls.Add(_alphaBlend);
             Add(_alphaBlend);
@@ -1569,7 +1569,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void _keyName_AddButton(object sender, EventArgs e)
         {
             UIManager.Gumps.OfType<AssistantHotkeyButtonGump>().FirstOrDefault(s => s._hotkeyName == _selectedHK)?.Dispose();
-            var hotkeyButtonGump = new AssistantHotkeyButtonGump(_selectedHK, Mouse.Position.X, Mouse.Position.Y);
+            var hotkeyButtonGump = new AssistantHotkeyButtonGump(World, _selectedHK, Mouse.Position.X, Mouse.Position.Y);
             UIManager.Add(hotkeyButtonGump);
         }
 
@@ -1732,7 +1732,7 @@ namespace ClassicUO.Game.UI.Gumps
             y = _buttonHeight + (_buttonHeight >> 1);
             Add(_macroPicTiled = new GumpPicTiled(x, y, (WIDTH >> 1) - _buttonWidth, HEIGHT - (y + _buttonHeight * 2), 0xBBC), page);
             Line.CreateRectangleArea(this, x, y, _macroPicTiled.Width, _macroPicTiled.Height, page, Color.Red.PackedValue, 1, null);
-            _macroArea = new AreaContainer(_macroPicTiled.X + 2, _macroPicTiled.Y + 2, _macroPicTiled.Width - 4, _macroPicTiled.Height - 4, MacroBox = new ScriptTextBox(FONT, _macroPicTiled.Width));
+            _macroArea = new AreaContainer(_macroPicTiled.X + 2, _macroPicTiled.Y + 2, _macroPicTiled.Width - 4, _macroPicTiled.Height - 4, MacroBox = new ScriptTextBox(this, FONT, _macroPicTiled.Width));
             Add(_macroArea, page);
             Add(b = new NiceButton(x, _macroPicTiled.Y + _macroPicTiled.Height + (_buttonHeight >> 2), _buttonWidth * 5, _buttonHeight, ButtonAction.Activate, "Object Inspector") { IsSelectable = false, ButtonParameter = (int)ButtonType.ObjectInspector }, page);
             Add(_returnToParent = new AssistCheckbox(0x00D2, 0x00D3, "playmacro Returns to Parent", FONT, ScriptTextBox.GRAY_HUE, true) { X = b.X + b.Width + (_buttonWidth >> 3), Y = b.Y }, page);
@@ -1765,7 +1765,7 @@ namespace ClassicUO.Game.UI.Gumps
         private void _macrokeyName_AddButton(object sender, EventArgs e)
         {
             UIManager.Gumps.OfType<AssistantMacroButtonGump>().FirstOrDefault(s => s._macroName == _macroSelected)?.Dispose();
-            var macroButtonGump = new AssistantMacroButtonGump(_macroSelected, Mouse.Position.X, Mouse.Position.Y);
+            var macroButtonGump = new AssistantMacroButtonGump(World, _macroSelected, Mouse.Position.X, Mouse.Position.Y);
             UIManager.Add(macroButtonGump);
         }
 
@@ -3544,7 +3544,7 @@ namespace ClassicUO.Game.UI.Gumps
                         WIDTH = x;
                         HEIGHT = y;
                         XmlFileParser.SaveProfile();
-                        UIManager.Add(UOSObjects.Gump = new AssistantGump() { X = 200, Y = 200 });
+                        UIManager.Add(UOSObjects.Gump = new AssistantGump(World) { X = 200, Y = 200 });
                     }
                     break;
                 }
@@ -3595,7 +3595,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
                 case ButtonType.NewMacro:
                 {
-                    UIManager.Add(new NewMacroGump());
+                    UIManager.Add(new NewMacroGump(World));
                     break;
                 }
                 case ButtonType.RemoveMacro:
@@ -3667,7 +3667,7 @@ namespace ClassicUO.Game.UI.Gumps
                     {
                         UOEntity entity;
                         if (SerialHelper.IsValid(serial) && (entity = UOSObjects.FindEntity(serial)) != null)
-                            UIManager.Add(new ObjectInspectorGump(entity));
+                            UIManager.Add(new ObjectInspectorGump(World, entity));
                     }
                     Targeting.OneTimeTarget(false, OnTargetSelected);
                     break;
@@ -3679,7 +3679,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
                 case ButtonType.AddNewProfile:
                 {
-                    UIManager.Add(new NewProfileGump());
+                    UIManager.Add(new NewProfileGump(World));
                     break;
                 }
                 default:
@@ -3745,7 +3745,7 @@ namespace ClassicUO.Game.UI.Gumps
                 color = HuesLoader.Instance.GetPolygoneColor(12, hue);
 
             // MobileUO: TODO: ClickableColorBox dropped a parameter in CUO 0.1.9.0, this may need to be revisited
-            ClickableColorBox box = new ClickableColorBox(x, y, 13, 14, hue/*, color*/);
+            ClickableColorBox box = new ClickableColorBox(World, x, y, 13, 14, hue/*, color*/);
             Add(box, page);
             Add(new Label(text, true, ScriptTextBox.GRAY_HUE) { X = x + box.Width * 2, Y = y }, page);
             return box;

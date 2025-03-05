@@ -1,6 +1,6 @@
 #region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -48,9 +48,10 @@ namespace ClassicUO.Game.UI.Gumps
         // MobileUO: added variables
         private Button closeButton;
         public static bool CloseButtonsEnabled;
-        
-        public Gump(uint local, uint server)
+
+        public Gump(World world, uint local, uint server)
         {
+            World = world;
             LocalSerial = local;
             ServerSerial = server;
             AcceptMouseInput = false;
@@ -92,6 +93,8 @@ namespace ClassicUO.Game.UI.Gumps
                 }
             }
         }
+
+        public World World { get; }
 
         public bool CanBeSaved => GumpType != Gumps.GumpType.None;
 

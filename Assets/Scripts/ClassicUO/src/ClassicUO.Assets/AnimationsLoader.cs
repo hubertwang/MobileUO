@@ -1,6 +1,6 @@
 ﻿#region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -1296,6 +1296,11 @@ namespace ClassicUO.Assets
                 animType = AnimationGroupsType.Animal;
             }
 
+            if (animFlags.HasFlag(AnimationFlags.CalculateOffsetLowGroupExtended))
+            {
+                animType = AnimationGroupsType.Monster;
+            }
+
             switch (animType)
             {
                 case AnimationGroupsType.Animal:
@@ -1515,19 +1520,25 @@ namespace ClassicUO.Assets
                 return Span<FrameInfo>.Empty;
             }
 
-            if (index.Position == 0xFFFF_FFFF || index.Size == 0xFFFF_FFFF)
+            if (index.Position == 0xFFFF_FFFF || index.Size == 0xFFFF_FFFF || index.Size <= 0)
             {
                 return Span<FrameInfo>.Empty;
             }
-
+            
             var file = _files[fileIndex];
 
+            if (index.Position + index.Size > file.Length)
+            {
+                return Span<FrameInfo>.Empty;
+            }
+            
             var reader = new StackDataReader(
                 new ReadOnlySpan<byte>(
                     (byte*)file.StartAddress.ToPointer() + index.Position,
                     (int)index.Size
                 )
             );
+            
             reader.Seek(0);
 
             var palette = new ReadOnlySpan<ushort>(reader.PositionAddress.ToPointer(), 512 / sizeof(ushort));
@@ -1867,13 +1878,22 @@ namespace ClassicUO.Assets
         public ushort Hue;
     }
 
-    struct BodyConvInfo
+    // MobileUO: feature parameterless struct constructors is not available in C# 9.0 - made into a class
+    // MobileUO TODO: Fix when Unity supports > C# 9.0
+    class BodyConvInfo
+    //struct BodyConvInfo
+
     {
         public int FileIndex;
         public AnimationGroupsType AnimType;
         public ushort Graphic;
-        public ushort Hue;
+        public ushort Hue = INVALID_HUE;
         public sbyte MountHeight;
+        public const ushort INVALID_HUE = 0xFF;
+
+        public BodyConvInfo()
+        {
+        }
     }
 
     unsafe struct UopInfo

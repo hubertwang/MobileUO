@@ -1,6 +1,6 @@
 ﻿#region license
 
-// Copyright (c) 2021, andreakarasho
+// Copyright (c) 2024, andreakarasho
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -101,9 +101,9 @@ namespace ClassicUO.Game.Scenes
 
         public void UpdateMaxDrawZ(bool force = false)
         {
-            int playerX = World.Player.X;
-            int playerY = World.Player.Y;
-            int playerZ = World.Player.Z;
+            int playerX = _world.Player.X;
+            int playerY = _world.Player.Y;
+            int playerZ = _world.Player.Z;
 
             if (
                 playerX == _oldPlayerX && playerY == _oldPlayerY && playerZ == _oldPlayerZ && !force
@@ -122,7 +122,7 @@ namespace ClassicUO.Game.Scenes
             _noDrawRoofs = !ProfileManager.CurrentProfile.DrawRoofs;
             int bx = playerX;
             int by = playerY;
-            Chunk chunk = World.Map.GetChunk(bx, by, false);
+            Chunk chunk = _world.Map.GetChunk(bx, by, false);
 
             if (chunk != null)
             {
@@ -187,7 +187,7 @@ namespace ClassicUO.Game.Scenes
                 playerY++;
                 bx = playerX;
                 by = playerY;
-                chunk = World.Map.GetChunk(bx, by, false);
+                chunk = _world.Map.GetChunk(bx, by, false);
 
                 if (chunk != null)
                 {
@@ -221,8 +221,8 @@ namespace ClassicUO.Game.Scenes
                                 if (((ulong)itemdata.Flags & 0x204) == 0 && itemdata.IsRoof)
                                 {
                                     _maxZ = tileZ;
-                                    World.Map.ClearBockAccess();
-                                    _maxGroundZ = World.Map.CalculateNearZ(
+                                    _world.Map.ClearBockAccess();
+                                    _maxGroundZ = _world.Map.CalculateNearZ(
                                         tileZ,
                                         playerX,
                                         playerY,
@@ -284,7 +284,7 @@ namespace ClassicUO.Game.Scenes
 
         private void ApplyFoliageTransparency(ushort graphic, int x, int y, int z)
         {
-            GameObject tile = World.Map.GetTile(x, y);
+            GameObject tile = _world.Map.GetTile(x, y);
 
             if (tile != null)
             {
@@ -302,7 +302,7 @@ namespace ClassicUO.Game.Scenes
 
         private void UpdateObjectHandles(Entity obj, bool useObjectHandles)
         {
-            if (useObjectHandles && NameOverHeadManager.IsAllowed(obj))
+            if (useObjectHandles && _world.NameOverHeadManager.IsAllowed(obj))
             {
                 if (obj.ObjectHandlesStatus != ObjectHandlesStatus.CLOSED)
                 {
@@ -334,21 +334,21 @@ namespace ClassicUO.Game.Scenes
                 {
                     sbyte index = 0;
 
-                    bool check = World.Player.X <= worldX && World.Player.Y <= worldY;
+                    bool check = _world.Player.X <= worldX && _world.Player.Y <= worldY;
 
                     if (!check)
                     {
-                        check = World.Player.Y <= worldY && World.Player.X <= worldX + 1;
+                        check = _world.Player.Y <= worldY && _world.Player.X <= worldX + 1;
 
                         if (!check)
                         {
-                            check = World.Player.X <= worldX && World.Player.Y <= worldY + 1;
+                            check = _world.Player.X <= worldX && _world.Player.Y <= worldY + 1;
                         }
                     }
 
                     if (check)
                     {
-                        var rect = Client.Game.Arts.GetRealArtBounds(obj.Graphic);
+                        var rect = Client.Game.UO.Arts.GetRealArtBounds(obj.Graphic);
 
                         rect.X = obj.RealScreenPosition.X - (rect.Width >> 1) + rect.X;
                         rect.Y = obj.RealScreenPosition.Y - rect.Height + rect.Y;
@@ -563,7 +563,7 @@ namespace ClassicUO.Game.Scenes
         private bool HasSurfaceOverhead(Entity obj)
         {
             if (
-                obj.Serial == World.Player.Serial /* || _maxZ == _maxGroundZ*/
+                obj.Serial == _world.Player.Serial /* || _maxZ == _maxGroundZ*/
             )
             {
                 return false;
@@ -575,7 +575,7 @@ namespace ClassicUO.Game.Scenes
             {
                 for (int x = -1; x <= 2; ++x)
                 {
-                    GameObject tile = World.Map.GetTile(obj.X + x, obj.Y + y);
+                    GameObject tile = _world.Map.GetTile(obj.X + x, obj.Y + y);
 
                     found = false;
 
@@ -764,7 +764,7 @@ namespace ClassicUO.Game.Scenes
                         continue;
                     }
 
-                    if (!IsFoliageVisibleAtSeason(ref itemData, World.Season))
+                    if (!IsFoliageVisibleAtSeason(ref itemData, _world.Season))
                     {
                         continue;
                     }
@@ -1000,7 +1000,7 @@ namespace ClassicUO.Game.Scenes
                         UpdateObjectHandles(item, useObjectHandles);
                     }
 
-                    if (!item.IsMulti && !IsFoliageVisibleAtSeason(ref itemData, World.Season))
+                    if (!item.IsMulti && !IsFoliageVisibleAtSeason(ref itemData, _world.Season))
                     {
                         continue;
                     }
@@ -1124,11 +1124,11 @@ namespace ClassicUO.Game.Scenes
             int winGameWidth = Camera.Bounds.Width; //ProfileManager.CurrentProfile.GameWindowSize.X;
             int winGameHeight = Camera.Bounds.Height; //ProfileManager.CurrentProfile.GameWindowSize.Y;
             int winGameCenterX = winGamePosX + (winGameWidth >> 1);
-            int winGameCenterY = winGamePosY + (winGameHeight >> 1) + (World.Player.Z << 2);
-            winGameCenterX -= (int) World.Player.Offset.X;
-            winGameCenterY -= (int) (World.Player.Offset.Y - World.Player.Offset.Z);
-            int winDrawOffsetX = (World.Player.X - World.Player.Y) * 22 - winGameCenterX;
-            int winDrawOffsetY = (World.Player.X + World.Player.Y) * 22 - winGameCenterY;
+            int winGameCenterY = winGamePosY + (winGameHeight >> 1) + (_world.Player.Z << 2);
+            winGameCenterX -= (int) _world.Player.Offset.X;
+            winGameCenterY -= (int) (_world.Player.Offset.Y - _world.Player.Offset.Z);
+            int winDrawOffsetX = (_world.Player.X - _world.Player.Y) * 22 - winGameCenterX;
+            int winDrawOffsetY = (_world.Player.X + _world.Player.Y) * 22 - winGameCenterY;
 
             int winGameScaledOffsetX;
             int winGameScaledOffsetY;
@@ -1174,10 +1174,10 @@ namespace ClassicUO.Game.Scenes
 
             int size = Math.Max(width, height);
 
-            if (size < World.ClientViewRange)
-                size = World.ClientViewRange;
+            if (size < _world.ClientViewRange)
+                size = _world.ClientViewRange;
 
-            int realMinRangeX = World.Player.X - size;
+            int realMinRangeX = _world.Player.X - size;
 
             // MobleUO: TODO: do we have to add this?
             //if (Camera.Offset.X != 0 || Camera.Offset.Y != 0)
@@ -1188,15 +1188,15 @@ namespace ClassicUO.Game.Scenes
 
             if (realMinRangeX < 0)
                 realMinRangeX = 0;
-            int realMaxRangeX = World.Player.X + size;
+            int realMaxRangeX = _world.Player.X + size;
 
             //if (realMaxRangeX >= FileManager.Map.MapsDefaultSize[World.Map.Index][0])
             //    realMaxRangeX = FileManager.Map.MapsDefaultSize[World.Map.Index][0];
-            int realMinRangeY = World.Player.Y - size;
+            int realMinRangeY = _world.Player.Y - size;
 
             if (realMinRangeY < 0)
                 realMinRangeY = 0;
-            int realMaxRangeY = World.Player.Y + size;
+            int realMaxRangeY = _world.Player.Y + size;
 
             //if (realMaxRangeY >= FileManager.Map.MapsDefaultSize[World.Map.Index][1])
             //    realMaxRangeY = FileManager.Map.MapsDefaultSize[World.Map.Index][1];
@@ -1211,11 +1211,11 @@ namespace ClassicUO.Game.Scenes
             if (minBlockY < 0)
                 minBlockY = 0;
 
-            if (maxBlockX >= MapLoader.Instance.MapsDefaultSize[World.Map.Index, 0])
-                maxBlockX = MapLoader.Instance.MapsDefaultSize[World.Map.Index, 0] - 1;
+            if (maxBlockX >= MapLoader.Instance.MapsDefaultSize[_world.Map.Index, 0])
+                maxBlockX = MapLoader.Instance.MapsDefaultSize[_world.Map.Index, 0] - 1;
 
-            if (maxBlockY >= MapLoader.Instance.MapsDefaultSize[World.Map.Index, 1])
-                maxBlockY = MapLoader.Instance.MapsDefaultSize[World.Map.Index, 1] - 1;
+            if (maxBlockY >= MapLoader.Instance.MapsDefaultSize[_world.Map.Index, 1])
+                maxBlockY = MapLoader.Instance.MapsDefaultSize[_world.Map.Index, 1] - 1;
 
             int drawOffset = (int) (zoom * 40.0);
             float maxX = winGamePosX + winGameWidth ;
